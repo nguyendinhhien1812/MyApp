@@ -9,12 +9,10 @@ interface QuickActionProps {
 }
 
 const QuickAction = ({ icon, label, onPress }: QuickActionProps) => {
-  const { colors } = useTheme().theme;
-  const styles = createStyles();
   return (
     <TouchableOpacity style={styles.quickItem} onPress={onPress}>
       <View style={styles.quickIconWrap}>
-        <Icon type="ionicon" name={icon} size={20} color={colors.black} />
+        <Icon type="ionicon" name={icon} size={20} color="#b36a1a" />
       </View>
       <Text style={styles.quickLabel}>{label}</Text>
     </TouchableOpacity>
@@ -23,19 +21,22 @@ const QuickAction = ({ icon, label, onPress }: QuickActionProps) => {
 
 export default QuickAction;
 
-const createStyles = () =>
-  StyleSheet.create({
-    quickItem: {
-      alignItems: 'center',
-    },
-    quickIconWrap: {
-      backgroundColor: '#f2f2f2',
-      padding: 12,
-      borderRadius: 50,
-      marginBottom: 6,
-    },
-    quickLabel: {
-      fontSize: 12,
-      textAlign: 'center',
-    },
-  });
+const styles = StyleSheet.create({
+  quickItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  quickIconWrap: {
+    backgroundColor: '#fdf3e7',
+    padding: 12,
+    borderRadius: 14,
+    marginBottom: 6,
+    borderWidth: 0.5,
+    borderColor: '#f0c48a',
+  },
+  quickLabel: {
+    fontSize: 11,
+    textAlign: 'center',
+    color: '#555',
+  },
+});
