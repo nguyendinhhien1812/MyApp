@@ -15,6 +15,8 @@ type MainRoute = {
 import BankNavigator from './BankNavigator';
 import InvestmentNavigator from './InvestmentNavigator';
 import ExpenseNavigator from './ExpenseNavigator';
+import AboutScreen from '../container/About';
+import WebViewScreen from '../container/WebView';
 
 const MainNavigator = () => {
   const navigators = [
@@ -33,6 +35,14 @@ const MainNavigator = () => {
     {
       name: 'ExpenseScreen',
       component: ExpenseNavigator,
+    },
+    {
+      name: 'AboutScreen',
+      component: AboutScreen,
+    },
+    {
+      name: 'WebViewScreen',
+      component: WebViewScreen,
     },
   ];
 

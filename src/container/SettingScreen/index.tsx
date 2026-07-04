@@ -10,6 +10,7 @@ import {
   Pressable,
 } from 'react-native';
 import { Icon } from '@rneui/themed';
+import { useNavigation } from '@react-navigation/native';
 import { useLanguage } from '../../context/LanguageContext';
 import { Lang } from '../../i18n/translations';
 
@@ -76,6 +77,7 @@ const ToggleRow = ({
 
 const SettingScreen = () => {
   const { lang, t, setLang } = useLanguage();
+  const navigation = useNavigation();
   const [notification, setNotification] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [langModal, setLangModal] = useState(false);
@@ -125,7 +127,13 @@ const SettingScreen = () => {
       <Text style={styles.sectionLabel}>{t.setting.sectionOther}</Text>
       <View style={styles.card}>
         <SettingRow icon="document-text-outline" label={t.setting.terms} />
-        <SettingRow icon="help-circle-outline"   label={t.setting.support} isLast />
+        <SettingRow icon="help-circle-outline"   label={t.setting.support} />
+        <SettingRow
+          icon="information-circle-outline"
+          label={t.setting.about}
+          onPress={() => (navigation as any).navigate('AboutScreen')}
+          isLast
+        />
       </View>
 
       <Text style={styles.version}>{t.setting.version}</Text>

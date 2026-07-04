@@ -24,31 +24,31 @@ const AVATAR_URL =
 const listContact = [
   {
     id: 1,
-    name: 'Mạng xã hội',
+    name: 'Facebook',
     imgIcon: 'https://i.pinimg.com/736x/07/f9/70/07f970236edf44d5b8021a1dbb241982.jpg',
     bgColor: '#e8f4fd',
-    screen: 'BankScreen',
+    url: 'https://www.facebook.com/hien.nguyen.433703/',
   },
   {
     id: 2,
     name: 'GitHub',
     imgIcon: 'https://i.pinimg.com/736x/cf/5f/7d/cf5f7dca8d30d52a39f4043f3796d7f0.jpg',
     bgColor: '#f0eeff',
-    screen: 'BankScreen',
+    url: 'https://github.com/nguyendinhhien1812',
   },
   {
     id: 3,
-    name: 'Email',
+    name: 'Gmail',
     imgIcon: 'https://i.pinimg.com/736x/71/0b/a5/710ba5f8773d6e2487301210099f4ee6.jpg',
     bgColor: '#fff4e8',
-    screen: 'BankScreen',
+    url: 'https://mail.google.com/mail/u/0/#inbox',
   },
   {
     id: 4,
-    name: 'Linking',
+    name: 'LinkedIn',
     imgIcon: 'https://i.pinimg.com/736x/a9/a6/fe/a9a6fe76b8a2ac0aae7617b729c7d975.jpg',
     bgColor: '#e8f8f1',
-    screen: 'BankScreen',
+    url: 'https://www.linkedin.com/in/hi%E1%BA%BFn-nguy%E1%BB%85n-271b8a2ab/',
   },
 ];
 
@@ -155,7 +155,12 @@ const HomeScreen = () => {
                 <TouchableOpacity
                   key={item.id}
                   style={styles.iconItem}
-                  onPress={() => navigation.navigate(item.screen as never)}
+                  onPress={() =>
+                    navigation.navigate('WebViewScreen' as never, {
+                      url: item.url,
+                      title: item.name,
+                    } as never)
+                  }
                 >
                   <View style={[styles.iconCircle, { backgroundColor: item.bgColor }]}>
                     <Image source={{ uri: item.imgIcon }} style={styles.iconImg} />

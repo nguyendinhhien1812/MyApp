@@ -5,11 +5,13 @@ import {
   StyleSheet,
   SafeAreaView,
   TouchableOpacity,
+  ScrollView,
   Image,
   Modal,
   Pressable,
 } from 'react-native';
 import { Icon } from '@rneui/themed';
+import { useNavigation } from '@react-navigation/native';
 import { useLanguage } from '../../context/LanguageContext';
 
 const PRIMARY = '#E89951';
@@ -67,8 +69,11 @@ const ProfileRow = ({
 
 // ─── Screen ──────────────────────────────────────────────────────────────────
 
+const TECH_TAGS = ['React Native', 'TypeScript', 'i18n', 'SVG', 'Real API'];
+
 const ProfileScreen = () => {
   const { t } = useLanguage();
+  const navigation = useNavigation();
   const [logoutModal, setLogoutModal] = useState(false);
 
   return (
@@ -77,6 +82,8 @@ const ProfileScreen = () => {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{t.profile.title}</Text>
       </View>
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
       {/* Avatar + Name card */}
       <View style={styles.avatarCard}>
@@ -134,6 +141,29 @@ const ProfileScreen = () => {
         />
       </View>
 
+      {/* ── VỀ ỨNG DỤNG ── */}
+      <TouchableOpacity
+        style={styles.aboutCard}
+        activeOpacity={0.85}
+        onPress={() => (navigation as any).navigate('AboutScreen')}>
+        <View style={styles.aboutLeft}>
+          <View style={styles.aboutIconWrap}>
+            <Icon type="ionicon" name="layers-outline" size={20} color={PRIMARY_DARK} />
+          </View>
+          <View style={styles.aboutInfo}>
+            <Text style={styles.aboutTitle}>{t.profile.aboutApp}</Text>
+            <View style={styles.aboutTagRow}>
+              {TECH_TAGS.map(tag => (
+                <View key={tag} style={styles.aboutTag}>
+                  <Text style={styles.aboutTagText}>{tag}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        </View>
+        <Icon type="ionicon" name="chevron-forward" size={16} color="#ccc" />
+      </TouchableOpacity>
+
       {/* ── Đăng xuất ── */}
       <View style={[styles.card, { marginTop: 12 }]}>
         <ProfileRow
@@ -144,6 +174,8 @@ const ProfileScreen = () => {
           onPress={() => setLogoutModal(true)}
         />
       </View>
+
+      </ScrollView>
 
       {/* Logout confirm modal */}
       <Modal
@@ -282,6 +314,41 @@ const styles = StyleSheet.create({
   rowRight: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   rowValue: { fontSize: 13, color: '#aaa' },
   rowDivider: { height: 0.5, backgroundColor: '#F0F0F0', marginLeft: 60 },
+
+  scrollContent: { paddingBottom: 32 },
+
+  // About card
+  aboutCard: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    marginHorizontal: 16,
+    marginTop: 12,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 0.5,
+    borderColor: PRIMARY_BORDER,
+  },
+  aboutLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
+  aboutIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: PRIMARY_LIGHT,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  aboutInfo: { flex: 1 },
+  aboutTitle: { fontSize: 14, fontWeight: '500', color: '#1a1a1a' },
+  aboutTagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 6 },
+  aboutTag: {
+    backgroundColor: '#F0F0F5',
+    borderRadius: 6,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+  },
+  aboutTagText: { fontSize: 9, color: '#666', fontWeight: '500' },
 
   // Logout modal
   modalOverlay: {
