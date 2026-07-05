@@ -8,9 +8,11 @@ import {
   Switch,
   Modal,
   Pressable,
+  Linking,
 } from 'react-native';
 import { Icon } from '@rneui/themed';
 import { useNavigation } from '@react-navigation/native';
+import { AppSnackbar } from '../../components/UI';
 import { useLanguage } from '../../context/LanguageContext';
 import { Lang } from '../../i18n/translations';
 
@@ -79,8 +81,8 @@ const SettingScreen = () => {
   const { lang, t, setLang } = useLanguage();
   const navigation = useNavigation();
   const [notification, setNotification] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
   const [langModal, setLangModal] = useState(false);
+  const [toast, setToast] = useState('');
 
   const currentLangLabel = LANG_OPTIONS.find(o => o.code === lang)?.label ?? '';
 
@@ -109,8 +111,8 @@ const SettingScreen = () => {
         <ToggleRow
           icon="moon-outline"
           label={t.setting.darkMode}
-          value={darkMode}
-          onToggle={() => setDarkMode(v => !v)}
+          value={false}
+          onToggle={() => setToast(t.common.demoFeature)}
           isLast
         />
       </View>
@@ -118,16 +120,42 @@ const SettingScreen = () => {
       {/* ── TÀI KHOẢN ── */}
       <Text style={styles.sectionLabel}>{t.setting.sectionAccount}</Text>
       <View style={styles.card}>
-        <SettingRow icon="person-outline"          label={t.setting.profileInfo} />
-        <SettingRow icon="lock-closed-outline"     label={t.setting.security} />
-        <SettingRow icon="shield-checkmark-outline" label={t.setting.twoFactor} isLast />
+        <SettingRow
+          icon="person-outline"
+          label={t.setting.profileInfo}
+          onPress={() => (navigation as any).navigate('EditProfileScreen')}
+        />
+        <SettingRow
+          icon="lock-closed-outline"
+          label={t.setting.security}
+          onPress={() => (navigation as any).navigate('SecurityScreen')}
+        />
+        <SettingRow
+          icon="shield-checkmark-outline"
+          label={t.setting.twoFactor}
+          onPress={() => setToast(t.common.demoFeature)}
+          isLast
+        />
       </View>
 
       {/* ── KHÁC ── */}
       <Text style={styles.sectionLabel}>{t.setting.sectionOther}</Text>
       <View style={styles.card}>
-        <SettingRow icon="document-text-outline" label={t.setting.terms} />
-        <SettingRow icon="help-circle-outline"   label={t.setting.support} />
+        <SettingRow
+          icon="document-text-outline"
+          label={t.setting.terms}
+          onPress={() => (navigation as any).navigate('TermsScreen')}
+        />
+        <SettingRow
+          icon="help-circle-outline"
+          label={t.setting.support}
+          onPress={() =>
+            // Simulator/máy không có app Mail → fallback hiện email
+            Linking.openURL('mailto:Kyonguyen00775@gmail.com').catch(() =>
+              setToast('Email: Kyonguyen00775@gmail.com'),
+            )
+          }
+        />
         <SettingRow
           icon="information-circle-outline"
           label={t.setting.about}
@@ -137,6 +165,14 @@ const SettingScreen = () => {
       </View>
 
       <Text style={styles.version}>{t.setting.version}</Text>
+
+      <AppSnackbar
+        visible={!!toast}
+        onDismiss={() => setToast('')}
+        message={toast}
+        tone="default"
+        duration={1800}
+      />
 
       {/* ── Language bottom sheet ── */}
       <Modal

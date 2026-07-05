@@ -8,6 +8,7 @@ import {
   FlatList,
 } from 'react-native';
 import { Icon } from '@rneui/themed';
+import { useNavigation } from '@react-navigation/native';
 import { useLanguage } from '../../context/LanguageContext';
 
 const PRIMARY = '#E89951';
@@ -90,7 +91,9 @@ const NOTIFICATIONS: NotifItem[] = [
 
 const NotificationScreen = () => {
   const { t } = useLanguage();
+  const navigation = useNavigation();
   const [activeFilter, setActiveFilter] = useState(0); // 0=all, 1=read, 2=unread
+  const [notifications, setNotifications] = useState(NOTIFICATIONS);
 
   const filters = [
     t.notification.filterAll,
@@ -98,13 +101,19 @@ const NotificationScreen = () => {
     t.notification.filterUnread,
   ];
 
-  const filtered = NOTIFICATIONS.filter(item => {
+  const filtered = notifications.filter(item => {
     if (activeFilter === 1) return item.isRead;
     if (activeFilter === 2) return !item.isRead;
     return true;
   });
 
-  const unreadCount = NOTIFICATIONS.filter(n => !n.isRead).length;
+  const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  const markAllRead = () =>
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+
+  const markRead = (id: number) =>
+    setNotifications(prev => prev.map(n => (n.id === id ? { ...n, isRead: true } : n)));
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -119,10 +128,12 @@ const NotificationScreen = () => {
           )}
         </View>
         <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.headerIconBtn}>
+          <TouchableOpacity style={styles.headerIconBtn} onPress={markAllRead}>
             <Icon type="ionicon" name="checkmark-done-outline" size={20} color={PRIMARY_DARK} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.headerIconBtn}>
+          <TouchableOpacity
+            style={styles.headerIconBtn}
+            onPress={() => navigation.navigate('Setting' as never)}>
             <Icon type="ionicon" name="settings-outline" size={20} color="#888" />
           </TouchableOpacity>
         </View>
@@ -161,6 +172,7 @@ const NotificationScreen = () => {
         renderItem={({ item }) => (
           <TouchableOpacity
             activeOpacity={0.75}
+            onPress={() => markRead(item.id)}
             style={[styles.notifRow, !item.isRead && styles.notifRowUnread]}>
             {/* Icon */}
             <View style={[styles.notifIcon, { backgroundColor: item.iconBg }]}>

@@ -9,7 +9,9 @@ import {
   Share,
 } from 'react-native';
 import { Icon } from '@rneui/themed';
-import Svg, { Rect, Line } from 'react-native-svg';
+import Svg, { Rect } from 'react-native-svg';
+import { AppSnackbar } from '../../components/UI';
+import { useLanguage } from '../../context/LanguageContext';
 
 const PRIMARY = '#E89951';
 const PRIMARY_DARK = '#b36a1a';
@@ -78,8 +80,11 @@ interface Props {
 }
 
 const QRPayScreen = ({ navigation }: Props) => {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'myqr' | 'scan'>('myqr');
   const [amountEnabled, setAmountEnabled] = useState(false);
+  const [flashOn, setFlashOn] = useState(false);
+  const [toast, setToast] = useState('');
 
   const handleShare = async () => {
     try {
@@ -95,7 +100,9 @@ const QRPayScreen = ({ navigation }: Props) => {
           <Icon type="ionicon" name="arrow-back" size={18} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>QR Pay</Text>
-        <TouchableOpacity style={styles.headerBtn}>
+        <TouchableOpacity
+          style={styles.headerBtn}
+          onPress={() => setToast(t.common.demoFeature)}>
           <Icon type="ionicon" name="ellipsis-horizontal" size={18} color="#fff" />
         </TouchableOpacity>
       </View>
@@ -167,9 +174,11 @@ const QRPayScreen = ({ navigation }: Props) => {
           {/* Bottom actions */}
           <View style={styles.bottomActions}>
             <View style={styles.actionRow}>
-              <TouchableOpacity style={styles.btnOutline}>
+              <TouchableOpacity
+                style={styles.btnOutline}
+                onPress={() => setToast(t.qrpay.qrSaved)}>
                 <Icon type="ionicon" name="download-outline" size={16} color={PRIMARY_DARK} />
-                <Text style={styles.btnOutlineText}>Lưu ảnh</Text>
+                <Text style={styles.btnOutlineText}>{t.qrpay.saveImage}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.btnSolid} onPress={handleShare}>
                 <Icon type="ionicon" name="share-outline" size={16} color="#fff" />
@@ -209,16 +218,25 @@ const QRPayScreen = ({ navigation }: Props) => {
           {/* Controls */}
           <View style={styles.scanControls}>
             <View style={styles.controlItem}>
-              <TouchableOpacity style={styles.controlBtn}>
-                <Icon type="ionicon" name="flashlight-outline" size={20} color="#fff" />
+              <TouchableOpacity
+                style={[styles.controlBtn, flashOn && styles.controlBtnActive]}
+                onPress={() => setFlashOn(v => !v)}>
+                <Icon
+                  type="ionicon"
+                  name={flashOn ? 'flashlight' : 'flashlight-outline'}
+                  size={20}
+                  color={flashOn ? PRIMARY_DARK : '#fff'}
+                />
               </TouchableOpacity>
-              <Text style={styles.controlLabel}>Đèn pin</Text>
+              <Text style={styles.controlLabel}>{t.qrpay.flash}</Text>
             </View>
             <View style={styles.controlItem}>
-              <TouchableOpacity style={styles.controlBtn}>
+              <TouchableOpacity
+                style={styles.controlBtn}
+                onPress={() => setToast(t.common.demoFeature)}>
                 <Icon type="ionicon" name="images-outline" size={20} color="#fff" />
               </TouchableOpacity>
-              <Text style={styles.controlLabel}>Thư viện</Text>
+              <Text style={styles.controlLabel}>{t.qrpay.gallery}</Text>
             </View>
           </View>
 
@@ -240,6 +258,14 @@ const QRPayScreen = ({ navigation }: Props) => {
           </View>
         </View>
       )}
+
+      <AppSnackbar
+        visible={!!toast}
+        onDismiss={() => setToast('')}
+        message={toast}
+        tone={toast === t.qrpay.qrSaved ? 'success' : 'default'}
+        duration={1800}
+      />
     </SafeAreaView>
   );
 };
@@ -448,6 +474,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.15)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  controlBtnActive: {
+    backgroundColor: '#fff',
   },
   controlLabel: { fontSize: 10, color: 'rgba(255,255,255,0.5)' },
 

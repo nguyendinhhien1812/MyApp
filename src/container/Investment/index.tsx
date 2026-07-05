@@ -8,9 +8,12 @@ import {
   ScrollView,
   Dimensions,
   Animated,
+  Modal,
+  Pressable,
 } from 'react-native';
 import { Icon } from '@rneui/themed';
 import Svg, { Polyline } from 'react-native-svg';
+import { AppDialog, AppSnackbar } from '../../components/UI';
 import { useLanguage } from '../../context/LanguageContext';
 
 const PRIMARY      = '#E89951';
@@ -565,6 +568,52 @@ const styles = StyleSheet.create({
     borderColor: '#c0392b',
   },
   btnSellText: { fontSize: 14, fontWeight: '600', color: '#c0392b' },
+
+  // Stock detail bottom sheet
+  sheetOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'flex-end',
+  },
+  sheet: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 36,
+  },
+  sheetHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#e0e0e0',
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  sheetHeaderInfo: { flex: 1 },
+  sheetTicker: { fontSize: 16, fontWeight: '700', color: '#1a1a1a' },
+  sheetName: { fontSize: 12, color: '#888', marginTop: 2 },
+  sheetPrice: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#1a1a1a',
+    letterSpacing: -0.5,
+    marginTop: 14,
+  },
+  sheetSpark: {
+    alignItems: 'center',
+    backgroundColor: '#fafafa',
+    borderRadius: 14,
+    paddingVertical: 14,
+    marginTop: 12,
+  },
+  sheetVol: { fontSize: 12, color: '#888', marginTop: 10, marginBottom: 4 },
 });
 
 // ─── Sparkline components ─────────────────────────────────────────────────────
@@ -713,6 +762,19 @@ const InvestmentScreen = ({ navigation }: Props) => {
   const [liveHOSE,     setLiveHOSE]     = useState<StockItem[] | null>(null);
   const [stockLoading, setStockLoading] = useState(true);
   const [stockError,   setStockError]   = useState(false);
+
+  // Chi tiết mã + luồng đặt lệnh demo
+  const [selectedStock, setSelectedStock] = useState<StockItem | null>(null);
+  const [orderStock,    setOrderStock]    = useState<StockItem | null>(null);
+  const [orderSide,     setOrderSide]     = useState<'buy' | 'sell' | null>(null);
+  const [orderToast,    setOrderToast]    = useState(false);
+
+  // Modal native luôn nằm trên Portal — phải đóng sheet trước rồi mới mở dialog
+  const placeOrder = (side: 'buy' | 'sell') => {
+    setOrderStock(selectedStock);
+    setSelectedStock(null);
+    setOrderSide(side);
+  };
 
   // Skeleton pulse animation
   const shimmer = useRef(new Animated.Value(0.4)).current;
@@ -918,7 +980,13 @@ const InvestmentScreen = ({ navigation }: Props) => {
               </View>
             )}
           </View>
-          <TouchableOpacity>
+          <TouchableOpacity
+            onPress={() =>
+              (navigation as any).navigate('WebViewScreen', {
+                url: 'https://cafef.vn/thi-truong-chung-khoan.chn',
+                title: t.investment.market,
+              })
+            }>
             <Text style={styles.seeAll}>{t.investment.viewMore}</Text>
           </TouchableOpacity>
         </View>
@@ -970,6 +1038,7 @@ const InvestmentScreen = ({ navigation }: Props) => {
               <TouchableOpacity
                 key={stock.id}
                 activeOpacity={0.75}
+                onPress={() => setSelectedStock(stock)}
                 style={[
                   styles.stockRow,
                   index === 0 && styles.stockRowFirst,
@@ -1046,16 +1115,135 @@ const InvestmentScreen = ({ navigation }: Props) => {
           <Text style={styles.securityText}>{t.investment.ssl}</Text>
         </View>
         <View style={styles.ctaRow}>
-          <TouchableOpacity style={styles.btnBuy} activeOpacity={0.85}>
+          <TouchableOpacity
+            style={styles.btnBuy}
+            activeOpacity={0.85}
+            onPress={() => {
+              setOrderStock(null);
+              setOrderSide('buy');
+            }}>
             <Icon type="ionicon" name="trending-up" size={16} color="#fff" />
             <Text style={styles.btnBuyText}>{t.investment.buyNow}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.btnSell} activeOpacity={0.85}>
+          <TouchableOpacity
+            style={styles.btnSell}
+            activeOpacity={0.85}
+            onPress={() => {
+              setOrderStock(null);
+              setOrderSide('sell');
+            }}>
             <Icon type="ionicon" name="trending-down" size={16} color="#c0392b" />
             <Text style={styles.btnSellText}>{t.investment.sell}</Text>
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Bottom sheet chi tiết mã cổ phiếu */}
+      <Modal
+        visible={!!selectedStock}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setSelectedStock(null)}>
+        <Pressable style={styles.sheetOverlay} onPress={() => setSelectedStock(null)}>
+          <Pressable style={styles.sheet} onPress={e => e.stopPropagation()}>
+            <View style={styles.sheetHandle} />
+            {selectedStock && (
+              <>
+                <View style={styles.sheetHeader}>
+                  <View
+                    style={[styles.stockIcon, { backgroundColor: selectedStock.iconBg }]}>
+                    <Text
+                      style={[styles.stockTickerIcon, { color: selectedStock.iconColor }]}>
+                      {selectedStock.ticker.slice(0, 3)}
+                    </Text>
+                  </View>
+                  <View style={styles.sheetHeaderInfo}>
+                    <Text style={styles.sheetTicker}>{selectedStock.ticker}</Text>
+                    <Text style={styles.sheetName} numberOfLines={1}>
+                      {selectedStock.name}
+                    </Text>
+                  </View>
+                  <View
+                    style={[
+                      styles.changeBadge,
+                      {
+                        backgroundColor:
+                          selectedStock.trend === 'up' ? '#e8f8f0' : '#ffeaea',
+                      },
+                    ]}>
+                    <Text
+                      style={[
+                        styles.changeText,
+                        { color: selectedStock.trend === 'up' ? '#1a7a40' : '#c0392b' },
+                      ]}>
+                      {selectedStock.change > 0 ? '+' : ''}
+                      {selectedStock.change.toFixed(2)}%
+                    </Text>
+                  </View>
+                </View>
+
+                <Text style={styles.sheetPrice}>{money(selectedStock.price)}</Text>
+
+                <View style={styles.sheetSpark}>
+                  <SparkLine
+                    data={selectedStock.sparkData}
+                    color={selectedStock.trend === 'up' ? '#1a7a40' : '#c0392b'}
+                    width={SCREEN_WIDTH - 88}
+                    height={64}
+                  />
+                </View>
+
+                {selectedStock.vol ? (
+                  <Text style={styles.sheetVol}>
+                    {t.investment.volume}: {selectedStock.vol}
+                  </Text>
+                ) : null}
+
+                <View style={styles.ctaRow}>
+                  <TouchableOpacity
+                    style={styles.btnBuy}
+                    activeOpacity={0.85}
+                    onPress={() => placeOrder('buy')}>
+                    <Icon type="ionicon" name="trending-up" size={16} color="#fff" />
+                    <Text style={styles.btnBuyText}>{t.investment.buyNow}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.btnSell}
+                    activeOpacity={0.85}
+                    onPress={() => placeOrder('sell')}>
+                    <Icon type="ionicon" name="trending-down" size={16} color="#c0392b" />
+                    <Text style={styles.btnSellText}>{t.investment.sell}</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Xác nhận lệnh + toast */}
+      <AppDialog
+        visible={!!orderSide}
+        onDismiss={() => setOrderSide(null)}
+        icon={orderSide === 'sell' ? 'trending-down' : 'trending-up'}
+        tone={orderSide === 'sell' ? 'danger' : 'success'}
+        title={orderSide === 'sell' ? t.investment.sellTitle : t.investment.buyTitle}
+        description={`${orderStock ? orderStock.ticker + ' · ' : ''}${t.investment.orderDesc}`}
+        cancelText={t.common.cancel}
+        confirmText={t.common.confirm}
+        onConfirm={() => {
+          setOrderSide(null);
+          setOrderStock(null);
+          setOrderToast(true);
+        }}
+      />
+      <AppSnackbar
+        visible={orderToast}
+        onDismiss={() => setOrderToast(false)}
+        message={t.investment.orderSuccess}
+        tone="success"
+        duration={1800}
+      />
     </SafeAreaView>
   );
 };

@@ -1,7 +1,6 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import HomeScreen from '../container/Home';
-import BankScreen from '../container/BankScreen';
 
 const HomeStack = createStackNavigator();
 

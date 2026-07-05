@@ -103,7 +103,9 @@ const BankScreen = ({ navigation }: BankScreenProps) => {
             <Icon type="ionicon" name="arrow-back" size={20} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t.bank.title}</Text>
-          <TouchableOpacity style={styles.headerBtn}>
+          <TouchableOpacity
+            style={styles.headerBtn}
+            onPress={() => navigation.navigate('CardManagement' as never)}>
             <Icon type="ionicon" name="ellipsis-horizontal" size={20} color="#fff" />
           </TouchableOpacity>
         </View>
@@ -154,7 +156,15 @@ const BankScreen = ({ navigation }: BankScreenProps) => {
           style={styles.quickSendScroll}
           contentContainerStyle={styles.quickSendList}
           renderItem={({ item }) => (
-            <TouchableOpacity style={styles.contactItem}>
+            <TouchableOpacity
+              style={styles.contactItem}
+              onPress={() =>
+                // @ts-ignore
+                navigation.navigate('TransferMoney', {
+                  balance,
+                  contact: { name: item.name, avatar: item.avatar },
+                })
+              }>
               <Image style={styles.contactAvatar} source={{ uri: item.avatar }} />
               <Text style={styles.contactName}>{item.name}</Text>
             </TouchableOpacity>

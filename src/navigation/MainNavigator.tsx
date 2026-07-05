@@ -1,8 +1,6 @@
-import React, { Suspense } from 'react';
+import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import TabNavigator from './TabNavigator';
-import { Federated } from '@callstack/repack/client';
-import { View, ActivityIndicator } from 'react-native';
 
 const MainStack = createStackNavigator();
 
@@ -18,6 +16,10 @@ import ExpenseNavigator from './ExpenseNavigator';
 import AboutScreen from '../container/About';
 import WebViewScreen from '../container/WebView';
 import LoginScreen from '../container/Login';
+import SkillNavigator from './SkillNavigator';
+import EditProfileScreen from '../container/EditProfile';
+import SecurityScreen from '../container/Security';
+import TermsScreen from '../container/Terms';
 
 const MainNavigator = () => {
   const navigators = [
@@ -48,6 +50,22 @@ const MainNavigator = () => {
     {
       name: 'LoginScreen',
       component: LoginScreen,
+    },
+    {
+      name: 'SkillsScreen',
+      component: SkillNavigator,
+    },
+    {
+      name: 'EditProfileScreen',
+      component: EditProfileScreen,
+    },
+    {
+      name: 'SecurityScreen',
+      component: SecurityScreen,
+    },
+    {
+      name: 'TermsScreen',
+      component: TermsScreen,
     },
   ];
 

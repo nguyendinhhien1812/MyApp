@@ -91,13 +91,17 @@ const ProfileScreen = () => {
         </View>
         <View style={styles.nameBlock}>
           <Text style={styles.nameText}>Nguyễn Đình Hiến</Text>
-          <Text style={styles.emailText}>nguyenhien@gmail.com</Text>
+          <Text style={styles.roleText}>{t.profile.role}</Text>
+          <Text style={styles.emailText}>Kyonguyen00775@gmail.com</Text>
           <View style={styles.levelBadge}>
             <Icon type="ionicon" name="star" size={11} color={PRIMARY_DARK} />
             <Text style={styles.levelText}>{t.profile.level}: {t.profile.levelValue}</Text>
           </View>
+          <Text style={styles.memberText}>{t.profile.member} 02/2021</Text>
         </View>
-        <TouchableOpacity style={styles.editBtn}>
+        <TouchableOpacity
+          style={styles.editBtn}
+          onPress={() => (navigation as any).navigate('EditProfileScreen')}>
           <Icon type="ionicon" name="create-outline" size={18} color={PRIMARY_DARK} />
           <Text style={styles.editText}>{t.profile.editProfile}</Text>
         </TouchableOpacity>
@@ -111,12 +115,14 @@ const ProfileScreen = () => {
           label={t.profile.history}
           iconBg="#e8f0f8"
           iconColor="#1a4a7a"
+          onPress={() => navigation.navigate('Notification' as never)}
         />
         <ProfileRow
           icon="card-outline"
           label={t.profile.personalAccount}
           iconBg="#e8f8f0"
           iconColor="#1a7a40"
+          onPress={() => navigation.navigate('BankScreen' as never)}
           isLast
         />
       </View>
@@ -129,12 +135,14 @@ const ProfileScreen = () => {
           label={t.profile.security}
           iconBg="#fff4e8"
           iconColor={PRIMARY_DARK}
+          onPress={() => (navigation as any).navigate('SecurityScreen')}
         />
         <ProfileRow
           icon="document-text-outline"
           label={t.profile.terms}
           iconBg="#f5f0ff"
           iconColor="#6c3fc4"
+          onPress={() => (navigation as any).navigate('TermsScreen')}
           isLast
         />
       </View>
@@ -238,7 +246,9 @@ const styles = StyleSheet.create({
   },
   nameBlock: { flex: 1 },
   nameText: { fontSize: 16, fontWeight: '600', color: '#1a1a1a' },
+  roleText: { fontSize: 11, color: PRIMARY_DARK, fontWeight: '500', marginTop: 2 },
   emailText: { fontSize: 12, color: '#aaa', marginTop: 2 },
+  memberText: { fontSize: 10, color: '#bbb', marginTop: 5 },
   levelBadge: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -1,4 +1,4 @@
-import { Icon, useTheme } from '@rneui/themed';
+import { Icon } from '@rneui/themed';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 

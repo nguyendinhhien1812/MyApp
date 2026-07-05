@@ -15,7 +15,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Icon } from '@rneui/themed';
 import { FormTextInput, FormCheckbox } from '../../components/Form';
-import { AppButton } from '../../components/UI';
+import { AppButton, AppDialog } from '../../components/UI';
 import { useLanguage } from '../../context/LanguageContext';
 import type { Translations } from '../../i18n/translations';
 
@@ -47,6 +47,7 @@ interface Props {
 const LoginScreen = ({ navigation }: Props) => {
   const { t } = useLanguage();
   const [submitting, setSubmitting] = useState(false);
+  const [forgotVisible, setForgotVisible] = useState(false);
 
   const schema = useMemo(() => makeSchema(t), [t]);
   const { control, handleSubmit } = useForm<LoginForm>({
@@ -102,7 +103,7 @@ const LoginScreen = ({ navigation }: Props) => {
 
             <View style={styles.optionsRow}>
               <FormCheckbox control={control} name="remember" label={t.login.remember} />
-              <TouchableOpacity activeOpacity={0.7}>
+              <TouchableOpacity activeOpacity={0.7} onPress={() => setForgotVisible(true)}>
                 <Text style={styles.forgotText}>{t.login.forgot}</Text>
               </TouchableOpacity>
             </View>
@@ -121,6 +122,17 @@ const LoginScreen = ({ navigation }: Props) => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <AppDialog
+        visible={forgotVisible}
+        onDismiss={() => setForgotVisible(false)}
+        icon="help-circle-outline"
+        tone="info"
+        title={t.login.forgotTitle}
+        description={t.login.forgotDesc}
+        confirmText={t.login.forgotOk}
+        onConfirm={() => setForgotVisible(false)}
+      />
     </SafeAreaView>
   );
 };

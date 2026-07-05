@@ -6,12 +6,13 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
-  FlatList,
 } from 'react-native';
 import { Text, Icon, Avatar } from '@rneui/themed';
 import { useNavigation } from '@react-navigation/native';
+import { ProgressBar } from 'react-native-paper';
 import Chatbot from '../../components/Chatbot';
 import { useLanguage } from '../../context/LanguageContext';
+import { SKILLS, LEVEL_BADGE } from '../Skills/data';
 
 const PRIMARY = '#E89951';
 const PRIMARY_LIGHT = '#fdf3e7';
@@ -52,32 +53,8 @@ const listContact = [
   },
 ];
 
-const listSkills = [
-  {
-    id: 1,
-    name: 'ReactJS',
-    subtitle: 'Front-end framework',
-    imgIcon: 'https://i.pinimg.com/1200x/28/b0/d1/28b0d189571e22609f0e9378da7b09a4.jpg',
-  },
-  {
-    id: 2,
-    name: 'Python',
-    subtitle: 'Back-end / data',
-    imgIcon: 'https://i.pinimg.com/1200x/cd/d5/cf/cdd5cf427e1a17885f3c01d0b5ce60b7.jpg',
-  },
-  {
-    id: 3,
-    name: 'Java',
-    subtitle: 'Object-oriented',
-    imgIcon: 'https://i.pinimg.com/736x/7b/25/56/7b2556503cbd9035d51831afd44bf888.jpg',
-  },
-  {
-    id: 4,
-    name: 'Design',
-    subtitle: 'UI/UX',
-    imgIcon: 'https://i.pinimg.com/736x/ee/ea/c5/eeeac546cb55a9d9090299a8217c089e.jpg',
-  },
-];
+// Top 4 kỹ năng nổi bật từ CV — full list ở mini-app Kỹ năng (SkillsScreen)
+const topSkills = SKILLS.slice(0, 4);
 
 // quickActions labels are built inside component using t
 
@@ -98,6 +75,13 @@ const HomeScreen = () => {
     { id: 3, label: t.home.expense, icon: 'calculator',  screen: 'ExpenseScreen' },
   ];
 
+  const levelLabels = {
+    expert: t.skills.levelExpert,
+    proficient: t.skills.levelProficient,
+    good: t.skills.levelGood,
+    learning: t.skills.levelLearning,
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
@@ -117,7 +101,9 @@ const HomeScreen = () => {
               <Text style={styles.greeting}>{t.home.greeting} 👋</Text>
               <Text style={styles.username}>Nguyễn Đình Hiến</Text>
             </View>
-            <TouchableOpacity style={styles.bellBtn}>
+            <TouchableOpacity
+              style={styles.bellBtn}
+              onPress={() => navigation.navigate('Notification' as never)}>
               <Icon name="notifications-outline" type="ionicon" size={20} color="#2a1500" />
             </TouchableOpacity>
           </View>
@@ -145,7 +131,10 @@ const HomeScreen = () => {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <SectionTitle title={t.home.contact} />
-            <TouchableOpacity>
+            <TouchableOpacity
+              onPress={() =>
+                (navigation as any).navigate('BankScreen', { screen: 'AllContacts' })
+              }>
               <Text style={styles.seeAll}>{t.home.viewAll}</Text>
             </TouchableOpacity>
           </View>
@@ -176,23 +165,44 @@ const HomeScreen = () => {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <SectionTitle title={t.home.skills} />
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('SkillsScreen' as never)}>
               <Text style={styles.seeAll}>{t.home.viewAll}</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.card}>
-            {listSkills.map((item, index) => (
+            {topSkills.map((item, index) => (
               <TouchableOpacity
                 key={item.id}
                 style={[
                   styles.skillRow,
-                  index < listSkills.length - 1 && styles.skillRowBorder,
+                  index < topSkills.length - 1 && styles.skillRowBorder,
                 ]}
+                activeOpacity={0.7}
+                onPress={() =>
+                  (navigation as any).navigate('SkillsScreen', {
+                    screen: 'SkillDetail',
+                    params: { skillId: item.id },
+                  })
+                }
               >
-                <Image source={{ uri: item.imgIcon }} style={styles.skillIcon} />
+                <View style={[styles.skillIconWrap, { backgroundColor: item.iconBg }]}>
+                  <Icon name={item.icon} type="ionicon" size={20} color={item.iconColor} />
+                </View>
                 <View style={styles.skillInfo}>
-                  <Text style={styles.skillName}>{item.name}</Text>
-                  <Text style={styles.skillSub}>{item.subtitle}</Text>
+                  <View style={styles.skillTopRow}>
+                    <Text style={styles.skillName}>{item.name}</Text>
+                    <View style={[styles.skillBadge, { backgroundColor: LEVEL_BADGE[item.level].bg }]}>
+                      <Text style={[styles.skillBadgeText, { color: LEVEL_BADGE[item.level].color }]}>
+                        {levelLabels[item.level]}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text style={styles.skillSub}>{item.keywords}</Text>
+                  <ProgressBar
+                    progress={item.percent / 100}
+                    color={PRIMARY}
+                    style={styles.skillProgress}
+                  />
                 </View>
                 <Icon name="chevron-forward" type="ionicon" size={16} color="#bbb" />
               </TouchableOpacity>
@@ -388,22 +398,45 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0.5,
     borderBottomColor: '#f0f0f0',
   },
-  skillIcon: {
+  skillIconWrap: {
     width: 42,
     height: 42,
     borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   skillInfo: {
     flex: 1,
+  },
+  skillTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
   },
   skillName: {
     fontSize: 13,
     fontWeight: '500',
     color: '#1a1a1a',
+    flexShrink: 1,
+  },
+  skillBadge: {
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  skillBadgeText: {
+    fontSize: 10,
+    fontWeight: '500',
   },
   skillSub: {
     fontSize: 11,
     color: '#999',
     marginTop: 2,
+  },
+  skillProgress: {
+    height: 4,
+    borderRadius: 2,
+    marginTop: 5,
   },
 });

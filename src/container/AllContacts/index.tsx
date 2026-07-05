@@ -11,6 +11,8 @@ import {
   ScrollView,
 } from 'react-native';
 import { Icon } from '@rneui/themed';
+import { AppSnackbar } from '../../components/UI';
+import { useLanguage } from '../../context/LanguageContext';
 
 const PRIMARY = '#E89951';
 const PRIMARY_DARK = '#b36a1a';
@@ -52,7 +54,9 @@ interface Props {
 }
 
 const AllContactsScreen = ({ navigation }: Props) => {
+  const { t } = useLanguage();
   const [search, setSearch] = useState('');
+  const [toast, setToast] = useState('');
 
   const filtered = ALL_CONTACTS.filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -66,8 +70,10 @@ const AllContactsScreen = ({ navigation }: Props) => {
         <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.goBack()}>
           <Icon type="ionicon" name="arrow-back" size={18} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Gửi nhanh</Text>
-        <TouchableOpacity style={styles.headerBtn}>
+        <Text style={styles.headerTitle}>{t.contacts.title}</Text>
+        <TouchableOpacity
+          style={styles.headerBtn}
+          onPress={() => setToast(t.common.demoFeature)}>
           <Icon type="ionicon" name="person-add-outline" size={18} color="#fff" />
         </TouchableOpacity>
       </View>
@@ -77,7 +83,7 @@ const AllContactsScreen = ({ navigation }: Props) => {
         <Icon type="ionicon" name="search-outline" size={16} color="#aaa" />
         <TextInput
           style={styles.searchInput}
-          placeholder="Tên, số tài khoản..."
+          placeholder={t.contacts.searchPlaceholder}
           placeholderTextColor="#ccc"
           value={search}
           onChangeText={setSearch}
@@ -98,13 +104,20 @@ const AllContactsScreen = ({ navigation }: Props) => {
           search.length === 0 ? (
             <View>
               {/* Recent */}
-              <Text style={styles.sectionTitle}>GẦN ĐÂY NHẤT</Text>
+              <Text style={styles.sectionTitle}>{t.contacts.recent}</Text>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.recentList}>
                 {RECENT.map(item => (
-                  <TouchableOpacity key={item.id} style={styles.recentItem}>
+                  <TouchableOpacity
+                    key={item.id}
+                    style={styles.recentItem}
+                    onPress={() =>
+                      navigation.navigate('TransferMoney', {
+                        contact: { name: item.name, avatar: item.avatar },
+                      })
+                    }>
                     <View style={styles.recentAvatarWrap}>
                       <Image source={{ uri: item.avatar }} style={styles.recentAvatar} />
                     </View>
@@ -113,16 +126,18 @@ const AllContactsScreen = ({ navigation }: Props) => {
                   </TouchableOpacity>
                 ))}
                 {/* Add new */}
-                <TouchableOpacity style={styles.recentItem}>
+                <TouchableOpacity
+                  style={styles.recentItem}
+                  onPress={() => setToast(t.common.demoFeature)}>
                   <View style={styles.addAvatarBtn}>
                     <Icon type="ionicon" name="add" size={18} color={PRIMARY} />
                   </View>
-                  <Text style={[styles.recentName, { color: PRIMARY }]}>Thêm</Text>
+                  <Text style={[styles.recentName, { color: PRIMARY }]}>{t.contacts.add}</Text>
                   <Text style={styles.recentAmount}> </Text>
                 </TouchableOpacity>
               </ScrollView>
 
-              <Text style={[styles.sectionTitle, { marginTop: 8 }]}>TẤT CẢ LIÊN LẠC</Text>
+              <Text style={[styles.sectionTitle, { marginTop: 8 }]}>{t.contacts.all}</Text>
             </View>
           ) : null
         }
@@ -141,8 +156,14 @@ const AllContactsScreen = ({ navigation }: Props) => {
             </View>
             <View style={styles.contactRight}>
               <Text style={styles.contactAmount}>-{money(item.lastAmount)}</Text>
-              <TouchableOpacity style={styles.sendAgainBtn}>
-                <Text style={styles.sendAgainText}>Gửi lại</Text>
+              <TouchableOpacity
+                style={styles.sendAgainBtn}
+                onPress={() =>
+                  navigation.navigate('TransferMoney', {
+                    contact: { name: item.name, bank: item.bank, avatar: item.avatar },
+                  })
+                }>
+                <Text style={styles.sendAgainText}>{t.contacts.sendAgain}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -150,9 +171,17 @@ const AllContactsScreen = ({ navigation }: Props) => {
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Icon type="ionicon" name="search-outline" size={32} color="#ddd" />
-            <Text style={styles.emptyText}>Không tìm thấy liên lạc</Text>
+            <Text style={styles.emptyText}>{t.contacts.empty}</Text>
           </View>
         }
+      />
+
+      <AppSnackbar
+        visible={!!toast}
+        onDismiss={() => setToast('')}
+        message={toast}
+        tone="default"
+        duration={1800}
       />
     </SafeAreaView>
   );

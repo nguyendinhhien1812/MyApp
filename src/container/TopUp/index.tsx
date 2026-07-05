@@ -9,6 +9,8 @@ import {
   Dimensions,
 } from 'react-native';
 import { Icon } from '@rneui/themed';
+import { AppDialog, AppSnackbar } from '../../components/UI';
+import { useLanguage } from '../../context/LanguageContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PRIMARY = '#E89951';
@@ -45,8 +47,11 @@ interface Props {
 }
 
 const TopUpScreen = ({ navigation }: Props) => {
+  const { t } = useLanguage();
   const [selectedCarrier, setSelectedCarrier] = useState('viettel');
   const [selectedAmount, setSelectedAmount] = useState(50000);
+  const [confirmVisible, setConfirmVisible] = useState(false);
+  const [successVisible, setSuccessVisible] = useState(false);
 
   const currentCarrier = CARRIERS.find(c => c.id === selectedCarrier) ?? CARRIERS[0];
 
@@ -156,11 +161,40 @@ const TopUpScreen = ({ navigation }: Props) => {
 
       {/* CTA */}
       <View style={styles.bottom}>
-        <TouchableOpacity style={styles.ctaBtn} activeOpacity={0.85}>
+        <TouchableOpacity
+          style={styles.ctaBtn}
+          activeOpacity={0.85}
+          onPress={() => setConfirmVisible(true)}>
           <Icon type="ionicon" name="phone-portrait-outline" size={18} color="#fff" />
           <Text style={styles.ctaText}>Nạp ngay {money(selectedAmount)}</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Xác nhận + thông báo thành công */}
+      <AppDialog
+        visible={confirmVisible}
+        onDismiss={() => setConfirmVisible(false)}
+        icon="phone-portrait-outline"
+        tone="primary"
+        title={t.bank.topUpConfirmTitle}
+        description={`${currentCarrier.name} · ${money(selectedAmount)}. ${t.bank.topUpConfirmDesc}`}
+        cancelText={t.common.cancel}
+        confirmText={t.common.confirm}
+        onConfirm={() => {
+          setConfirmVisible(false);
+          setSuccessVisible(true);
+        }}
+      />
+      <AppSnackbar
+        visible={successVisible}
+        onDismiss={() => {
+          setSuccessVisible(false);
+          navigation.goBack();
+        }}
+        message={t.bank.topUpSuccess}
+        tone="success"
+        duration={1600}
+      />
     </SafeAreaView>
   );
 };

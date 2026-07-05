@@ -8,11 +8,11 @@ import {
   ScrollView,
 } from 'react-native';
 import { Icon } from '@rneui/themed';
+import { AppDialog, AppSnackbar } from '../../components/UI';
+import { useLanguage } from '../../context/LanguageContext';
 
 const PRIMARY = '#E89951';
-const PRIMARY_DARK = '#b36a1a';
 const PRIMARY_LIGHT = '#fdf3e7';
-const PRIMARY_BORDER = '#f0c48a';
 
 interface ToggleProps {
   value: boolean;
@@ -33,9 +33,15 @@ interface Props {
 }
 
 const CardManagementScreen = ({ navigation }: Props) => {
+  const { t } = useLanguage();
   const [onlinePayment, setOnlinePayment] = useState(true);
   const [intlPayment, setIntlPayment] = useState(false);
   const [notification, setNotification] = useState(true);
+  const [locked, setLocked] = useState(false);
+  const [showNumber, setShowNumber] = useState(false);
+  const [lockDialog, setLockDialog] = useState(false);
+  const [cancelDialog, setCancelDialog] = useState(false);
+  const [toast, setToast] = useState('');
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -45,7 +51,9 @@ const CardManagementScreen = ({ navigation }: Props) => {
           <Icon type="ionicon" name="arrow-back" size={18} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Thẻ của tôi</Text>
-        <TouchableOpacity style={styles.headerBtn}>
+        <TouchableOpacity
+          style={styles.headerBtn}
+          onPress={() => setToast(t.common.demoFeature)}>
           <Icon type="ionicon" name="add-outline" size={20} color="#fff" />
         </TouchableOpacity>
       </View>
@@ -59,7 +67,9 @@ const CardManagementScreen = ({ navigation }: Props) => {
           <View style={styles.decoCircle1} />
           <View style={styles.decoCircle2} />
           <View style={styles.chip} />
-          <Text style={styles.cardNumber}>••••  ••••  ••••  8842</Text>
+          <Text style={styles.cardNumber}>
+            {showNumber ? '4532  8721  9034  8842' : '••••  ••••  ••••  8842'}
+          </Text>
           <View style={styles.cardBottom}>
             <View>
               <Text style={styles.cardFieldLabel}>CHỦ THẺ</Text>
@@ -77,8 +87,10 @@ const CardManagementScreen = ({ navigation }: Props) => {
         <View style={styles.card}>
           {/* Status */}
           <View style={styles.statusRow}>
-            <View style={styles.statusDot} />
-            <Text style={styles.statusText}>Đang hoạt động</Text>
+            <View style={[styles.statusDot, locked && styles.statusDotLocked]} />
+            <Text style={styles.statusText}>
+              {locked ? t.card.lockedStatus : t.card.activeStatus}
+            </Text>
             <View style={styles.statusBadge}>
               <Text style={styles.statusBadgeText}>Visa Debit</Text>
             </View>
@@ -86,25 +98,52 @@ const CardManagementScreen = ({ navigation }: Props) => {
           <View style={styles.divider} />
           {/* 4 actions */}
           <View style={styles.actionsRow}>
-            <TouchableOpacity style={styles.actionItem}>
+            <TouchableOpacity
+              style={styles.actionItem}
+              onPress={() => {
+                if (locked) {
+                  setLocked(false);
+                  setToast(t.card.unlockedToast);
+                } else {
+                  setLockDialog(true);
+                }
+              }}>
               <View style={[styles.actionIcon, { backgroundColor: '#fee2e2' }]}>
-                <Icon type="ionicon" name="lock-closed-outline" size={16} color="#dc2626" />
+                <Icon
+                  type="ionicon"
+                  name={locked ? 'lock-open-outline' : 'lock-closed-outline'}
+                  size={16}
+                  color="#dc2626"
+                />
               </View>
-              <Text style={styles.actionLabel}>Khóa thẻ</Text>
+              <Text style={styles.actionLabel}>
+                {locked ? t.card.unlockAction : t.card.lockAction}
+              </Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionItem}>
+            <TouchableOpacity
+              style={styles.actionItem}
+              onPress={() => setShowNumber(v => !v)}>
               <View style={[styles.actionIcon, { backgroundColor: '#dbeafe' }]}>
-                <Icon type="ionicon" name="eye-outline" size={16} color="#2563eb" />
+                <Icon
+                  type="ionicon"
+                  name={showNumber ? 'eye-off-outline' : 'eye-outline'}
+                  size={16}
+                  color="#2563eb"
+                />
               </View>
               <Text style={styles.actionLabel}>Số thẻ</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionItem}>
+            <TouchableOpacity
+              style={styles.actionItem}
+              onPress={() => setToast(t.common.demoFeature)}>
               <View style={[styles.actionIcon, { backgroundColor: '#f3e8ff' }]}>
                 <Icon type="ionicon" name="document-text-outline" size={16} color="#7c3aed" />
               </View>
               <Text style={styles.actionLabel}>Sao kê</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionItem}>
+            <TouchableOpacity
+              style={styles.actionItem}
+              onPress={() => setToast(t.common.demoFeature)}>
               <View style={[styles.actionIcon, { backgroundColor: PRIMARY_LIGHT }]}>
                 <Icon type="ionicon" name="settings-outline" size={16} color={PRIMARY} />
               </View>
@@ -156,12 +195,50 @@ const CardManagementScreen = ({ navigation }: Props) => {
         </View>
 
         {/* Danger zone */}
-        <TouchableOpacity style={styles.dangerBtn}>
+        <TouchableOpacity style={styles.dangerBtn} onPress={() => setCancelDialog(true)}>
           <Icon type="ionicon" name="trash-outline" size={16} color="#dc2626" />
           <Text style={styles.dangerText}>Hủy thẻ</Text>
         </TouchableOpacity>
 
       </ScrollView>
+
+      {/* Dialogs + toast */}
+      <AppDialog
+        visible={lockDialog}
+        onDismiss={() => setLockDialog(false)}
+        icon="lock-closed-outline"
+        tone="danger"
+        title={t.card.lockTitle}
+        description={t.card.lockDesc}
+        cancelText={t.common.cancel}
+        confirmText={t.card.lockAction}
+        onConfirm={() => {
+          setLockDialog(false);
+          setLocked(true);
+          setToast(t.card.lockedToast);
+        }}
+      />
+      <AppDialog
+        visible={cancelDialog}
+        onDismiss={() => setCancelDialog(false)}
+        icon="trash-outline"
+        tone="danger"
+        title={t.card.cancelTitle}
+        description={t.card.cancelDesc}
+        cancelText={t.common.cancel}
+        confirmText={t.common.confirm}
+        onConfirm={() => {
+          setCancelDialog(false);
+          setToast(t.common.demoFeature);
+        }}
+      />
+      <AppSnackbar
+        visible={!!toast}
+        onDismiss={() => setToast('')}
+        message={toast}
+        tone="default"
+        duration={1800}
+      />
     </SafeAreaView>
   );
 };
@@ -252,6 +329,7 @@ const styles = StyleSheet.create({
     padding: 14,
   },
   statusDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#22c55e' },
+  statusDotLocked: { backgroundColor: '#dc2626' },
   statusText: { flex: 1, fontSize: 14, color: '#1a1a1a', fontWeight: '500' },
   statusBadge: {
     backgroundColor: '#F5F5F5',

@@ -177,6 +177,8 @@ const AboutScreen = ({ navigation }: Props) => {
           <FeatureRow text={t.about.feat3} />
           <FeatureRow text={t.about.feat4} />
           <FeatureRow text={t.about.feat5} />
+          <FeatureRow text={t.about.feat6} />
+          <FeatureRow text={t.about.feat7} />
         </View>
 
         {/* ── Source code CTA ── */}

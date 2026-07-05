@@ -89,7 +89,7 @@ const TRANSACTIONS: TxItem[] = [
 ];
 
 // Filter id → categoryId mapping (index-based, i18n-safe)
-const FILTER_IDS = ['', 'food', 'shopping', 'fun'];
+const FILTER_IDS = ['', 'food', 'shopping', 'fun', 'transport', 'utility', 'other'];
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 const SectionTitle = ({ title }: { title: string }) => (
@@ -104,6 +104,7 @@ interface Props { navigation: any; }
 
 const ExpenseScreen = ({ navigation }: Props) => {
   const { t } = useLanguage();
+  const scrollRef = React.useRef<ScrollView>(null);
   const [activeFilter, setActiveFilter] = useState(0);
   const [addModal, setAddModal]         = useState(false);
   const [addAmount, setAddAmount]       = useState('');
@@ -115,6 +116,9 @@ const ExpenseScreen = ({ navigation }: Props) => {
     t.expense.filterFood,
     t.expense.filterShop,
     t.expense.filterFun,
+    t.expense.catTransport,
+    t.expense.catUtility,
+    t.expense.catOther,
   ];
 
   // Index-based filter — never compare to label string
@@ -140,12 +144,17 @@ const ExpenseScreen = ({ navigation }: Props) => {
           <Icon type="ionicon" name="arrow-back" size={18} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t.expense.title}</Text>
-        <TouchableOpacity style={styles.headerBtn}>
+        <TouchableOpacity
+          style={styles.headerBtn}
+          onPress={() => navigation.navigate('ExpenseStats' as never)}>
           <Icon type="ionicon" name="options-outline" size={18} color="#fff" />
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+      <ScrollView
+        ref={scrollRef}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scroll}>
 
         {/* ── Hero card ── */}
         <View style={styles.heroCard}>
@@ -176,7 +185,12 @@ const ExpenseScreen = ({ navigation }: Props) => {
               <Text style={styles.quickLabel}>{t.expense.stats}</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.quickBtn}>
+            <TouchableOpacity
+              style={styles.quickBtn}
+              onPress={() => {
+                setActiveFilter(0);
+                scrollRef.current?.scrollToEnd({ animated: true });
+              }}>
               <View style={styles.quickIconWrap}>
                 <Icon type="ionicon" name="time-outline" size={20} color={PRIMARY_DARK} />
               </View>
@@ -190,7 +204,16 @@ const ExpenseScreen = ({ navigation }: Props) => {
         <View style={styles.card}>
           <View style={styles.catGrid}>
             {CATEGORIES.map(cat => (
-              <TouchableOpacity key={cat.id} style={styles.catItem} activeOpacity={0.7}>
+              <TouchableOpacity
+                key={cat.id}
+                style={styles.catItem}
+                activeOpacity={0.7}
+                onPress={() => {
+                  // Lọc giao dịch theo danh mục — danh mục chưa có filter riêng thì về Tất cả
+                  const idx = FILTER_IDS.indexOf(cat.id);
+                  setActiveFilter(idx > 0 ? idx : 0);
+                  scrollRef.current?.scrollToEnd({ animated: true });
+                }}>
                 <View style={[styles.catIconWrap, { backgroundColor: cat.iconBg }]}>
                   <Icon type="ionicon" name={cat.icon} size={22} color={cat.iconColor} />
                 </View>
@@ -203,7 +226,11 @@ const ExpenseScreen = ({ navigation }: Props) => {
         {/* ── Recent transactions ── */}
         <View style={styles.sectionHeader}>
           <SectionTitle title={t.expense.recentTx} />
-          <TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              setActiveFilter(0);
+              scrollRef.current?.scrollToEnd({ animated: true });
+            }}>
             <Text style={styles.viewAll}>{t.expense.viewAll}</Text>
           </TouchableOpacity>
         </View>

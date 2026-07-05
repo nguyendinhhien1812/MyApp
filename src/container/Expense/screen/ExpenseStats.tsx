@@ -16,7 +16,6 @@ import { useLanguage } from '../../../context/LanguageContext';
 // ─── Brand colors ─────────────────────────────────────────────────────────────
 const PRIMARY        = '#E89951';
 const PRIMARY_DARK   = '#b36a1a';
-const PRIMARY_LIGHT  = '#fdf3e7';
 const PRIMARY_BORDER = '#f0c48a';
 const COLOR_DANGER   = '#c0392b';
 const COLOR_SUCCESS  = '#1a7a40';

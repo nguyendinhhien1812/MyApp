@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -10,10 +10,10 @@ import {
 } from 'react-native';
 import { Icon } from '@rneui/themed';
 import { StackScreenProps } from '@react-navigation/stack';
+import { AppDialog, AppSnackbar } from '../../../components/UI';
+import { useLanguage } from '../../../context/LanguageContext';
 
 const PRIMARY = '#E89951';
-const PRIMARY_DARK = '#b36a1a';
-const PRIMARY_LIGHT = '#fdf3e7';
 const PRIMARY_BORDER = '#f0c48a';
 
 const RECIPIENT = {
@@ -35,7 +35,12 @@ const money = (n: number) =>
 interface Props extends StackScreenProps<any> {}
 
 const TransferMoney = ({ navigation, route }: Props) => {
+  const { t } = useLanguage();
   const balance = (route.params as any)?.balance ?? 1000000000;
+  // Người nhận truyền từ Gửi nhanh / Gửi lại — mặc định RECIPIENT demo
+  const recipient = { ...RECIPIENT, ...((route.params as any)?.contact ?? {}) };
+  const [confirmVisible, setConfirmVisible] = useState(false);
+  const [successVisible, setSuccessVisible] = useState(false);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -56,11 +61,11 @@ const TransferMoney = ({ navigation, route }: Props) => {
         <View style={styles.card}>
           <Text style={styles.sectionLabel}>NGƯỜI NHẬN</Text>
           <View style={styles.recipientRow}>
-            <Image source={{ uri: RECIPIENT.avatar }} style={styles.avatar} />
+            <Image source={{ uri: recipient.avatar }} style={styles.avatar} />
             <View style={styles.recipientInfo}>
-              <Text style={styles.recipientName}>{RECIPIENT.name}</Text>
+              <Text style={styles.recipientName}>{recipient.name}</Text>
               <Text style={styles.recipientBank}>
-                {RECIPIENT.bank} · {RECIPIENT.accountMasked}
+                {recipient.bank} · {recipient.accountMasked}
               </Text>
             </View>
             <View style={styles.verifiedBadge}>
@@ -118,11 +123,40 @@ const TransferMoney = ({ navigation, route }: Props) => {
           <Icon type="ionicon" name="lock-closed-outline" size={13} color="#aaa" />
           <Text style={styles.securityTextSmall}>Bảo mật bởi Face ID</Text>
         </View>
-        <TouchableOpacity style={styles.confirmBtn} activeOpacity={0.85}>
+        <TouchableOpacity
+          style={styles.confirmBtn}
+          activeOpacity={0.85}
+          onPress={() => setConfirmVisible(true)}>
           <Icon type="ionicon" name="happy-outline" size={20} color="#fff" />
           <Text style={styles.confirmText}>Xác nhận bằng Face ID</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Xác nhận + thông báo thành công */}
+      <AppDialog
+        visible={confirmVisible}
+        onDismiss={() => setConfirmVisible(false)}
+        icon="swap-horizontal"
+        tone="primary"
+        title={t.bank.transferConfirmTitle}
+        description={`${money(AMOUNT)} → ${recipient.name}. ${t.bank.transferConfirmDesc}`}
+        cancelText={t.common.cancel}
+        confirmText={t.common.confirm}
+        onConfirm={() => {
+          setConfirmVisible(false);
+          setSuccessVisible(true);
+        }}
+      />
+      <AppSnackbar
+        visible={successVisible}
+        onDismiss={() => {
+          setSuccessVisible(false);
+          navigation.goBack();
+        }}
+        message={t.bank.transferSuccess}
+        tone="success"
+        duration={1600}
+      />
     </SafeAreaView>
   );
 };

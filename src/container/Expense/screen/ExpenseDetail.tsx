@@ -10,13 +10,13 @@ import {
   TextInput,
 } from 'react-native';
 import { Icon } from '@rneui/themed';
+import { AppSnackbar } from '../../../components/UI';
 import { useLanguage } from '../../../context/LanguageContext';
 
 // ─── Brand colors ─────────────────────────────────────────────────────────────
 const PRIMARY        = '#E89951';
 const PRIMARY_DARK   = '#b36a1a';
 const PRIMARY_LIGHT  = '#fdf3e7';
-const PRIMARY_BORDER = '#f0c48a';
 const COLOR_DANGER   = '#c0392b';
 const COLOR_SUCCESS  = '#1a7a40';
 
@@ -25,6 +25,7 @@ type TxItem = {
   id: number;
   name: string;
   category: string;
+  categoryId: string;
   icon: string;
   iconBg: string;
   iconColor: string;
@@ -82,6 +83,7 @@ const ExpenseDetail = ({ navigation, route }: Props) => {
   const { t } = useLanguage();
   const item = (route.params as any)?.item as TxItem | undefined;
   const [note, setNote] = useState('');
+  const [toast, setToast] = useState('');
 
   if (!item) {
     return (
@@ -172,7 +174,10 @@ const ExpenseDetail = ({ navigation, route }: Props) => {
 
         {/* ── Receipt row ── */}
         <Text style={styles.sectionLabel}>{t.expense.receipt}</Text>
-        <TouchableOpacity style={styles.receiptCard} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={styles.receiptCard}
+          activeOpacity={0.7}
+          onPress={() => setToast(t.common.demoFeature)}>
           <View style={styles.receiptIcon}>
             <Icon type="ionicon" name="cloud-upload-outline" size={24} color={PRIMARY_DARK} />
           </View>
@@ -192,12 +197,22 @@ const ExpenseDetail = ({ navigation, route }: Props) => {
           <Icon type="ionicon" name="lock-closed-outline" size={11} color="#ccc" />
           <Text style={styles.sslText}>{t.expense.ssl}</Text>
         </View>
-        <TouchableOpacity style={styles.primaryBtn} activeOpacity={0.85}>
+        <TouchableOpacity
+          style={styles.primaryBtn}
+          activeOpacity={0.85}
+          onPress={() => setToast(t.expense.noteSaved)}>
           <Icon type="ionicon" name="checkmark-circle-outline" size={18} color="#fff" />
           <Text style={styles.primaryBtnText}>{t.expense.saveNote}</Text>
         </TouchableOpacity>
       </View>
 
+      <AppSnackbar
+        visible={!!toast}
+        onDismiss={() => setToast('')}
+        message={toast}
+        tone={toast === t.expense.noteSaved ? 'success' : 'default'}
+        duration={1800}
+      />
     </SafeAreaView>
   );
 };

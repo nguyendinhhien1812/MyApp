@@ -5,15 +5,12 @@ import SettingScreen from '../container/SettingScreen';
 import ProfileScreen from '../container/ProfileScreen';
 import Icon from '../components/Icon';
 import { ICON_TYPE } from '../components/Icon/style';
-import { useTheme } from '@rneui/themed';
 import HomeNavigator from './HomeNavigator';
-import { HomeScreen } from '../container';
 import { useLanguage } from '../context/LanguageContext';
 
 const Tabs = createBottomTabNavigator();
 
 const TabNavigator = () => {
-  const colors = useTheme().theme.colors;
   const { t } = useLanguage();
 
   return (
