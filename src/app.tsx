@@ -2,7 +2,9 @@ import React from 'react';
 import { LogBox } from 'react-native';
 import AppNavigator from './navigation/AppNavigator';
 import { ThemeProvider, createTheme } from '@rneui/themed';
+import { PaperProvider } from 'react-native-paper';
 import { COLORS_DARK, COLORS_LIGHT } from './theme/ColorScheme';
+import { paperTheme } from './theme/paperTheme';
 import { LanguageProvider } from './context/LanguageContext';
 
 LogBox.ignoreLogs(['Warning: ...']); // Ignore log notification by message
@@ -17,7 +19,9 @@ export default function App() {
   return (
     <LanguageProvider>
       <ThemeProvider theme={theme}>
-        <AppNavigator />
+        <PaperProvider theme={paperTheme}>
+          <AppNavigator />
+        </PaperProvider>
       </ThemeProvider>
     </LanguageProvider>
   );

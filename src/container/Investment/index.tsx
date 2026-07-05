@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,18 +7,28 @@ import {
   TouchableOpacity,
   ScrollView,
   Dimensions,
+  Animated,
 } from 'react-native';
 import { Icon } from '@rneui/themed';
 import Svg, { Polyline } from 'react-native-svg';
 import { useLanguage } from '../../context/LanguageContext';
 
-const PRIMARY = '#E89951';
+const PRIMARY      = '#E89951';
 const PRIMARY_DARK = '#b36a1a';
 const PRIMARY_LIGHT = '#fdf3e7';
 const PRIMARY_BORDER = '#f0c48a';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
+// ─── API URLs ────────────────────────────────────────────────────────────────
+
+const RATES_API =
+  'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.min.json';
+
+// Works from React Native native app (no CORS); may be blocked in browser/sandbox
+const STOCK_API =
+  'https://apipubaws.tcbs.com.vn/stock-insight/v1/stock/ticker-list?tickers=VNM,VIC,FPT,VCB,TCB,HPG,MBB,BID,CTG,ACB';
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const money = (n: number) =>
   new Intl.NumberFormat('vi-VN', {
@@ -29,77 +39,24 @@ const money = (n: number) =>
 
 const shortMoney = (n: number) => {
   if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}tỷ`;
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}tr`;
+  if (n >= 1_000_000)     return `${(n / 1_000_000).toFixed(1)}tr`;
   return `${(n / 1_000).toFixed(0)}k`;
 };
 
-// ─── Sparkline component ────────────────────────────────────────────────────
-
-interface SparkProps {
-  data: number[];
-  color: string;
-  width?: number;
-  height?: number;
-}
-
-const SparkLine = ({ data, color, width = 52, height = 28 }: SparkProps) => {
-  const n = data.length;
-  if (n < 2) return null;
-  const max = Math.max(...data);
-  const min = Math.min(...data);
-  const range = max - min || 1;
-  const pts = data
-    .map((v, i) => {
-      const x = ((i / (n - 1)) * width).toFixed(1);
-      const y = (height - ((v - min) / range) * (height - 4) - 2).toFixed(1);
-      return `${x},${y}`;
-    })
-    .join(' ');
-  return (
-    <Svg width={width} height={height}>
-      <Polyline
-        points={pts}
-        fill="none"
-        stroke={color}
-        strokeWidth={1.5}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
+/** Deterministic sparkline shaped by trend direction */
+const makeSparkData = (ticker: string, trend: 'up' | 'down'): number[] => {
+  const hash = ticker.split('').reduce((s, c, i) => s + c.charCodeAt(0) * (i + 3), 0);
+  return Array.from({ length: 7 }, (_, i) => {
+    const noise = ((hash * (i + 7) * 13) % 10) - 5;
+    const trendOff = trend === 'up' ? i * 3 : -i * 3;
+    return Math.max(4, 22 + noise + trendOff);
+  });
 };
 
-// Portfolio-sized sparkline
-const PortfolioSparkLine = ({ data }: { data: number[] }) => {
-  const w = SCREEN_WIDTH - 32 - 32; // screen - margin - padding
-  const h = 52;
-  const n = data.length;
-  if (n < 2) return null;
-  const max = Math.max(...data);
-  const min = Math.min(...data);
-  const range = max - min || 1;
-  const pts = data
-    .map((v, i) => {
-      const x = ((i / (n - 1)) * w).toFixed(1);
-      const y = (h - ((v - min) / range) * (h - 6) - 3).toFixed(1);
-      return `${x},${y}`;
-    })
-    .join(' ');
-  return (
-    <Svg width={w} height={h}>
-      <Polyline
-        points={pts}
-        fill="none"
-        stroke={PRIMARY}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-};
+const fmtTime = () =>
+  new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 
-// ─── Data ───────────────────────────────────────────────────────────────────
+// ─── Types ───────────────────────────────────────────────────────────────────
 
 const MARKET_TABS = ['HOSE', 'HNX', 'Vàng', 'Quỹ'] as const;
 type MarketTab = typeof MARKET_TABS[number];
@@ -117,36 +74,67 @@ type StockItem = {
   iconColor: string;
 };
 
+interface RateData {
+  usdVnd: number;
+  eurVnd: number;
+  goldPerGram: number;
+  updatedAt: string;
+}
+
+// ─── Ticker metadata ──────────────────────────────────────────────────────────
+
+const TICKER_NAMES: Record<string, string> = {
+  VNM: 'Vinamilk', VIC: 'Vingroup', FPT: 'FPT Corp',
+  VCB: 'Vietcombank', TCB: 'Techcombank', HPG: 'Hoà Phát',
+  MBB: 'MB Bank', BID: 'BIDV', CTG: 'VietinBank', ACB: 'ACB Bank',
+};
+
+const TICKER_CONFIG: Record<string, { bg: string; fg: string }> = {
+  VCB: { bg: '#e8f0f8', fg: '#1a4a7a' },
+  FPT: { bg: '#fff4e8', fg: PRIMARY_DARK },
+  HPG: { bg: '#e8f8f0', fg: '#1a7a40' },
+  VIC: { bg: '#f5f0ff', fg: '#6c3fc4' },
+  MBB: { bg: '#e8f0f8', fg: '#1a4a7a' },
+  TCB: { bg: '#ffeaea', fg: '#c0392b' },
+  BID: { bg: '#e8f8f0', fg: '#1a7a40' },
+  CTG: { bg: '#fff4e8', fg: PRIMARY_DARK },
+  ACB: { bg: '#e8f0f8', fg: '#1a4a7a' },
+  VNM: { bg: '#e8f8f0', fg: '#1a7a40' },
+  MWG: { bg: PRIMARY_LIGHT, fg: PRIMARY },
+};
+
+// ─── Static mock data (fallback) ──────────────────────────────────────────────
+
 const STOCKS: Record<MarketTab, StockItem[]> = {
   HOSE: [
     {
       id: 'VCB', ticker: 'VCB', name: 'Vietcombank', vol: '4.2M',
       price: 89500, change: 1.24, trend: 'up',
-      sparkData: [20, 26, 30, 36, 32, 40, 44],
+      sparkData: makeSparkData('VCB', 'up'),
       iconBg: '#e8f0f8', iconColor: '#1a4a7a',
     },
     {
       id: 'FPT', ticker: 'FPT', name: 'FPT Corp', vol: '2.8M',
       price: 125200, change: -0.87, trend: 'down',
-      sparkData: [44, 40, 34, 36, 28, 32, 26],
+      sparkData: makeSparkData('FPT', 'down'),
       iconBg: '#fff4e8', iconColor: PRIMARY_DARK,
     },
     {
       id: 'HPG', ticker: 'HPG', name: 'Hoà Phát', vol: '9.1M',
       price: 27800, change: 2.58, trend: 'up',
-      sparkData: [18, 22, 26, 30, 28, 36, 40],
+      sparkData: makeSparkData('HPG', 'up'),
       iconBg: '#e8f8f0', iconColor: '#1a7a40',
     },
     {
       id: 'VIC', ticker: 'VIC', name: 'Vingroup', vol: '3.5M',
       price: 45600, change: -0.44, trend: 'down',
-      sparkData: [38, 34, 36, 30, 28, 30, 26],
+      sparkData: makeSparkData('VIC', 'down'),
       iconBg: '#f5f0ff', iconColor: '#6c3fc4',
     },
     {
       id: 'MWG', ticker: 'MWG', name: 'Thế Giới Di Động', vol: '1.9M',
       price: 62300, change: 1.77, trend: 'up',
-      sparkData: [20, 24, 28, 26, 32, 36, 40],
+      sparkData: makeSparkData('MWG', 'up'),
       iconBg: PRIMARY_LIGHT, iconColor: PRIMARY,
     },
   ],
@@ -154,33 +142,33 @@ const STOCKS: Record<MarketTab, StockItem[]> = {
     {
       id: 'SHB', ticker: 'SHB', name: 'Saigon Hanoi Bank', vol: '8.4M',
       price: 14200, change: 0.71, trend: 'up',
-      sparkData: [22, 26, 28, 32, 30, 34, 38],
+      sparkData: makeSparkData('SHB', 'up'),
       iconBg: '#e8f0f8', iconColor: '#1a4a7a',
     },
     {
       id: 'PVS', ticker: 'PVS', name: 'PTSC', vol: '5.2M',
       price: 35100, change: -1.12, trend: 'down',
-      sparkData: [40, 36, 32, 34, 28, 30, 26],
+      sparkData: makeSparkData('PVS', 'down'),
       iconBg: '#e8f8f0', iconColor: '#1a7a40',
     },
     {
       id: 'VCS', ticker: 'VCS', name: 'Vicostone', vol: '0.8M',
       price: 78900, change: 0.38, trend: 'up',
-      sparkData: [24, 28, 26, 30, 28, 32, 36],
+      sparkData: makeSparkData('VCS', 'up'),
       iconBg: '#fff4e8', iconColor: PRIMARY_DARK,
     },
   ],
   Vàng: [
     {
       id: 'SJC', ticker: 'SJC', name: 'Vàng SJC', vol: '',
-      price: 108500000, change: 0.46, trend: 'up',
-      sparkData: [20, 24, 28, 32, 30, 36, 40],
+      price: 108_500_000, change: 0.46, trend: 'up',
+      sparkData: makeSparkData('SJC', 'up'),
       iconBg: PRIMARY_LIGHT, iconColor: PRIMARY,
     },
     {
       id: '999', ticker: '24K', name: 'Vàng 24K nhẫn', vol: '',
-      price: 105200000, change: -0.22, trend: 'down',
-      sparkData: [38, 34, 36, 30, 32, 28, 26],
+      price: 105_200_000, change: -0.22, trend: 'down',
+      sparkData: makeSparkData('24K', 'down'),
       iconBg: '#fff4e8', iconColor: PRIMARY_DARK,
     },
   ],
@@ -188,13 +176,13 @@ const STOCKS: Record<MarketTab, StockItem[]> = {
     {
       id: 'FUEVFVND', ticker: 'VN Diamond', name: 'ETF VN Diamond', vol: '12.5M',
       price: 18700, change: 1.08, trend: 'up',
-      sparkData: [22, 26, 30, 28, 34, 36, 40],
+      sparkData: makeSparkData('FUEVFVND', 'up'),
       iconBg: '#e8f8f0', iconColor: '#1a7a40',
     },
     {
       id: 'E1VFVN30', ticker: 'VN30 ETF', name: 'ETF VN30', vol: '7.8M',
       price: 14200, change: 0.85, trend: 'up',
-      sparkData: [18, 22, 26, 30, 28, 36, 38],
+      sparkData: makeSparkData('E1VFVN30', 'up'),
       iconBg: '#e8f0f8', iconColor: '#1a4a7a',
     },
   ],
@@ -202,205 +190,55 @@ const STOCKS: Record<MarketTab, StockItem[]> = {
 
 const PORTFOLIO_DATA = [18, 22, 28, 32, 30, 38, 42, 46, 44, 50, 52, 56];
 
-// ─── Screen ─────────────────────────────────────────────────────────────────
+// ─── TCBS response parser ─────────────────────────────────────────────────────
 
-interface Props {
-  navigation: any;
-}
+const parseTCBSItem = (raw: any): StockItem | null => {
+  try {
+    const ticker: string = raw?.ticker || raw?.symbol || raw?.code || '';
+    if (!ticker) return null;
 
-const InvestmentScreen = ({ navigation }: Props) => {
-  const { t } = useLanguage();
-  const [activeTab, setActiveTab] = useState<MarketTab>('HOSE');
+    // TCBS quotes prices in thousands of VND (125.5 → 125,500 VND)
+    const rawPrice: number =
+      raw?.lastPrice ?? raw?.price ?? raw?.closePrice ??
+      raw?.refPrice ?? raw?.avgPrice ?? 0;
+    if (!rawPrice || rawPrice <= 0) return null;
+    const price = Math.round(rawPrice * 1000);
 
-  const stocks = STOCKS[activeTab];
+    const changeRaw: number =
+      raw?.pctChange ?? raw?.percentChange ??
+      raw?.priceChangePercent ?? raw?.changePercent ?? 0;
+    const change = Number(Number(changeRaw).toFixed(2));
+    const trend: 'up' | 'down' = change >= 0 ? 'up' : 'down';
 
-  return (
-    <SafeAreaView style={styles.safe}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.headerBtn}
-          onPress={() => navigation.goBack()}>
-          <Icon type="ionicon" name="arrow-back" size={18} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t.investment.title}</Text>
-        <TouchableOpacity style={styles.headerBtn}>
-          <Icon type="ionicon" name="notifications-outline" size={18} color="#fff" />
-        </TouchableOpacity>
-      </View>
+    const volRaw: number =
+      raw?.tradingVol ?? raw?.volume ?? raw?.matchedVol ?? raw?.totalVol ?? 0;
+    const vol = volRaw > 0
+      ? volRaw >= 1_000_000
+        ? `${(volRaw / 1_000_000).toFixed(1)}M`
+        : `${(volRaw / 1_000).toFixed(0)}K`
+      : '';
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scroll}>
+    const cfg = TICKER_CONFIG[ticker];
 
-        {/* ── Portfolio Card ── */}
-        <View style={styles.portfolioCard}>
-          <Text style={styles.portLabel}>{t.investment.portfolio}</Text>
-          <Text style={styles.portValue}>{money(42_680_000)}</Text>
-
-          <View style={styles.portPnlRow}>
-            <View style={styles.pnlBadgeUp}>
-              <Icon type="ionicon" name="trending-up" size={11} color="#1a7a40" />
-              <Text style={styles.pnlTextUp}>+5.2% {t.investment.todayPnl}</Text>
-            </View>
-            <Text style={styles.pnlAmount}>+{money(2_100_000)}</Text>
-          </View>
-
-          {/* Sparkline */}
-          <View style={styles.sparklineWrap}>
-            <PortfolioSparkLine data={PORTFOLIO_DATA} />
-          </View>
-
-          {/* Allocation stats */}
-          <View style={styles.allocRow}>
-            <View style={styles.allocItem}>
-              <Text style={[styles.allocNum, { color: '#1a7a40' }]}>3 CP</Text>
-              <Text style={styles.allocLabel}>{t.investment.profit}</Text>
-            </View>
-            <View style={styles.allocDivider} />
-            <View style={styles.allocItem}>
-              <Text style={[styles.allocNum, { color: '#c0392b' }]}>1 CP</Text>
-              <Text style={styles.allocLabel}>{t.investment.loss}</Text>
-            </View>
-            <View style={styles.allocDivider} />
-            <View style={styles.allocItem}>
-              <Text style={[styles.allocNum, { color: PRIMARY }]}>
-                {shortMoney(8_500_000)}
-              </Text>
-              <Text style={styles.allocLabel}>{t.investment.cash}</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* ── Market Section ── */}
-        <View style={styles.sectionHeader}>
-          <View style={styles.sectionTitleRow}>
-            <View style={styles.accentBar} />
-            <Text style={styles.sectionTitleText}>{t.investment.market}</Text>
-          </View>
-          <TouchableOpacity>
-            <Text style={styles.seeAll}>{t.investment.viewMore}</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Market Tabs */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.mktTabsWrap}>
-          {MARKET_TABS.map(tab => (
-            <TouchableOpacity
-              key={tab}
-              style={[styles.mktTab, activeTab === tab && styles.mktTabActive]}
-              onPress={() => setActiveTab(tab)}>
-              <Text
-                style={[
-                  styles.mktTabText,
-                  activeTab === tab && styles.mktTabTextActive,
-                ]}>
-                {tab}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        {/* Stock List */}
-        <View style={styles.stockList}>
-          {stocks.map((stock, index) => (
-            <TouchableOpacity
-              key={stock.id}
-              activeOpacity={0.75}
-              style={[
-                styles.stockRow,
-                index === 0 && styles.stockRowFirst,
-                index === stocks.length - 1 && styles.stockRowLast,
-                index > 0 && styles.stockRowBorder,
-              ]}>
-              {/* Icon */}
-              <View style={[styles.stockIcon, { backgroundColor: stock.iconBg }]}>
-                <Text style={[styles.stockTickerIcon, { color: stock.iconColor }]}>
-                  {stock.ticker.slice(0, 3)}
-                </Text>
-              </View>
-
-              {/* Info */}
-              <View style={styles.stockInfo}>
-                <Text style={styles.stockTicker}>{stock.ticker}</Text>
-                <Text style={styles.stockName} numberOfLines={1}>
-                  {stock.name}
-                </Text>
-                {stock.vol ? (
-                  <Text style={styles.stockVol}>{t.investment.volume}: {stock.vol}</Text>
-                ) : null}
-              </View>
-
-              {/* Mini sparkline */}
-              <View style={styles.sparkWrap}>
-                <SparkLine
-                  data={stock.sparkData}
-                  color={stock.trend === 'up' ? '#1a7a40' : '#c0392b'}
-                />
-              </View>
-
-              {/* Price + change */}
-              <View style={styles.stockPriceCol}>
-                <Text
-                  style={[
-                    styles.priceVal,
-                    { color: stock.trend === 'up' ? '#1a7a40' : '#c0392b' },
-                  ]}>
-                  {money(stock.price)}
-                </Text>
-                <View
-                  style={[
-                    styles.changeBadge,
-                    {
-                      backgroundColor:
-                        stock.trend === 'up' ? '#e8f8f0' : '#ffeaea',
-                    },
-                  ]}>
-                  <Text
-                    style={[
-                      styles.changeText,
-                      { color: stock.trend === 'up' ? '#1a7a40' : '#c0392b' },
-                    ]}>
-                    {stock.change > 0 ? '+' : ''}
-                    {stock.change.toFixed(2)}%
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Bottom spacer for the fixed CTA bar */}
-        <View style={{ height: 16 }} />
-      </ScrollView>
-
-      {/* ── Bottom CTA ── */}
-      <View style={styles.bottomBar}>
-        <View style={styles.securityRow}>
-          <Icon type="ionicon" name="lock-closed-outline" size={11} color="#ccc" />
-          <Text style={styles.securityText}>{t.investment.ssl}</Text>
-        </View>
-        <View style={styles.ctaRow}>
-          <TouchableOpacity style={styles.btnBuy} activeOpacity={0.85}>
-            <Icon type="ionicon" name="trending-up" size={16} color="#fff" />
-            <Text style={styles.btnBuyText}>{t.investment.buyNow}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.btnSell} activeOpacity={0.85}>
-            <Icon type="ionicon" name="trending-down" size={16} color="#c0392b" />
-            <Text style={styles.btnSellText}>{t.investment.sell}</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </SafeAreaView>
-  );
+    return {
+      id: ticker,
+      ticker,
+      name: TICKER_NAMES[ticker] ?? ticker,
+      vol,
+      price,
+      change,
+      trend,
+      sparkData: makeSparkData(ticker, trend),
+      iconBg:    cfg?.bg ?? '#e8f0f8',
+      iconColor: cfg?.fg ?? '#1a4a7a',
+    };
+  } catch {
+    return null;
+  }
 };
 
-export default InvestmentScreen;
-
-// ─── Styles ─────────────────────────────────────────────────────────────────
+// ─── Styles ───────────────────────────────────────────────────────────────────
+// (defined before sub-components so they can reference it)
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F2F2F7' },
@@ -432,7 +270,7 @@ const styles = StyleSheet.create({
 
   scroll: { paddingBottom: 8 },
 
-  // ── Portfolio Card ──
+  // Portfolio card
   portfolioCard: {
     backgroundColor: '#fff',
     borderRadius: 16,
@@ -476,10 +314,7 @@ const styles = StyleSheet.create({
   },
   pnlTextUp: { fontSize: 11, color: '#1a7a40', fontWeight: '500' },
   pnlAmount: { fontSize: 12, color: '#1a7a40', fontWeight: '500' },
-  sparklineWrap: {
-    marginTop: 12,
-    marginBottom: 4,
-  },
+  sparklineWrap: { marginTop: 12, marginBottom: 4 },
   allocRow: {
     flexDirection: 'row',
     marginTop: 12,
@@ -492,7 +327,103 @@ const styles = StyleSheet.create({
   allocNum: { fontSize: 13, fontWeight: '600' },
   allocLabel: { fontSize: 10, color: '#aaa', marginTop: 3 },
 
-  // ── Section header ──
+  // Live rate card
+  rateCard: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    marginHorizontal: 12,
+    marginBottom: 12,
+    padding: 14,
+    borderWidth: 0.5,
+    borderColor: PRIMARY_BORDER,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+  },
+  rateCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  rateCardTitle: {
+    fontSize: 10,
+    color: '#aaa',
+    letterSpacing: 0.6,
+    fontWeight: '600',
+  },
+  liveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#e8f8f0',
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#1a7a40',
+  },
+  liveBadgeText: { fontSize: 9, color: '#1a7a40', fontWeight: '700' },
+  rateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+  },
+  rateRowBorder: {
+    borderTopWidth: 0.5,
+    borderTopColor: '#F5F5F5',
+  },
+  rateCurrency: { fontSize: 13, fontWeight: '500', color: '#1a1a1a' },
+  rateValue: { fontSize: 13, fontWeight: '600', color: PRIMARY_DARK },
+  rateUpdated: { fontSize: 10, color: '#ccc', marginTop: 8 },
+
+  // Error states
+  errorCard: {
+    backgroundColor: '#fff5ec',
+    borderRadius: 12,
+    marginHorizontal: 12,
+    marginBottom: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderWidth: 0.5,
+    borderColor: PRIMARY_BORDER,
+  },
+  errorText: { flex: 1, fontSize: 12, color: PRIMARY_DARK },
+  errorRetryBtn: {
+    backgroundColor: PRIMARY,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  errorRetryText: { fontSize: 11, fontWeight: '600', color: '#fff' },
+
+  // Stock error banner (shown above mock data)
+  stockErrorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#fff8ec',
+    borderRadius: 8,
+    marginHorizontal: 12,
+    marginBottom: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderWidth: 0.5,
+    borderColor: PRIMARY_BORDER,
+  },
+  stockErrorText: { flex: 1, fontSize: 11, color: PRIMARY_DARK },
+
+  // Section header
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -501,25 +432,12 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginBottom: 10,
   },
-  sectionTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  accentBar: {
-    width: 4,
-    height: 18,
-    backgroundColor: PRIMARY,
-    borderRadius: 2,
-  },
-  sectionTitleText: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#1a1a1a',
-  },
+  sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  accentBar: { width: 4, height: 18, backgroundColor: PRIMARY, borderRadius: 2 },
+  sectionTitleText: { fontSize: 15, fontWeight: '500', color: '#1a1a1a' },
   seeAll: { fontSize: 12, color: PRIMARY, fontWeight: '500' },
 
-  // ── Market tabs ──
+  // Market tabs
   mktTabsWrap: {
     paddingHorizontal: 16,
     gap: 8,
@@ -533,14 +451,11 @@ const styles = StyleSheet.create({
     borderColor: '#e0e0e0',
     backgroundColor: '#fff',
   },
-  mktTabActive: {
-    backgroundColor: PRIMARY,
-    borderColor: PRIMARY,
-  },
+  mktTabActive: { backgroundColor: PRIMARY, borderColor: PRIMARY },
   mktTabText: { fontSize: 12, color: '#888' },
   mktTabTextActive: { color: '#fff', fontWeight: '500' },
 
-  // ── Stock list ──
+  // Stock list
   stockList: {
     marginHorizontal: 12,
     backgroundColor: '#fff',
@@ -589,7 +504,26 @@ const styles = StyleSheet.create({
   },
   changeText: { fontSize: 10, fontWeight: '500' },
 
-  // ── Bottom bar ──
+  // Live indicator next to market title
+  liveIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#e8f8f0',
+    borderRadius: 8,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    marginLeft: 6,
+  },
+  liveIndicatorDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: '#1a7a40',
+  },
+  liveIndicatorText: { fontSize: 9, fontWeight: '700', color: '#1a7a40' },
+
+  // Bottom bar
   bottomBar: {
     backgroundColor: '#fff',
     paddingHorizontal: 16,
@@ -606,10 +540,7 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   securityText: { fontSize: 10, color: '#ccc' },
-  ctaRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
+  ctaRow: { flexDirection: 'row', gap: 10 },
   btnBuy: {
     flex: 2,
     backgroundColor: PRIMARY,
@@ -635,3 +566,498 @@ const styles = StyleSheet.create({
   },
   btnSellText: { fontSize: 14, fontWeight: '600', color: '#c0392b' },
 });
+
+// ─── Sparkline components ─────────────────────────────────────────────────────
+
+interface SparkProps {
+  data: number[];
+  color: string;
+  width?: number;
+  height?: number;
+}
+
+const SparkLine = ({ data, color, width = 52, height = 28 }: SparkProps) => {
+  const n = data.length;
+  if (n < 2) return null;
+  const max = Math.max(...data);
+  const min = Math.min(...data);
+  const range = max - min || 1;
+  const pts = data
+    .map((v, i) => {
+      const x = ((i / (n - 1)) * width).toFixed(1);
+      const y = (height - ((v - min) / range) * (height - 4) - 2).toFixed(1);
+      return `${x},${y}`;
+    })
+    .join(' ');
+  return (
+    <Svg width={width} height={height}>
+      <Polyline
+        points={pts}
+        fill="none"
+        stroke={color}
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+};
+
+const PortfolioSparkLine = ({ data }: { data: number[] }) => {
+  const w = SCREEN_WIDTH - 32 - 32;
+  const h = 52;
+  const n = data.length;
+  if (n < 2) return null;
+  const max = Math.max(...data);
+  const min = Math.min(...data);
+  const range = max - min || 1;
+  const pts = data
+    .map((v, i) => {
+      const x = ((i / (n - 1)) * w).toFixed(1);
+      const y = (h - ((v - min) / range) * (h - 6) - 3).toFixed(1);
+      return `${x},${y}`;
+    })
+    .join(' ');
+  return (
+    <Svg width={w} height={h}>
+      <Polyline
+        points={pts}
+        fill="none"
+        stroke={PRIMARY}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+};
+
+// ─── Skeleton sub-components ──────────────────────────────────────────────────
+
+const SkeletonBox = ({
+  w, h, r = 6, shimmer,
+}: {
+  w: number | string;
+  h: number;
+  r?: number;
+  shimmer: Animated.Value;
+}) => (
+  <Animated.View
+    style={{ width: w as number, height: h, borderRadius: r, backgroundColor: '#e8e8e8', opacity: shimmer as unknown as number }}
+  />
+);
+
+const SkeletonRateCard = ({ shimmer }: { shimmer: Animated.Value }) => (
+  <View style={styles.rateCard}>
+    <View style={styles.rateCardHeader}>
+      <SkeletonBox w={130} h={12} shimmer={shimmer} />
+      <SkeletonBox w={44} h={20} r={10} shimmer={shimmer} />
+    </View>
+    {[0, 1, 2].map(i => (
+      <View key={i} style={[styles.rateRow, i > 0 && styles.rateRowBorder]}>
+        <SkeletonBox w={60} h={12} shimmer={shimmer} />
+        <SkeletonBox w={90} h={12} shimmer={shimmer} />
+      </View>
+    ))}
+    <SkeletonBox w={100} h={10} r={5} shimmer={shimmer} />
+  </View>
+);
+
+const SkeletonStockRow = ({
+  shimmer,
+  isFirst,
+  isLast,
+}: {
+  shimmer: Animated.Value;
+  isFirst?: boolean;
+  isLast?: boolean;
+}) => (
+  <View
+    style={[
+      styles.stockRow,
+      isFirst && styles.stockRowFirst,
+      isLast && styles.stockRowLast,
+      !isFirst && styles.stockRowBorder,
+    ]}>
+    <Animated.View
+      style={[styles.stockIcon, { backgroundColor: '#e8e8e8', opacity: shimmer }]}
+    />
+    <View style={[styles.stockInfo, { gap: 5 }]}>
+      <SkeletonBox w={36} h={12} shimmer={shimmer} />
+      <SkeletonBox w={70} h={10} shimmer={shimmer} />
+    </View>
+    <SkeletonBox w={52} h={28} shimmer={shimmer} />
+    <View style={[styles.stockPriceCol, { gap: 4 }]}>
+      <SkeletonBox w={72} h={12} shimmer={shimmer} />
+      <SkeletonBox w={52} h={20} r={6} shimmer={shimmer} />
+    </View>
+  </View>
+);
+
+// ─── Main Screen ──────────────────────────────────────────────────────────────
+
+interface Props {
+  navigation: any;
+}
+
+const InvestmentScreen = ({ navigation }: Props) => {
+  const { t } = useLanguage();
+
+  // ── State ──
+  const [activeTab, setActiveTab] = useState<MarketTab>('HOSE');
+
+  const [rates,        setRates]        = useState<RateData | null>(null);
+  const [ratesLoading, setRatesLoading] = useState(true);
+  const [ratesError,   setRatesError]   = useState(false);
+
+  const [liveHOSE,     setLiveHOSE]     = useState<StockItem[] | null>(null);
+  const [stockLoading, setStockLoading] = useState(true);
+  const [stockError,   setStockError]   = useState(false);
+
+  // Skeleton pulse animation
+  const shimmer = useRef(new Animated.Value(0.4)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmer, { toValue: 1,   duration: 800, useNativeDriver: true }),
+        Animated.timing(shimmer, { toValue: 0.4, duration: 800, useNativeDriver: true }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [shimmer]);
+
+  // ── API calls ──
+
+  const fetchRates = async () => {
+    setRatesLoading(true);
+    setRatesError(false);
+    try {
+      const res = await fetch(RATES_API);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      const r = json?.usd;
+      if (!r?.vnd || !r?.eur || !r?.xau) throw new Error('Invalid shape');
+
+      const usdVnd = r.vnd as number;
+      const eurVnd = usdVnd / (r.eur as number);
+      const xauUsd = 1 / (r.xau as number);        // USD per troy oz
+      const goldPerGram = (xauUsd * usdVnd) / 31.1035; // VND per gram
+
+      setRates({
+        usdVnd:      Math.round(usdVnd),
+        eurVnd:      Math.round(eurVnd),
+        goldPerGram: Math.round(goldPerGram),
+        updatedAt:   fmtTime(),
+      });
+    } catch {
+      setRatesError(true);
+    } finally {
+      setRatesLoading(false);
+    }
+  };
+
+  const fetchStocks = async () => {
+    setStockLoading(true);
+    setStockError(false);
+    try {
+      const res = await fetch(STOCK_API, {
+        headers: { Accept: 'application/json' },
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      const arr: any[] = json?.data || json?.listStock || json?.stocks || [];
+      if (!Array.isArray(arr) || arr.length === 0) throw new Error('Empty');
+      const parsed = arr.map(parseTCBSItem).filter(Boolean) as StockItem[];
+      if (parsed.length === 0) throw new Error('Parse failed');
+      setLiveHOSE(parsed);
+    } catch {
+      setStockError(true);
+      // liveHOSE stays null → will show mock + error banner
+    } finally {
+      setStockLoading(false);
+    }
+  };
+
+  const handleRefresh = () => {
+    fetchRates();
+    fetchStocks();
+  };
+
+  useEffect(() => {
+    fetchRates();
+    fetchStocks();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Which stock list to show
+  const stocks: StockItem[] =
+    activeTab === 'HOSE' && liveHOSE ? liveHOSE : STOCKS[activeTab as MarketTab];
+
+  const showHOSELoading = activeTab === 'HOSE' && stockLoading && !liveHOSE;
+  const showHOSEError   = activeTab === 'HOSE' && stockError && !liveHOSE;
+  const showStockLive   = activeTab === 'HOSE' && !!liveHOSE;
+
+  return (
+    <SafeAreaView style={styles.safe}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.headerBtn}
+          onPress={() => navigation.goBack()}>
+          <Icon type="ionicon" name="arrow-back" size={18} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>{t.investment.title}</Text>
+        <TouchableOpacity style={styles.headerBtn} onPress={handleRefresh}>
+          <Icon type="ionicon" name="refresh-outline" size={18} color="#fff" />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scroll}>
+
+        {/* ── Portfolio Card ── */}
+        <View style={styles.portfolioCard}>
+          <Text style={styles.portLabel}>{t.investment.portfolio}</Text>
+          <Text style={styles.portValue}>{money(42_680_000)}</Text>
+
+          <View style={styles.portPnlRow}>
+            <View style={styles.pnlBadgeUp}>
+              <Icon type="ionicon" name="trending-up" size={11} color="#1a7a40" />
+              <Text style={styles.pnlTextUp}>+5.2% {t.investment.todayPnl}</Text>
+            </View>
+            <Text style={styles.pnlAmount}>+{money(2_100_000)}</Text>
+          </View>
+
+          <View style={styles.sparklineWrap}>
+            <PortfolioSparkLine data={PORTFOLIO_DATA} />
+          </View>
+
+          <View style={styles.allocRow}>
+            <View style={styles.allocItem}>
+              <Text style={[styles.allocNum, { color: '#1a7a40' }]}>3 CP</Text>
+              <Text style={styles.allocLabel}>{t.investment.profit}</Text>
+            </View>
+            <View style={styles.allocDivider} />
+            <View style={styles.allocItem}>
+              <Text style={[styles.allocNum, { color: '#c0392b' }]}>1 CP</Text>
+              <Text style={styles.allocLabel}>{t.investment.loss}</Text>
+            </View>
+            <View style={styles.allocDivider} />
+            <View style={styles.allocItem}>
+              <Text style={[styles.allocNum, { color: PRIMARY }]}>
+                {shortMoney(8_500_000)}
+              </Text>
+              <Text style={styles.allocLabel}>{t.investment.cash}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* ── Live Rate Card ── */}
+        {ratesLoading ? (
+          <SkeletonRateCard shimmer={shimmer} />
+        ) : ratesError ? (
+          <View style={styles.errorCard}>
+            <Icon type="ionicon" name="warning-outline" size={16} color={PRIMARY_DARK} />
+            <Text style={styles.errorText}>{t.investment.errorRates}</Text>
+            <TouchableOpacity style={styles.errorRetryBtn} onPress={fetchRates}>
+              <Text style={styles.errorRetryText}>{t.investment.retry}</Text>
+            </TouchableOpacity>
+          </View>
+        ) : rates ? (
+          <View style={styles.rateCard}>
+            <View style={styles.rateCardHeader}>
+              <Text style={styles.rateCardTitle}>{t.investment.rateTitle}</Text>
+              <View style={styles.liveBadge}>
+                <View style={styles.liveDot} />
+                <Text style={styles.liveBadgeText}>{t.investment.liveTag}</Text>
+              </View>
+            </View>
+
+            {/* USD */}
+            <View style={styles.rateRow}>
+              <Text style={styles.rateCurrency}>USD / VND</Text>
+              <Text style={styles.rateValue}>
+                {rates.usdVnd.toLocaleString('vi-VN')}
+              </Text>
+            </View>
+
+            {/* EUR */}
+            <View style={[styles.rateRow, styles.rateRowBorder]}>
+              <Text style={styles.rateCurrency}>EUR / VND</Text>
+              <Text style={styles.rateValue}>
+                {rates.eurVnd.toLocaleString('vi-VN')}
+              </Text>
+            </View>
+
+            {/* Gold */}
+            <View style={[styles.rateRow, styles.rateRowBorder]}>
+              <Text style={styles.rateCurrency}>{t.investment.goldGram}</Text>
+              <Text style={styles.rateValue}>
+                {shortMoney(rates.goldPerGram)}
+              </Text>
+            </View>
+
+            <Text style={styles.rateUpdated}>
+              {t.investment.updatedAt} {rates.updatedAt}
+            </Text>
+          </View>
+        ) : null}
+
+        {/* ── Market Section Header ── */}
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionTitleRow}>
+            <View style={styles.accentBar} />
+            <Text style={styles.sectionTitleText}>{t.investment.market}</Text>
+            {showStockLive && (
+              <View style={styles.liveIndicator}>
+                <View style={styles.liveIndicatorDot} />
+                <Text style={styles.liveIndicatorText}>{t.investment.liveTag}</Text>
+              </View>
+            )}
+          </View>
+          <TouchableOpacity>
+            <Text style={styles.seeAll}>{t.investment.viewMore}</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Market Tabs */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.mktTabsWrap}>
+          {MARKET_TABS.map(tab => (
+            <TouchableOpacity
+              key={tab}
+              style={[styles.mktTab, activeTab === tab && styles.mktTabActive]}
+              onPress={() => setActiveTab(tab)}>
+              <Text
+                style={[
+                  styles.mktTabText,
+                  activeTab === tab && styles.mktTabTextActive,
+                ]}>
+                {tab}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        {/* Stock error banner (above mock data) */}
+        {showHOSEError && (
+          <TouchableOpacity style={styles.stockErrorBanner} onPress={fetchStocks}>
+            <Icon type="ionicon" name="wifi-outline" size={14} color={PRIMARY_DARK} />
+            <Text style={styles.stockErrorText}>{t.investment.errorStock}</Text>
+            <Icon type="ionicon" name="refresh-outline" size={14} color={PRIMARY} />
+          </TouchableOpacity>
+        )}
+
+        {/* Stock List */}
+        <View style={styles.stockList}>
+          {showHOSELoading ? (
+            // Skeleton rows while loading
+            [0, 1, 2, 3].map(i => (
+              <SkeletonStockRow
+                key={i}
+                shimmer={shimmer}
+                isFirst={i === 0}
+                isLast={i === 3}
+              />
+            ))
+          ) : (
+            stocks.map((stock: StockItem, index: number) => (
+              <TouchableOpacity
+                key={stock.id}
+                activeOpacity={0.75}
+                style={[
+                  styles.stockRow,
+                  index === 0 && styles.stockRowFirst,
+                  index === stocks.length - 1 && styles.stockRowLast,
+                  index > 0 && styles.stockRowBorder,
+                ]}>
+                {/* Icon */}
+                <View style={[styles.stockIcon, { backgroundColor: stock.iconBg }]}>
+                  <Text style={[styles.stockTickerIcon, { color: stock.iconColor }]}>
+                    {stock.ticker.slice(0, 3)}
+                  </Text>
+                </View>
+
+                {/* Info */}
+                <View style={styles.stockInfo}>
+                  <Text style={styles.stockTicker}>{stock.ticker}</Text>
+                  <Text style={styles.stockName} numberOfLines={1}>
+                    {stock.name}
+                  </Text>
+                  {stock.vol ? (
+                    <Text style={styles.stockVol}>
+                      {t.investment.volume}: {stock.vol}
+                    </Text>
+                  ) : null}
+                </View>
+
+                {/* Sparkline */}
+                <View style={styles.sparkWrap}>
+                  <SparkLine
+                    data={stock.sparkData}
+                    color={stock.trend === 'up' ? '#1a7a40' : '#c0392b'}
+                  />
+                </View>
+
+                {/* Price + change */}
+                <View style={styles.stockPriceCol}>
+                  <Text
+                    style={[
+                      styles.priceVal,
+                      { color: stock.trend === 'up' ? '#1a7a40' : '#c0392b' },
+                    ]}>
+                    {money(stock.price)}
+                  </Text>
+                  <View
+                    style={[
+                      styles.changeBadge,
+                      {
+                        backgroundColor:
+                          stock.trend === 'up' ? '#e8f8f0' : '#ffeaea',
+                      },
+                    ]}>
+                    <Text
+                      style={[
+                        styles.changeText,
+                        { color: stock.trend === 'up' ? '#1a7a40' : '#c0392b' },
+                      ]}>
+                      {stock.change > 0 ? '+' : ''}
+                      {stock.change.toFixed(2)}%
+                    </Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))
+          )}
+        </View>
+
+        <View style={{ height: 16 }} />
+      </ScrollView>
+
+      {/* ── Bottom CTA ── */}
+      <View style={styles.bottomBar}>
+        <View style={styles.securityRow}>
+          <Icon type="ionicon" name="lock-closed-outline" size={11} color="#ccc" />
+          <Text style={styles.securityText}>{t.investment.ssl}</Text>
+        </View>
+        <View style={styles.ctaRow}>
+          <TouchableOpacity style={styles.btnBuy} activeOpacity={0.85}>
+            <Icon type="ionicon" name="trending-up" size={16} color="#fff" />
+            <Text style={styles.btnBuyText}>{t.investment.buyNow}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.btnSell} activeOpacity={0.85}>
+            <Icon type="ionicon" name="trending-down" size={16} color="#c0392b" />
+            <Text style={styles.btnSellText}>{t.investment.sell}</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </SafeAreaView>
+  );
+};
+
+export default InvestmentScreen;
