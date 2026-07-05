@@ -171,6 +171,23 @@ export const vi = {
     catUtility: 'Tiện ích',
     catOther: 'Khác',
   },
+  login: {
+    welcome: 'Chào mừng trở lại!',
+    subtitle: 'Đăng nhập để tiếp tục quản lý tài chính của bạn',
+    phone: 'Số điện thoại',
+    phonePlaceholder: 'Nhập số điện thoại',
+    password: 'Mật khẩu',
+    passwordPlaceholder: 'Nhập mật khẩu',
+    remember: 'Ghi nhớ đăng nhập',
+    forgot: 'Quên mật khẩu?',
+    submit: 'Đăng nhập',
+    submitting: 'Đang đăng nhập...',
+    errPhoneRequired: 'Vui lòng nhập số điện thoại',
+    errPhoneInvalid: 'Số điện thoại không hợp lệ',
+    errPasswordRequired: 'Vui lòng nhập mật khẩu',
+    errPasswordMin: 'Mật khẩu phải có ít nhất 6 ký tự',
+    ssl: 'Đăng nhập được bảo mật SSL 256-bit',
+  },
 };
 
 export const en: Translations = {
@@ -341,6 +358,23 @@ export const en: Translations = {
     catTransport: 'Transport',
     catUtility: 'Utilities',
     catOther: 'Other',
+  },
+  login: {
+    welcome: 'Welcome back!',
+    subtitle: 'Sign in to continue managing your finances',
+    phone: 'Phone number',
+    phonePlaceholder: 'Enter phone number',
+    password: 'Password',
+    passwordPlaceholder: 'Enter password',
+    remember: 'Remember me',
+    forgot: 'Forgot password?',
+    submit: 'Sign in',
+    submitting: 'Signing in...',
+    errPhoneRequired: 'Please enter your phone number',
+    errPhoneInvalid: 'Invalid phone number',
+    errPasswordRequired: 'Please enter your password',
+    errPasswordMin: 'Password must be at least 6 characters',
+    ssl: 'Sign-in secured with 256-bit SSL',
   },
 };
 

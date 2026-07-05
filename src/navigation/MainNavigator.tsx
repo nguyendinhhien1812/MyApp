@@ -17,6 +17,7 @@ import InvestmentNavigator from './InvestmentNavigator';
 import ExpenseNavigator from './ExpenseNavigator';
 import AboutScreen from '../container/About';
 import WebViewScreen from '../container/WebView';
+import LoginScreen from '../container/Login';
 
 const MainNavigator = () => {
   const navigators = [
@@ -43,6 +44,10 @@ const MainNavigator = () => {
     {
       name: 'WebViewScreen',
       component: WebViewScreen,
+    },
+    {
+      name: 'LoginScreen',
+      component: LoginScreen,
     },
   ];
 

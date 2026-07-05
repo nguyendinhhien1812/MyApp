@@ -7,14 +7,12 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
-  Modal,
-  Pressable,
 } from 'react-native';
 import { Icon } from '@rneui/themed';
 import { useNavigation } from '@react-navigation/native';
 import { useLanguage } from '../../context/LanguageContext';
+import { AppDialog } from '../../components/UI';
 
-const PRIMARY = '#E89951';
 const PRIMARY_DARK = '#b36a1a';
 const PRIMARY_LIGHT = '#fdf3e7';
 const PRIMARY_BORDER = '#f0c48a';
@@ -177,32 +175,21 @@ const ProfileScreen = () => {
 
       </ScrollView>
 
-      {/* Logout confirm modal */}
-      <Modal
+      {/* Logout confirm dialog */}
+      <AppDialog
         visible={logoutModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setLogoutModal(false)}>
-        <Pressable style={styles.modalOverlay} onPress={() => setLogoutModal(false)}>
-          <Pressable style={styles.modalBox} onPress={e => e.stopPropagation()}>
-            <View style={styles.modalIconWrap}>
-              <Icon type="ionicon" name="exit-outline" size={28} color="#ef4444" />
-            </View>
-            <Text style={styles.modalTitle}>{t.profile.logout}</Text>
-            <Text style={styles.modalDesc}>{t.profile.logoutConfirm}</Text>
-            <View style={styles.modalBtns}>
-              <TouchableOpacity
-                style={styles.modalBtnCancel}
-                onPress={() => setLogoutModal(false)}>
-                <Text style={styles.modalBtnCancelText}>{t.setting.cancel}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.modalBtnConfirm}>
-                <Text style={styles.modalBtnConfirmText}>{t.profile.logout}</Text>
-              </TouchableOpacity>
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
+        onDismiss={() => setLogoutModal(false)}
+        icon="exit-outline"
+        tone="danger"
+        title={t.profile.logout}
+        description={t.profile.logoutConfirm}
+        cancelText={t.setting.cancel}
+        confirmText={t.profile.logout}
+        onConfirm={() => {
+          setLogoutModal(false);
+          navigation.navigate('LoginScreen' as never);
+        }}
+      />
     </SafeAreaView>
   );
 };
@@ -349,48 +336,4 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   aboutTagText: { fontSize: 9, color: '#666', fontWeight: '500' },
-
-  // Logout modal
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 32,
-  },
-  modalBox: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 24,
-    width: '100%',
-    alignItems: 'center',
-  },
-  modalIconWrap: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#ffeaea',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 14,
-  },
-  modalTitle: { fontSize: 17, fontWeight: '600', color: '#1a1a1a', marginBottom: 6 },
-  modalDesc: { fontSize: 13, color: '#888', textAlign: 'center', lineHeight: 18 },
-  modalBtns: { flexDirection: 'row', gap: 10, marginTop: 20, width: '100%' },
-  modalBtnCancel: {
-    flex: 1,
-    backgroundColor: '#F2F2F7',
-    borderRadius: 12,
-    paddingVertical: 13,
-    alignItems: 'center',
-  },
-  modalBtnCancelText: { fontSize: 14, fontWeight: '500', color: '#888' },
-  modalBtnConfirm: {
-    flex: 1,
-    backgroundColor: '#ef4444',
-    borderRadius: 12,
-    paddingVertical: 13,
-    alignItems: 'center',
-  },
-  modalBtnConfirmText: { fontSize: 14, fontWeight: '600', color: '#fff' },
 });

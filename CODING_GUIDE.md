@@ -572,6 +572,76 @@ const SparkLine = ({ data, color, width = 52, height = 28 }) => {
 };
 ```
 
+### 6.11 UI Kit (`src/components/UI/` — nền react-native-paper)
+
+Bộ component dùng chung đã theme sẵn theo brand — **ưu tiên dùng chúng thay vì
+viết lại TouchableOpacity/Modal thủ công** cho các pattern bên dưới.
+Màu brand lấy từ `BRAND` trong `src/theme/paperTheme.ts` (không hardcode lại).
+`PaperProvider` đã được bọc sẵn trong `src/app.tsx`.
+
+| Component | Thay cho pattern | Props chính |
+|---|---|---|
+| `AppButton` | Bottom CTA (6.5) | `title`, `variant: primary\|danger\|outline\|ghost`, `loading`, `icon` |
+| `AppCard` | Card chuẩn (6.1) | `onPress?`, `padded`, `inset` |
+| `AppChip` | Filter chip (6.4) | `label`, `selected`, `onPress` |
+| `AppDialog` | Confirm modal (6.9) | `visible`, `tone`, `icon`, `cancelText?`, `confirmText`, `onConfirm` |
+| `AppSnackbar` | Toast/thông báo nhanh | `visible`, `message`, `tone: success\|danger\|info` |
+| `AppSwitch` | Toggle (6.3) | `value`, `onValueChange` |
+| `SectionTitle` | Section title (4.4) | `title`, `actionText?`, `onAction?` |
+
+```typescript
+import { AppButton, AppDialog } from '../../components/UI';
+
+<AppButton title={t.xxx.confirm} loading={submitting} onPress={handleSubmit(onSubmit)} />
+
+<AppDialog
+  visible={show} onDismiss={() => setShow(false)}
+  icon="exit-outline" tone="danger"
+  title={t.profile.logout} description={t.profile.logoutConfirm}
+  cancelText={t.setting.cancel} confirmText={t.profile.logout}
+  onConfirm={doLogout}
+/>
+```
+
+Ví dụ thật: nút submit ở `src/container/Login/index.tsx`, dialog đăng xuất ở
+`src/container/ProfileScreen/index.tsx`.
+
+### 6.12 Form (react-hook-form + zod)
+
+Component form dùng chung nằm ở `src/components/Form/` (`FormTextInput`, `FormCheckbox`).
+Mỗi component tự bọc `Controller` và tự render label + error — screen chỉ cần khai báo schema.
+Ví dụ đầy đủ: `src/container/Login/index.tsx`.
+
+```typescript
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { FormTextInput, FormCheckbox } from '../../components/Form';
+
+// Schema nhận t để error message theo i18n
+const makeSchema = (t: Translations) =>
+  z.object({
+    phone: z.string().min(1, t.login.errPhoneRequired).regex(/^(0|\+84)\d{9}$/, t.login.errPhoneInvalid),
+    password: z.string().min(1, t.login.errPasswordRequired).min(6, t.login.errPasswordMin),
+    remember: z.boolean(),
+  });
+type LoginForm = z.infer<ReturnType<typeof makeSchema>>;
+
+// Trong component
+const schema = useMemo(() => makeSchema(t), [t]);
+const { control, handleSubmit } = useForm<LoginForm>({
+  resolver: zodResolver(schema),
+  defaultValues: { phone: '', password: '', remember: true },
+  mode: 'onTouched',
+});
+
+// JSX — truyền control + name, mọi thứ còn lại tự động
+<FormTextInput control={control} name="phone" label={t.login.phone} icon="call-outline" keyboardType="phone-pad" />
+<FormTextInput control={control} name="password" label={t.login.password} icon="lock-closed-outline" secure />
+<FormCheckbox  control={control} name="remember" label={t.login.remember} />
+<TouchableOpacity style={styles.primaryBtn} onPress={handleSubmit(onSubmit)} />
+```
+
 ---
 
 ## 7. i18n
@@ -830,6 +900,10 @@ Khi tạo một tính năng lớn độc lập (ví dụ: Chi phí, Vay vốn, B
 | `@rneui/themed` | UI components (Icon, Avatar, Switch...) |
 | `react-native-svg` | SVG sparkline charts |
 | `@callstack/repack` | Module federation |
+| `react-hook-form` | Quản lý state/validation của form |
+| `zod` | Schema validation, type-safe |
+| `@hookform/resolvers` | Nối zod vào react-hook-form |
+| `react-native-paper` | Nền cho UI kit `src/components/UI/` (đã theme theo brand) |
 
 ### Lệnh chạy (pnpm)
 
