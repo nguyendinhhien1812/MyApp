@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { Button } from 'react-native-paper';
-import { BRAND } from '../../theme/paperTheme';
+import { ThemeColors } from '../../theme/paperTheme';
+import { useThemeColors } from '../../context/ThemeContext';
 
 type Variant = 'primary' | 'danger' | 'outline' | 'ghost';
 
@@ -22,20 +23,6 @@ const MODE: Record<Variant, 'contained' | 'outlined' | 'text'> = {
   ghost: 'text',
 };
 
-const BUTTON_COLOR: Record<Variant, string | undefined> = {
-  primary: BRAND.primary,
-  danger: BRAND.danger,
-  outline: undefined,
-  ghost: undefined,
-};
-
-const TEXT_COLOR: Record<Variant, string> = {
-  primary: BRAND.white,
-  danger: BRAND.white,
-  outline: BRAND.primaryDark,
-  ghost: BRAND.primaryDark,
-};
-
 const AppButton = ({
   title,
   onPress,
@@ -44,37 +31,56 @@ const AppButton = ({
   disabled = false,
   icon,
   style,
-}: AppButtonProps) => (
-  <Button
-    mode={MODE[variant]}
-    onPress={onPress}
-    loading={loading}
-    disabled={disabled || loading}
-    icon={icon}
-    buttonColor={BUTTON_COLOR[variant]}
-    textColor={TEXT_COLOR[variant]}
-    style={[styles.btn, variant === 'outline' && styles.btnOutline, style]}
-    contentStyle={styles.content}
-    labelStyle={styles.label}>
-    {title}
-  </Button>
-);
+}: AppButtonProps) => {
+  const c = useThemeColors();
+  const styles = useMemo(() => makeStyles(c), [c]);
+
+  const buttonColor: Record<Variant, string | undefined> = {
+    primary: c.primary,
+    danger: c.danger,
+    outline: undefined,
+    ghost: undefined,
+  };
+  const textColor: Record<Variant, string> = {
+    primary: '#fff', // text trên nền cam
+    danger: '#fff',
+    outline: c.primaryDark,
+    ghost: c.primaryDark,
+  };
+
+  return (
+    <Button
+      mode={MODE[variant]}
+      onPress={onPress}
+      loading={loading}
+      disabled={disabled || loading}
+      icon={icon}
+      buttonColor={buttonColor[variant]}
+      textColor={textColor[variant]}
+      style={[styles.btn, variant === 'outline' && styles.btnOutline, style]}
+      contentStyle={styles.content}
+      labelStyle={styles.label}>
+      {title}
+    </Button>
+  );
+};
 
 export default AppButton;
 
-const styles = StyleSheet.create({
-  btn: {
-    borderRadius: 12,
-  },
-  btnOutline: {
-    borderWidth: 1,
-    borderColor: BRAND.primaryBorder,
-  },
-  content: {
-    height: 50,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    btn: {
+      borderRadius: 12,
+    },
+    btnOutline: {
+      borderWidth: 1,
+      borderColor: c.primaryBorder,
+    },
+    content: {
+      height: 50,
+    },
+    label: {
+      fontSize: 14,
+      fontWeight: '600',
+    },
+  });

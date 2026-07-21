@@ -1,5 +1,5 @@
 // ─── 1. Imports ────────────────────────────────────────────────────────────
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,8 @@ import {
 import { Icon } from '@rneui/themed';
 import { ProgressBar } from 'react-native-paper';
 import { AppChip } from '../../components/UI';
-import { BRAND } from '../../theme/paperTheme';
+import { ThemeColors } from '../../theme/paperTheme';
+import { useThemeColors } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { SKILLS, LEVEL_BADGE, TOTAL_YEARS, TOTAL_PROJECTS, SkillItem } from './data';
 
@@ -23,6 +24,8 @@ interface Props {
 // ─── 3. Main screen component ──────────────────────────────────────────────
 const SkillsScreen = ({ navigation }: Props) => {
   const { t } = useLanguage();
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [activeFilter, setActiveFilter] = useState(0);
 
   const filters = [
@@ -114,11 +117,11 @@ const SkillsScreen = ({ navigation }: Props) => {
               </Text>
               <ProgressBar
                 progress={skill.percent / 100}
-                color={BRAND.primary}
+                color={colors.primary}
                 style={styles.progress}
               />
             </View>
-            <Icon type="ionicon" name="chevron-forward" size={15} color={BRAND.muted} />
+            <Icon type="ionicon" name="chevron-forward" size={15} color={colors.muted} />
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -129,13 +132,13 @@ const SkillsScreen = ({ navigation }: Props) => {
 export default SkillsScreen;
 
 // ─── 4. Styles ─────────────────────────────────────────────────────────────
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   // 1. Container chính
-  safe: { flex: 1, backgroundColor: BRAND.bg },
+  safe: { flex: 1, backgroundColor: c.bg },
 
   // 2. Header
   header: {
-    backgroundColor: BRAND.primary,
+    backgroundColor: c.primary,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -164,17 +167,17 @@ const styles = StyleSheet.create({
   // 4. Summary card
   summaryCard: {
     flexDirection: 'row',
-    backgroundColor: BRAND.white,
+    backgroundColor: c.white,
     borderRadius: 14,
     borderWidth: 0.5,
-    borderColor: BRAND.primaryBorder,
+    borderColor: c.primaryBorder,
     paddingVertical: 14,
   },
   summaryItem: { flex: 1, alignItems: 'center', gap: 2 },
-  summaryValue: { fontSize: 18, fontWeight: '700', color: BRAND.text },
-  summaryValueAccent: { color: BRAND.success },
-  summaryLabel: { fontSize: 11, color: BRAND.subtext },
-  summaryDivider: { width: 0.5, backgroundColor: BRAND.divider },
+  summaryValue: { fontSize: 18, fontWeight: '700', color: c.text },
+  summaryValueAccent: { color: c.success },
+  summaryLabel: { fontSize: 11, color: c.subtext },
+  summaryDivider: { width: 0.5, backgroundColor: c.divider },
 
   // 5. Filter
   filterRow: { gap: 8, paddingRight: 16 },
@@ -184,10 +187,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: BRAND.white,
+    backgroundColor: c.white,
     borderRadius: 14,
     borderWidth: 0.5,
-    borderColor: BRAND.border,
+    borderColor: c.border,
     padding: 14,
   },
   skillIconWrap: {
@@ -204,9 +207,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 8,
   },
-  skillName: { fontSize: 14, fontWeight: '500', color: BRAND.text, flexShrink: 1 },
+  skillName: { fontSize: 14, fontWeight: '500', color: c.text, flexShrink: 1 },
   levelBadge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
   levelText: { fontSize: 10, fontWeight: '500' },
-  skillSub: { fontSize: 11, color: BRAND.subtext },
+  skillSub: { fontSize: 11, color: c.subtext },
   progress: { height: 5, borderRadius: 3, marginTop: 3 },
 });

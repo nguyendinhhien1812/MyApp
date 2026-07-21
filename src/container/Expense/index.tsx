@@ -1,5 +1,5 @@
 // ─── Imports ─────────────────────────────────────────────────────────────────
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -13,12 +13,13 @@ import {
 } from 'react-native';
 import { Icon } from '@rneui/themed';
 import { useLanguage } from '../../context/LanguageContext';
+import { useThemeColors } from '../../context/ThemeContext';
+import { ThemeColors } from '../../theme/paperTheme';
 
 // ─── Brand colors ─────────────────────────────────────────────────────────────
+// Giữ lại để dùng cho dữ liệu tĩnh (CATEGORIES/TRANSACTIONS) — không đổi theo theme.
 const PRIMARY        = '#E89951';
 const PRIMARY_DARK   = '#b36a1a';
-const PRIMARY_LIGHT  = '#fdf3e7';
-const PRIMARY_BORDER = '#f0c48a';
 const COLOR_DANGER   = '#c0392b';
 const COLOR_SUCCESS  = '#1a7a40';
 
@@ -91,25 +92,27 @@ const TRANSACTIONS: TxItem[] = [
 // Filter id → categoryId mapping (index-based, i18n-safe)
 const FILTER_IDS = ['', 'food', 'shopping', 'fun', 'transport', 'utility', 'other'];
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
-const SectionTitle = ({ title }: { title: string }) => (
-  <View style={styles.sectionTitleRow}>
-    <View style={styles.accentBar} />
-    <Text style={styles.sectionTitleText}>{title}</Text>
-  </View>
-);
-
 // ─── Main Screen ─────────────────────────────────────────────────────────────
 interface Props { navigation: any; }
 
 const ExpenseScreen = ({ navigation }: Props) => {
   const { t } = useLanguage();
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const scrollRef = React.useRef<ScrollView>(null);
   const [activeFilter, setActiveFilter] = useState(0);
   const [addModal, setAddModal]         = useState(false);
   const [addAmount, setAddAmount]       = useState('');
   const [addNote, setAddNote]           = useState('');
   const [addCatIdx, setAddCatIdx]       = useState(0);
+
+  // ─── Sub-component: Section title (dùng styles theo theme) ───────────────
+  const SectionTitle = ({ title }: { title: string }) => (
+    <View style={styles.sectionTitleRow}>
+      <View style={styles.accentBar} />
+      <Text style={styles.sectionTitleText}>{title}</Text>
+    </View>
+  );
 
   const filters = [
     t.expense.filterAll,
@@ -171,7 +174,7 @@ const ExpenseScreen = ({ navigation }: Props) => {
           <View style={styles.quickRow}>
             <TouchableOpacity style={styles.quickBtn} onPress={() => setAddModal(true)}>
               <View style={styles.quickIconWrap}>
-                <Icon type="ionicon" name="add" size={20} color={PRIMARY_DARK} />
+                <Icon type="ionicon" name="add" size={20} color={colors.primaryDark} />
               </View>
               <Text style={styles.quickLabel}>{t.expense.addExpense}</Text>
             </TouchableOpacity>
@@ -180,7 +183,7 @@ const ExpenseScreen = ({ navigation }: Props) => {
               style={styles.quickBtn}
               onPress={() => navigation.navigate('ExpenseStats' as never)}>
               <View style={styles.quickIconWrap}>
-                <Icon type="ionicon" name="bar-chart-outline" size={20} color={PRIMARY_DARK} />
+                <Icon type="ionicon" name="bar-chart-outline" size={20} color={colors.primaryDark} />
               </View>
               <Text style={styles.quickLabel}>{t.expense.stats}</Text>
             </TouchableOpacity>
@@ -192,7 +195,7 @@ const ExpenseScreen = ({ navigation }: Props) => {
                 scrollRef.current?.scrollToEnd({ animated: true });
               }}>
               <View style={styles.quickIconWrap}>
-                <Icon type="ionicon" name="time-outline" size={20} color={PRIMARY_DARK} />
+                <Icon type="ionicon" name="time-outline" size={20} color={colors.primaryDark} />
               </View>
               <Text style={styles.quickLabel}>{t.expense.history}</Text>
             </TouchableOpacity>
@@ -300,7 +303,7 @@ const ExpenseScreen = ({ navigation }: Props) => {
                 onChangeText={setAddAmount}
                 keyboardType="number-pad"
                 placeholder="0"
-                placeholderTextColor="#ccc"
+                placeholderTextColor={colors.muted}
               />
             </View>
 
@@ -315,10 +318,10 @@ const ExpenseScreen = ({ navigation }: Props) => {
                   key={cat.id}
                   style={[styles.catPickerItem, addCatIdx === i && styles.catPickerItemActive]}
                   onPress={() => setAddCatIdx(i)}>
-                  <View style={[styles.catPickerIcon, { backgroundColor: addCatIdx === i ? PRIMARY : cat.iconBg }]}>
+                  <View style={[styles.catPickerIcon, { backgroundColor: addCatIdx === i ? colors.primary : cat.iconBg }]}>
                     <Icon type="ionicon" name={cat.icon} size={18} color={addCatIdx === i ? '#fff' : cat.iconColor} />
                   </View>
-                  <Text style={[styles.catPickerLabel, addCatIdx === i && { color: PRIMARY_DARK, fontWeight: '600' }]}>
+                  <Text style={[styles.catPickerLabel, addCatIdx === i && { color: colors.primaryDark, fontWeight: '600' }]}>
                     {getCatName(cat.id, t)}
                   </Text>
                 </TouchableOpacity>
@@ -332,7 +335,7 @@ const ExpenseScreen = ({ navigation }: Props) => {
               value={addNote}
               onChangeText={setAddNote}
               placeholder={t.expense.notePlaceholder}
-              placeholderTextColor="#ccc"
+              placeholderTextColor={colors.muted}
               multiline
             />
 
@@ -355,12 +358,12 @@ const ExpenseScreen = ({ navigation }: Props) => {
 export default ExpenseScreen;
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F2F2F7' },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: c.bg },
 
   // Header
   header: {
-    backgroundColor: PRIMARY,
+    backgroundColor: c.primary,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -382,13 +385,13 @@ const styles = StyleSheet.create({
 
   // Hero card
   heroCard: {
-    backgroundColor: '#fff',
+    backgroundColor: c.white,
     borderRadius: 20,
     marginHorizontal: 16,
     marginTop: 16,
     padding: 20,
     borderWidth: 0.5,
-    borderColor: PRIMARY_BORDER,
+    borderColor: c.primaryBorder,
     elevation: 2,
     shadowColor: '#000',
     shadowOpacity: 0.04,
@@ -397,7 +400,7 @@ const styles = StyleSheet.create({
   },
   heroLabel: {
     fontSize: 10,
-    color: '#aaa',
+    color: c.hint,
     letterSpacing: 0.6,
     fontWeight: '500',
   },
@@ -431,24 +434,24 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     gap: 6,
-    backgroundColor: PRIMARY_LIGHT,
+    backgroundColor: c.primaryLight,
     borderRadius: 12,
     paddingVertical: 12,
     borderWidth: 0.5,
-    borderColor: PRIMARY_BORDER,
+    borderColor: c.primaryBorder,
   },
   quickIconWrap: {
     width: 36, height: 36, borderRadius: 18,
-    backgroundColor: '#fff',
+    backgroundColor: c.white,
     alignItems: 'center', justifyContent: 'center',
-    borderWidth: 0.5, borderColor: PRIMARY_BORDER,
+    borderWidth: 0.5, borderColor: c.primaryBorder,
   },
-  quickLabel: { fontSize: 10, color: PRIMARY_DARK, fontWeight: '500' },
+  quickLabel: { fontSize: 10, color: c.primaryDark, fontWeight: '500' },
 
   // Section labels
   sectionLabel: {
     fontSize: 11,
-    color: '#aaa',
+    color: c.hint,
     letterSpacing: 0.6,
     fontWeight: '500',
     marginHorizontal: 20,
@@ -464,17 +467,17 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  accentBar: { width: 4, height: 18, backgroundColor: PRIMARY, borderRadius: 2 },
-  sectionTitleText: { fontSize: 15, fontWeight: '500', color: '#1a1a1a' },
-  viewAll: { fontSize: 12, color: PRIMARY, fontWeight: '500' },
+  accentBar: { width: 4, height: 18, backgroundColor: c.primary, borderRadius: 2 },
+  sectionTitleText: { fontSize: 15, fontWeight: '500', color: c.text },
+  viewAll: { fontSize: 12, color: c.primary, fontWeight: '500' },
 
   // Card
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: c.white,
     borderRadius: 14,
     marginHorizontal: 16,
     borderWidth: 0.5,
-    borderColor: '#e8e8e8',
+    borderColor: c.border,
     overflow: 'hidden',
   },
 
@@ -494,7 +497,7 @@ const styles = StyleSheet.create({
     width: 48, height: 48, borderRadius: 14,
     alignItems: 'center', justifyContent: 'center',
   },
-  catName: { fontSize: 10, color: '#555', fontWeight: '500', textAlign: 'center' },
+  catName: { fontSize: 10, color: c.subtext, fontWeight: '500', textAlign: 'center' },
 
   // Filter chips
   filterRow: {
@@ -507,21 +510,21 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     borderRadius: 20,
     borderWidth: 0.5,
-    borderColor: '#e0e0e0',
-    backgroundColor: '#fff',
+    borderColor: c.border,
+    backgroundColor: c.white,
     marginRight: 8,
   },
-  filterChipActive: { backgroundColor: PRIMARY, borderColor: PRIMARY },
-  filterText: { fontSize: 12, color: '#888' },
+  filterChipActive: { backgroundColor: c.primary, borderColor: c.primary },
+  filterText: { fontSize: 12, color: c.subtext },
   filterTextActive: { color: '#fff', fontWeight: '500' },
 
   // Transaction list
   txCard: {
-    backgroundColor: '#fff',
+    backgroundColor: c.white,
     borderRadius: 14,
     marginHorizontal: 16,
     borderWidth: 0.5,
-    borderColor: '#e8e8e8',
+    borderColor: c.border,
     overflow: 'hidden',
   },
   txRow: {
@@ -537,12 +540,12 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   txInfo: { flex: 1 },
-  txName: { fontSize: 13, fontWeight: '500', color: '#1a1a1a' },
-  txMeta: { fontSize: 11, color: '#aaa', marginTop: 2 },
+  txName: { fontSize: 13, fontWeight: '500', color: c.text },
+  txMeta: { fontSize: 11, color: c.hint, marginTop: 2 },
   txRight: { alignItems: 'flex-end', gap: 2 },
   txAmount: { fontSize: 13, fontWeight: '600', color: COLOR_DANGER },
-  txTime: { fontSize: 10, color: '#bbb' },
-  txDivider: { height: 0.5, backgroundColor: '#F0F0F0', marginLeft: 72 },
+  txTime: { fontSize: 10, color: c.muted },
+  txDivider: { height: 0.5, backgroundColor: c.divider, marginLeft: 72 },
 
   // Add Expense Modal
   modalOverlay: {
@@ -551,7 +554,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   bottomSheet: {
-    backgroundColor: '#fff',
+    backgroundColor: c.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 20,
@@ -560,16 +563,16 @@ const styles = StyleSheet.create({
   },
   handle: {
     width: 40, height: 4, borderRadius: 2,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: c.border,
     alignSelf: 'center',
     marginBottom: 20,
   },
   modalTitle: {
-    fontSize: 17, fontWeight: '600', color: '#1a1a1a',
+    fontSize: 17, fontWeight: '600', color: c.text,
     marginBottom: 16,
   },
   inputLabel: {
-    fontSize: 11, color: '#aaa',
+    fontSize: 11, color: c.hint,
     letterSpacing: 0.5, fontWeight: '500',
     marginBottom: 8, marginTop: 12,
   },
@@ -577,17 +580,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: PRIMARY_BORDER,
+    borderColor: c.primaryBorder,
     borderRadius: 12,
     paddingHorizontal: 14,
-    backgroundColor: PRIMARY_LIGHT,
+    backgroundColor: c.primaryLight,
     height: 52,
     gap: 8,
   },
-  currencySign: { fontSize: 18, color: PRIMARY_DARK, fontWeight: '600' },
+  currencySign: { fontSize: 18, color: c.primaryDark, fontWeight: '600' },
   amountInput: {
     flex: 1, fontSize: 22, fontWeight: '700',
-    color: '#1a1a1a', paddingVertical: 0,
+    color: c.text, paddingVertical: 0,
   },
   catPickerRow: { gap: 10, paddingVertical: 4 },
   catPickerItem: { alignItems: 'center', gap: 4, width: 64 },
@@ -596,30 +599,30 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   catPickerItemActive: {},
-  catPickerLabel: { fontSize: 10, color: '#888', textAlign: 'center' },
+  catPickerLabel: { fontSize: 10, color: c.subtext, textAlign: 'center' },
   noteInput: {
     borderWidth: 0.5,
-    borderColor: '#e8e8e8',
+    borderColor: c.border,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 13,
-    color: '#1a1a1a',
+    color: c.text,
     minHeight: 60,
     textAlignVertical: 'top',
-    backgroundColor: '#fafafa',
+    backgroundColor: c.white,
   },
   modalBtnRow: { flexDirection: 'row', gap: 10, marginTop: 20 },
   modalBtnCancel: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: c.bg,
     borderRadius: 12, height: 50,
     alignItems: 'center', justifyContent: 'center',
   },
-  modalBtnCancelText: { fontSize: 14, fontWeight: '500', color: '#888' },
+  modalBtnCancelText: { fontSize: 14, fontWeight: '500', color: c.subtext },
   modalBtnSave: {
     flex: 2,
-    backgroundColor: PRIMARY,
+    backgroundColor: c.primary,
     borderRadius: 12, height: 50,
     alignItems: 'center', justifyContent: 'center',
   },

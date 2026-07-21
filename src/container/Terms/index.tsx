@@ -1,5 +1,5 @@
 // ─── 1. Imports ────────────────────────────────────────────────────────────
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,8 @@ import {
   ScrollView,
 } from 'react-native';
 import { Icon } from '@rneui/themed';
-import { BRAND } from '../../theme/paperTheme';
+import { ThemeColors } from '../../theme/paperTheme';
+import { useThemeColors } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 
 // ─── 2. Main screen component ──────────────────────────────────────────────
@@ -19,6 +20,8 @@ interface Props {
 
 const TermsScreen = ({ navigation }: Props) => {
   const { t } = useLanguage();
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const sections = [
     { title: t.terms.s1Title, body: t.terms.s1Body },
@@ -55,11 +58,11 @@ const TermsScreen = ({ navigation }: Props) => {
 export default TermsScreen;
 
 // ─── 3. Styles ─────────────────────────────────────────────────────────────
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: BRAND.bg },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: c.bg },
 
   header: {
-    backgroundColor: BRAND.primary,
+    backgroundColor: c.primary,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -85,20 +88,20 @@ const styles = StyleSheet.create({
   scroll: { padding: 16, paddingBottom: 32 },
 
   card: {
-    backgroundColor: BRAND.white,
+    backgroundColor: c.white,
     borderRadius: 14,
     borderWidth: 0.5,
-    borderColor: BRAND.border,
+    borderColor: c.border,
     overflow: 'hidden',
   },
   section: { padding: 16 },
-  sectionBorder: { borderTopWidth: 0.5, borderTopColor: BRAND.divider },
-  sectionTitle: { fontSize: 14, fontWeight: '600', color: BRAND.text, marginBottom: 6 },
-  sectionBody: { fontSize: 13, color: BRAND.subtext, lineHeight: 20 },
+  sectionBorder: { borderTopWidth: 0.5, borderTopColor: c.divider },
+  sectionTitle: { fontSize: 14, fontWeight: '600', color: c.text, marginBottom: 6 },
+  sectionBody: { fontSize: 13, color: c.subtext, lineHeight: 20 },
 
   updated: {
     fontSize: 11,
-    color: BRAND.hint,
+    color: c.hint,
     textAlign: 'center',
     marginTop: 14,
   },

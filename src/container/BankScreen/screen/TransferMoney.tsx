@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -12,9 +12,8 @@ import { Icon } from '@rneui/themed';
 import { StackScreenProps } from '@react-navigation/stack';
 import { AppDialog, AppSnackbar } from '../../../components/UI';
 import { useLanguage } from '../../../context/LanguageContext';
-
-const PRIMARY = '#E89951';
-const PRIMARY_BORDER = '#f0c48a';
+import { useThemeColors } from '../../../context/ThemeContext';
+import { ThemeColors } from '../../../theme/paperTheme';
 
 const RECIPIENT = {
   name: 'John Smith',
@@ -36,6 +35,8 @@ interface Props extends StackScreenProps<any> {}
 
 const TransferMoney = ({ navigation, route }: Props) => {
   const { t } = useLanguage();
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const balance = (route.params as any)?.balance ?? 1000000000;
   // Người nhận truyền từ Gửi nhanh / Gửi lại — mặc định RECIPIENT demo
   const recipient = { ...RECIPIENT, ...((route.params as any)?.contact ?? {}) };
@@ -111,7 +112,7 @@ const TransferMoney = ({ navigation, route }: Props) => {
 
         {/* Security note */}
         <View style={styles.securityRow}>
-          <Icon type="ionicon" name="shield-checkmark-outline" size={14} color="#bbb" />
+          <Icon type="ionicon" name="shield-checkmark-outline" size={14} color={colors.muted} />
           <Text style={styles.securityText}>Giao dịch được mã hoá 256-bit SSL</Text>
         </View>
 
@@ -120,7 +121,7 @@ const TransferMoney = ({ navigation, route }: Props) => {
       {/* Bottom CTA */}
       <View style={styles.bottom}>
         <View style={styles.securityRowCenter}>
-          <Icon type="ionicon" name="lock-closed-outline" size={13} color="#aaa" />
+          <Icon type="ionicon" name="lock-closed-outline" size={13} color={colors.hint} />
           <Text style={styles.securityTextSmall}>Bảo mật bởi Face ID</Text>
         </View>
         <TouchableOpacity
@@ -163,12 +164,12 @@ const TransferMoney = ({ navigation, route }: Props) => {
 
 export default TransferMoney;
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F2F2F7' },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: c.bg },
 
   // Header
   header: {
-    backgroundColor: PRIMARY,
+    backgroundColor: c.primary,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -196,13 +197,13 @@ const styles = StyleSheet.create({
 
   // Card
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: c.white,
     borderRadius: 16,
     overflow: 'hidden',
   },
   sectionLabel: {
     fontSize: 10,
-    color: '#aaa',
+    color: c.hint,
     letterSpacing: 0.6,
     fontWeight: '500',
     paddingHorizontal: 16,
@@ -223,11 +224,11 @@ const styles = StyleSheet.create({
     height: 46,
     borderRadius: 23,
     borderWidth: 1.5,
-    borderColor: PRIMARY_BORDER,
+    borderColor: c.primaryBorder,
   },
   recipientInfo: { flex: 1 },
-  recipientName: { fontSize: 15, fontWeight: '600', color: '#1a1a1a' },
-  recipientBank: { fontSize: 12, color: '#888', marginTop: 3 },
+  recipientName: { fontSize: 15, fontWeight: '600', color: c.text },
+  recipientBank: { fontSize: 12, color: c.subtext, marginTop: 3 },
   verifiedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -249,7 +250,7 @@ const styles = StyleSheet.create({
   amountBig: {
     fontSize: 34,
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: c.text,
     letterSpacing: -0.5,
   },
   freeBadge: {
@@ -264,7 +265,7 @@ const styles = StyleSheet.create({
   freeText: { fontSize: 11, color: '#16a34a', fontWeight: '500' },
 
   // Rows
-  divider: { height: 0.5, backgroundColor: '#F0F0F0', marginHorizontal: 16 },
+  divider: { height: 0.5, backgroundColor: c.divider, marginHorizontal: 16 },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -272,9 +273,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 13,
   },
-  rowLabel: { fontSize: 14, color: '#888' },
-  rowValue: { fontSize: 14, color: '#1a1a1a', fontWeight: '500' },
-  rowRemain: { fontSize: 14, color: PRIMARY, fontWeight: '700' },
+  rowLabel: { fontSize: 14, color: c.subtext },
+  rowValue: { fontSize: 14, color: c.text, fontWeight: '500' },
+  rowRemain: { fontSize: 14, color: c.primary, fontWeight: '700' },
 
   // Security
   securityRow: {
@@ -284,14 +285,14 @@ const styles = StyleSheet.create({
     gap: 5,
     paddingVertical: 4,
   },
-  securityText: { fontSize: 11, color: '#bbb' },
+  securityText: { fontSize: 11, color: c.muted },
 
   // Bottom
   bottom: {
     padding: 16,
     paddingBottom: 24,
     gap: 10,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: c.bg,
   },
   securityRowCenter: {
     flexDirection: 'row',
@@ -299,9 +300,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 5,
   },
-  securityTextSmall: { fontSize: 11, color: '#aaa' },
+  securityTextSmall: { fontSize: 11, color: c.hint },
   confirmBtn: {
-    backgroundColor: PRIMARY,
+    backgroundColor: c.primary,
     borderRadius: 14,
     height: 52,
     flexDirection: 'row',

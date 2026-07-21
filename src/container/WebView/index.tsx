@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,8 @@ import {
 import { Icon } from '@rneui/themed';
 import { useFocusEffect } from '@react-navigation/native';
 import type { WebViewNavigation } from 'react-native-webview';
+import { useThemeColors } from '../../context/ThemeContext';
+import { ThemeColors } from '../../theme/paperTheme';
 
 // Safe lazy require — tránh crash khi native module chưa được link (pod install chưa chạy)
 let WebView: any = null;
@@ -22,8 +24,6 @@ try {
 } catch (_e) {
   webViewAvailable = false;
 }
-
-const PRIMARY      = '#E89951';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -41,6 +41,9 @@ interface Props {
 
 const WebViewScreen = ({ navigation, route }: Props) => {
   const { url, title } = route.params;
+
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const webviewRef = useRef<any>(null);
 
@@ -87,11 +90,11 @@ const WebViewScreen = ({ navigation, route }: Props) => {
           <View style={styles.headerBtn} />
         </View>
         <View style={styles.errorBox}>
-          <Icon type="ionicon" name="construct-outline" size={44} color="#ccc" />
+          <Icon type="ionicon" name="construct-outline" size={44} color={colors.muted} />
           <Text style={styles.errorTitle}>Cần rebuild ứng dụng</Text>
           <Text style={styles.errorSub}>
             Chạy{' '}
-            <Text style={{ fontWeight: '700', color: '#555' }}>pod install</Text>
+            <Text style={{ fontWeight: '700', color: colors.text }}>pod install</Text>
             {' '}và rebuild từ Xcode để kích hoạt WebView
           </Text>
           <TouchableOpacity
@@ -143,7 +146,7 @@ const WebViewScreen = ({ navigation, route }: Props) => {
       {/* ── Error state ── */}
       {hasError && (
         <View style={styles.errorBox}>
-          <Icon type="ionicon" name="wifi-outline" size={40} color="#ccc" />
+          <Icon type="ionicon" name="wifi-outline" size={40} color={colors.muted} />
           <Text style={styles.errorTitle}>Không thể tải trang</Text>
           <Text style={styles.errorSub}>{url}</Text>
           <TouchableOpacity
@@ -198,7 +201,7 @@ const WebViewScreen = ({ navigation, route }: Props) => {
           applicationNameForUserAgent="MyAppPortfolio/1.0"
           renderLoading={() => (
             <View style={styles.loadingOverlay}>
-              <ActivityIndicator size="large" color={PRIMARY} />
+              <ActivityIndicator size="large" color={colors.primary} />
             </View>
           )}
           startInLoadingState
@@ -212,12 +215,12 @@ export default WebViewScreen;
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F2F2F7' },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: c.bg },
 
   // Header
   header: {
-    backgroundColor: PRIMARY,
+    backgroundColor: c.primary,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -247,7 +250,7 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: 3,
-    backgroundColor: PRIMARY,
+    backgroundColor: c.primary,
   },
 
   // WebView
@@ -259,7 +262,7 @@ const styles = StyleSheet.create({
     top: 0, left: 0, right: 0, bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: c.white,
   },
 
   // Error state
@@ -269,15 +272,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 10,
     padding: 32,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: c.bg,
   },
-  errorTitle: { fontSize: 16, fontWeight: '600', color: '#555' },
-  errorSub:   { fontSize: 11, color: '#bbb', textAlign: 'center' },
+  errorTitle: { fontSize: 16, fontWeight: '600', color: c.text },
+  errorSub:   { fontSize: 11, color: c.muted, textAlign: 'center' },
   retryBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: PRIMARY,
+    backgroundColor: c.primary,
     borderRadius: 12,
     paddingHorizontal: 20,
     paddingVertical: 12,

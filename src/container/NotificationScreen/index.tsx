@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -10,10 +10,8 @@ import {
 import { Icon } from '@rneui/themed';
 import { useNavigation } from '@react-navigation/native';
 import { useLanguage } from '../../context/LanguageContext';
-
-const PRIMARY = '#E89951';
-const PRIMARY_DARK = '#b36a1a';
-const PRIMARY_LIGHT = '#fdf3e7';
+import { useThemeColors } from '../../context/ThemeContext';
+import { ThemeColors } from '../../theme/paperTheme';
 
 type NotifItem = {
   id: number;
@@ -54,7 +52,7 @@ const NOTIFICATIONS: NotifItem[] = [
     isRead: false,
     icon: 'shield-checkmark-outline',
     iconBg: '#fff4e8',
-    iconColor: PRIMARY_DARK,
+    iconColor: '#b36a1a',
     time: '2 giờ trước',
   },
   {
@@ -83,14 +81,16 @@ const NOTIFICATIONS: NotifItem[] = [
     contentKey: 'Chuyển tiền miễn phí toàn bộ trong tuần này. Áp dụng ngay!',
     isRead: true,
     icon: 'gift-outline',
-    iconBg: PRIMARY_LIGHT,
-    iconColor: PRIMARY_DARK,
+    iconBg: '#fdf3e7',
+    iconColor: '#b36a1a',
     time: '2 ngày trước',
   },
 ];
 
 const NotificationScreen = () => {
   const { t } = useLanguage();
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const navigation = useNavigation();
   const [activeFilter, setActiveFilter] = useState(0); // 0=all, 1=read, 2=unread
   const [notifications, setNotifications] = useState(NOTIFICATIONS);
@@ -129,12 +129,12 @@ const NotificationScreen = () => {
         </View>
         <View style={styles.headerActions}>
           <TouchableOpacity style={styles.headerIconBtn} onPress={markAllRead}>
-            <Icon type="ionicon" name="checkmark-done-outline" size={20} color={PRIMARY_DARK} />
+            <Icon type="ionicon" name="checkmark-done-outline" size={20} color={colors.primaryDark} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.headerIconBtn}
             onPress={() => navigation.navigate('Setting' as never)}>
-            <Icon type="ionicon" name="settings-outline" size={20} color="#888" />
+            <Icon type="ionicon" name="settings-outline" size={20} color={colors.subtext} />
           </TouchableOpacity>
         </View>
       </View>
@@ -163,7 +163,7 @@ const NotificationScreen = () => {
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <View style={styles.emptyIconWrap}>
-              <Icon type="ionicon" name="notifications-off-outline" size={32} color="#ddd" />
+              <Icon type="ionicon" name="notifications-off-outline" size={32} color={colors.muted} />
             </View>
             <Text style={styles.emptyTitle}>{t.notification.empty}</Text>
             <Text style={styles.emptyDesc}>{t.notification.emptyDesc}</Text>
@@ -201,8 +201,8 @@ const NotificationScreen = () => {
 
 export default NotificationScreen;
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F2F2F7' },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: c.bg },
 
   header: {
     flexDirection: 'row',
@@ -212,18 +212,18 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 10,
   },
-  headerTitle: { fontSize: 26, fontWeight: '700', color: '#1a1a1a' },
-  headerSub: { fontSize: 12, color: PRIMARY, fontWeight: '500', marginTop: 2 },
+  headerTitle: { fontSize: 26, fontWeight: '700', color: c.text },
+  headerSub: { fontSize: 12, color: c.primary, fontWeight: '500', marginTop: 2 },
   headerActions: { flexDirection: 'row', gap: 6, paddingTop: 4 },
   headerIconBtn: {
     width: 34,
     height: 34,
     borderRadius: 10,
-    backgroundColor: '#fff',
+    backgroundColor: c.white,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 0.5,
-    borderColor: '#e8e8e8',
+    borderColor: c.border,
   },
 
   filterRow: {
@@ -237,14 +237,14 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     borderRadius: 20,
     borderWidth: 0.5,
-    borderColor: '#e0e0e0',
-    backgroundColor: '#fff',
+    borderColor: c.border,
+    backgroundColor: c.white,
   },
   filterChipActive: {
-    backgroundColor: PRIMARY,
-    borderColor: PRIMARY,
+    backgroundColor: c.primary,
+    borderColor: c.primary,
   },
-  filterText: { fontSize: 12, color: '#888' },
+  filterText: { fontSize: 12, color: c.subtext },
   filterTextActive: { color: '#fff', fontWeight: '500' },
 
   listContent: { paddingHorizontal: 12, paddingBottom: 40 },
@@ -252,15 +252,15 @@ const styles = StyleSheet.create({
   notifRow: {
     flexDirection: 'row',
     gap: 12,
-    backgroundColor: '#fff',
+    backgroundColor: c.white,
     borderRadius: 14,
     padding: 14,
     alignItems: 'flex-start',
   },
   notifRowUnread: {
-    backgroundColor: PRIMARY_LIGHT,
+    backgroundColor: c.primaryLight,
     borderWidth: 0.5,
-    borderColor: '#f0c48a',
+    borderColor: c.primaryBorder,
   },
   notifIcon: {
     width: 44,
@@ -277,15 +277,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 3,
   },
-  notifTitle: { fontSize: 13, fontWeight: '500', color: '#1a1a1a', flex: 1 },
-  notifTitleUnread: { fontWeight: '600', color: PRIMARY_DARK },
-  notifBody: { fontSize: 12, color: '#888', lineHeight: 17 },
-  notifTime: { fontSize: 11, color: '#bbb', marginTop: 5 },
+  notifTitle: { fontSize: 13, fontWeight: '500', color: c.text, flex: 1 },
+  notifTitleUnread: { fontWeight: '600', color: c.primaryDark },
+  notifBody: { fontSize: 12, color: c.subtext, lineHeight: 17 },
+  notifTime: { fontSize: 11, color: c.muted, marginTop: 5 },
   unreadDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: PRIMARY,
+    backgroundColor: c.primary,
     marginLeft: 6,
     flexShrink: 0,
   },
@@ -297,10 +297,10 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#f5f5f7',
+    backgroundColor: c.bg,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  emptyTitle: { fontSize: 15, fontWeight: '500', color: '#888' },
-  emptyDesc: { fontSize: 12, color: '#bbb' },
+  emptyTitle: { fontSize: 15, fontWeight: '500', color: c.subtext },
+  emptyDesc: { fontSize: 12, color: c.muted },
 });

@@ -1,5 +1,5 @@
 import { Icon } from '@rneui/themed';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -12,8 +12,9 @@ import {
 import { QuickAction } from './components';
 import { StackScreenProps } from '@react-navigation/stack';
 import { useLanguage } from '../../context/LanguageContext';
+import { useThemeColors } from '../../context/ThemeContext';
+import { ThemeColors } from '../../theme/paperTheme';
 
-const PRIMARY = '#E89951';
 const PRIMARY_DARK = '#b36a1a';
 
 interface BankScreenProps extends StackScreenProps<{}> {}
@@ -60,7 +61,13 @@ const transactions: Transaction[] = [
 
 // FILTERS built inside component using t
 
-const SectionTitle = ({ title }: { title: string }) => (
+const SectionTitle = ({
+  title,
+  styles,
+}: {
+  title: string;
+  styles: ReturnType<typeof makeStyles>;
+}) => (
   <View style={styles.sectionTitleRow}>
     <View style={styles.accentBar} />
     <Text style={styles.sectionTitleText}>{title}</Text>
@@ -69,6 +76,8 @@ const SectionTitle = ({ title }: { title: string }) => (
 
 const BankScreen = ({ navigation }: BankScreenProps) => {
   const { t } = useLanguage();
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const FILTERS = [t.bank.filterAll, t.bank.filterIn, t.bank.filterOut];
   const [balanceVisible, setBalanceVisible] = useState(true);
   const [activeFilter, setActiveFilter] = useState(0); // 0=all, 1=in, 2=out
@@ -121,7 +130,7 @@ const BankScreen = ({ navigation }: BankScreenProps) => {
                 type="ionicon"
                 name={balanceVisible ? 'eye-outline' : 'eye-off-outline'}
                 size={18}
-                color="#bbb"
+                color={colors.muted}
               />
             </TouchableOpacity>
           </View>
@@ -143,7 +152,7 @@ const BankScreen = ({ navigation }: BankScreenProps) => {
 
         {/* Gửi nhanh */}
         <View style={styles.sectionHeader}>
-          <SectionTitle title={t.bank.quickSend} />
+          <SectionTitle title={t.bank.quickSend} styles={styles} />
           <TouchableOpacity onPress={() => navigation.navigate('AllContacts' as never)}>
             <Text style={styles.seeAll}>{t.bank.viewAll}</Text>
           </TouchableOpacity>
@@ -177,7 +186,7 @@ const BankScreen = ({ navigation }: BankScreenProps) => {
           ListHeaderComponent={
             <View>
               <View style={styles.txListSectionHeader}>
-                <SectionTitle title={t.bank.history} />
+                <SectionTitle title={t.bank.history} styles={styles} />
               </View>
               <View style={styles.filterRow}>
                 {FILTERS.map((f, i) => (
@@ -232,10 +241,10 @@ const BankScreen = ({ navigation }: BankScreenProps) => {
 
 export default BankScreen;
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f5f5f7',
+    backgroundColor: c.bg,
   },
   container: {
     flex: 1,
@@ -247,7 +256,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 130,
-    backgroundColor: PRIMARY,
+    backgroundColor: c.primary,
   },
   txList: {
     flex: 1,
@@ -276,13 +285,13 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   balanceCard: {
-    backgroundColor: '#fff',
+    backgroundColor: c.white,
     borderRadius: 20,
     marginHorizontal: 16,
     marginTop: 8,
     padding: 16,
     borderWidth: 0.5,
-    borderColor: '#e8e8e8',
+    borderColor: c.border,
     elevation: 4,
     shadowColor: '#000',
     shadowOpacity: 0.06,
@@ -296,12 +305,12 @@ const styles = StyleSheet.create({
   },
   balanceLabel: {
     fontSize: 12,
-    color: '#999',
+    color: c.subtext,
   },
   balanceAmount: {
     fontSize: 26,
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: c.text,
     marginVertical: 10,
   },
   quickActionsRow: {
@@ -333,17 +342,17 @@ const styles = StyleSheet.create({
   accentBar: {
     width: 4,
     height: 18,
-    backgroundColor: PRIMARY,
+    backgroundColor: c.primary,
     borderRadius: 2,
   },
   sectionTitleText: {
     fontSize: 15,
     fontWeight: '500',
-    color: '#1a1a1a',
+    color: c.text,
   },
   seeAll: {
     fontSize: 12,
-    color: PRIMARY,
+    color: c.primary,
     fontWeight: '500',
   },
   quickSendScroll: {
@@ -364,11 +373,11 @@ const styles = StyleSheet.create({
     height: 52,
     borderRadius: 26,
     borderWidth: 2,
-    borderColor: '#f0c48a',
+    borderColor: c.primaryBorder,
   },
   contactName: {
     fontSize: 11,
-    color: '#555',
+    color: c.subtext,
   },
   filterRow: {
     flexDirection: 'row',
@@ -381,32 +390,32 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 20,
     borderWidth: 0.5,
-    borderColor: '#e0e0e0',
-    backgroundColor: '#fff',
+    borderColor: c.border,
+    backgroundColor: c.white,
   },
   filterTabActive: {
-    backgroundColor: PRIMARY,
-    borderColor: PRIMARY,
+    backgroundColor: c.primary,
+    borderColor: c.primary,
   },
   filterLabel: {
     fontSize: 12,
-    color: '#888',
+    color: c.subtext,
   },
   filterLabelActive: {
     color: '#fff',
     fontWeight: '500',
   },
   txCard: {
-    backgroundColor: '#fff',
+    backgroundColor: c.white,
     borderRadius: 16,
     marginHorizontal: 16,
     padding: 14,
     borderWidth: 0.5,
-    borderColor: '#e8e8e8',
+    borderColor: c.border,
   },
   dateGroup: {
     fontSize: 11,
-    color: '#bbb',
+    color: c.muted,
     fontWeight: '500',
     marginBottom: 6,
   },
@@ -418,7 +427,7 @@ const styles = StyleSheet.create({
   },
   txBorder: {
     borderBottomWidth: 0.5,
-    borderBottomColor: '#f5f5f5',
+    borderBottomColor: c.divider,
   },
   txIconWrap: {
     width: 40,
@@ -434,11 +443,11 @@ const styles = StyleSheet.create({
   txName: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#1a1a1a',
+    color: c.text,
   },
   txTime: {
     fontSize: 11,
-    color: '#bbb',
+    color: c.muted,
     marginTop: 2,
   },
   amountPos: {

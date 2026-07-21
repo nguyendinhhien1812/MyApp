@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { Card } from 'react-native-paper';
-import { BRAND } from '../../theme/paperTheme';
+import { ThemeColors } from '../../theme/paperTheme';
+import { useThemeColors } from '../../context/ThemeContext';
 
 interface AppCardProps {
   children: React.ReactNode;
@@ -17,29 +18,34 @@ const AppCard = ({
   padded = true,
   inset = true,
   style,
-}: AppCardProps) => (
-  <Card
-    mode="contained"
-    onPress={onPress}
-    style={[styles.card, inset && styles.inset, style]}>
-    <View style={padded ? styles.padded : undefined}>{children}</View>
-  </Card>
-);
+}: AppCardProps) => {
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  return (
+    <Card
+      mode="contained"
+      onPress={onPress}
+      style={[styles.card, inset && styles.inset, style]}>
+      <View style={padded ? styles.padded : undefined}>{children}</View>
+    </Card>
+  );
+};
 
 export default AppCard;
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: BRAND.white,
-    borderRadius: 14,
-    borderWidth: 0.5,
-    borderColor: BRAND.border,
-    overflow: 'hidden',
-  },
-  inset: {
-    marginHorizontal: 16,
-  },
-  padded: {
-    padding: 16,
-  },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    card: {
+      backgroundColor: c.white,
+      borderRadius: 14,
+      borderWidth: 0.5,
+      borderColor: c.border,
+      overflow: 'hidden',
+    },
+    inset: {
+      marginHorizontal: 16,
+    },
+    padded: {
+      padding: 16,
+    },
+  });

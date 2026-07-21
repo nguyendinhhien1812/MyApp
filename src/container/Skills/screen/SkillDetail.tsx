@@ -1,5 +1,5 @@
 // ─── 1. Imports ────────────────────────────────────────────────────────────
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,8 @@ import {
 import { Icon } from '@rneui/themed';
 import { ProgressBar } from 'react-native-paper';
 import { AppButton } from '../../../components/UI';
-import { BRAND } from '../../../theme/paperTheme';
+import { ThemeColors } from '../../../theme/paperTheme';
+import { useThemeColors } from '../../../context/ThemeContext';
 import { useLanguage } from '../../../context/LanguageContext';
 import { getSkillById, LEVEL_BADGE, GITHUB_URL } from '../data';
 
@@ -22,7 +23,13 @@ interface Props {
 }
 
 // ─── 3. Sub-components ─────────────────────────────────────────────────────
-const SectionTitle = ({ title }: { title: string }) => (
+const SectionTitle = ({
+  title,
+  styles,
+}: {
+  title: string;
+  styles: ReturnType<typeof makeStyles>;
+}) => (
   <View style={styles.sectionTitleRow}>
     <View style={styles.accentBar} />
     <Text style={styles.sectionTitleText}>{title}</Text>
@@ -32,6 +39,8 @@ const SectionTitle = ({ title }: { title: string }) => (
 // ─── 4. Main screen component ──────────────────────────────────────────────
 const SkillDetail = ({ navigation, route }: Props) => {
   const { t, lang } = useLanguage();
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const skillId = (route.params as any)?.skillId ?? '';
   const skill = getSkillById(skillId);
 
@@ -72,7 +81,7 @@ const SkillDetail = ({ navigation, route }: Props) => {
           </View>
           <ProgressBar
             progress={skill.percent / 100}
-            color={BRAND.primary}
+            color={colors.primary}
             style={styles.heroProgress}
           />
           <Text style={styles.heroSub}>
@@ -81,14 +90,14 @@ const SkillDetail = ({ navigation, route }: Props) => {
         </View>
 
         {/* Kinh nghiệm nổi bật */}
-        <SectionTitle title={t.skills.sectionHighlights} />
+        <SectionTitle title={t.skills.sectionHighlights} styles={styles} />
         <View style={styles.card}>
           {skill.highlights[lang].map((hl, i) => (
             <View
               key={i}
               style={[styles.hlRow, i < skill.highlights[lang].length - 1 && styles.rowBorder]}>
               <View style={styles.hlDot}>
-                <Icon type="ionicon" name="checkmark" size={12} color={BRAND.success} />
+                <Icon type="ionicon" name="checkmark" size={12} color={colors.success} />
               </View>
               <Text style={styles.hlText}>{hl}</Text>
             </View>
@@ -96,7 +105,7 @@ const SkillDetail = ({ navigation, route }: Props) => {
         </View>
 
         {/* Dự án đã dùng */}
-        <SectionTitle title={t.skills.sectionProjects} />
+        <SectionTitle title={t.skills.sectionProjects} styles={styles} />
         <View style={styles.card}>
           {skill.projects.map((prj, i) => (
             <View
@@ -130,13 +139,13 @@ const SkillDetail = ({ navigation, route }: Props) => {
 export default SkillDetail;
 
 // ─── 5. Styles ─────────────────────────────────────────────────────────────
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   // 1. Container chính
-  safe: { flex: 1, backgroundColor: BRAND.bg },
+  safe: { flex: 1, backgroundColor: c.bg },
 
   // 2. Header
   header: {
-    backgroundColor: BRAND.primary,
+    backgroundColor: c.primary,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -164,10 +173,10 @@ const styles = StyleSheet.create({
 
   // 4. Hero card
   heroCard: {
-    backgroundColor: BRAND.white,
+    backgroundColor: c.white,
     borderRadius: 16,
     borderWidth: 0.5,
-    borderColor: BRAND.primaryBorder,
+    borderColor: c.primaryBorder,
     padding: 20,
     alignItems: 'center',
   },
@@ -178,7 +187,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  heroName: { fontSize: 17, fontWeight: '600', color: BRAND.text, marginTop: 10 },
+  heroName: { fontSize: 17, fontWeight: '600', color: c.text, marginTop: 10 },
   levelBadge: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 3, marginTop: 6 },
   levelText: { fontSize: 11, fontWeight: '500' },
   heroProgress: {
@@ -187,22 +196,22 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     marginTop: 14,
   },
-  heroSub: { fontSize: 11, color: BRAND.subtext, marginTop: 8, textAlign: 'center' },
+  heroSub: { fontSize: 11, color: c.subtext, marginTop: 8, textAlign: 'center' },
 
   // 5. Section title
   sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
-  accentBar: { width: 4, height: 18, backgroundColor: BRAND.primary, borderRadius: 2 },
-  sectionTitleText: { fontSize: 15, fontWeight: '500', color: BRAND.text },
+  accentBar: { width: 4, height: 18, backgroundColor: c.primary, borderRadius: 2 },
+  sectionTitleText: { fontSize: 15, fontWeight: '500', color: c.text },
 
   // 6. Cards & rows
   card: {
-    backgroundColor: BRAND.white,
+    backgroundColor: c.white,
     borderRadius: 14,
     borderWidth: 0.5,
-    borderColor: BRAND.border,
+    borderColor: c.border,
     overflow: 'hidden',
   },
-  rowBorder: { borderBottomWidth: 0.5, borderBottomColor: BRAND.divider },
+  rowBorder: { borderBottomWidth: 0.5, borderBottomColor: c.divider },
   hlRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -219,7 +228,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 1,
   },
-  hlText: { flex: 1, fontSize: 13, color: BRAND.text, lineHeight: 19 },
+  hlText: { flex: 1, fontSize: 13, color: c.text, lineHeight: 19 },
   prjRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -235,8 +244,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   prjInfo: { flex: 1 },
-  prjName: { fontSize: 13, color: BRAND.text },
-  prjTech: { fontSize: 10, color: BRAND.hint, marginTop: 1 },
+  prjName: { fontSize: 13, color: c.text },
+  prjTech: { fontSize: 10, color: c.hint, marginTop: 1 },
 
   // 7. Bottom CTA
   githubBtn: { marginTop: 4 },

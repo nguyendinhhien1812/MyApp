@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,8 @@ import { Icon } from '@rneui/themed';
 import Svg, { Polyline } from 'react-native-svg';
 import { AppDialog, AppSnackbar } from '../../components/UI';
 import { useLanguage } from '../../context/LanguageContext';
+import { useThemeColors } from '../../context/ThemeContext';
+import { ThemeColors } from '../../theme/paperTheme';
 
 const PRIMARY      = '#E89951';
 const PRIMARY_DARK = '#b36a1a';
@@ -243,12 +245,12 @@ const parseTCBSItem = (raw: any): StockItem | null => {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 // (defined before sub-components so they can reference it)
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F2F2F7' },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: c.bg },
 
   // Header
   header: {
-    backgroundColor: PRIMARY,
+    backgroundColor: c.primary,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -275,12 +277,12 @@ const styles = StyleSheet.create({
 
   // Portfolio card
   portfolioCard: {
-    backgroundColor: '#fff',
+    backgroundColor: c.white,
     borderRadius: 16,
     margin: 12,
     padding: 16,
     borderWidth: 0.5,
-    borderColor: PRIMARY_BORDER,
+    borderColor: c.primaryBorder,
     elevation: 2,
     shadowColor: '#000',
     shadowOpacity: 0.04,
@@ -289,14 +291,14 @@ const styles = StyleSheet.create({
   },
   portLabel: {
     fontSize: 10,
-    color: '#aaa',
+    color: c.hint,
     letterSpacing: 0.6,
     fontWeight: '500',
   },
   portValue: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: c.text,
     marginTop: 6,
     letterSpacing: -0.5,
   },
@@ -323,22 +325,22 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 0.5,
-    borderTopColor: '#F0F0F0',
+    borderTopColor: c.divider,
   },
   allocItem: { flex: 1, alignItems: 'center' },
-  allocDivider: { width: 0.5, backgroundColor: '#F0F0F0' },
+  allocDivider: { width: 0.5, backgroundColor: c.divider },
   allocNum: { fontSize: 13, fontWeight: '600' },
-  allocLabel: { fontSize: 10, color: '#aaa', marginTop: 3 },
+  allocLabel: { fontSize: 10, color: c.hint, marginTop: 3 },
 
   // Live rate card
   rateCard: {
-    backgroundColor: '#fff',
+    backgroundColor: c.white,
     borderRadius: 14,
     marginHorizontal: 12,
     marginBottom: 12,
     padding: 14,
     borderWidth: 0.5,
-    borderColor: PRIMARY_BORDER,
+    borderColor: c.primaryBorder,
     elevation: 1,
     shadowColor: '#000',
     shadowOpacity: 0.03,
@@ -353,7 +355,7 @@ const styles = StyleSheet.create({
   },
   rateCardTitle: {
     fontSize: 10,
-    color: '#aaa',
+    color: c.hint,
     letterSpacing: 0.6,
     fontWeight: '600',
   },
@@ -381,15 +383,15 @@ const styles = StyleSheet.create({
   },
   rateRowBorder: {
     borderTopWidth: 0.5,
-    borderTopColor: '#F5F5F5',
+    borderTopColor: c.divider,
   },
-  rateCurrency: { fontSize: 13, fontWeight: '500', color: '#1a1a1a' },
-  rateValue: { fontSize: 13, fontWeight: '600', color: PRIMARY_DARK },
-  rateUpdated: { fontSize: 10, color: '#ccc', marginTop: 8 },
+  rateCurrency: { fontSize: 13, fontWeight: '500', color: c.text },
+  rateValue: { fontSize: 13, fontWeight: '600', color: c.primaryDark },
+  rateUpdated: { fontSize: 10, color: c.hint, marginTop: 8 },
 
   // Error states
   errorCard: {
-    backgroundColor: '#fff5ec',
+    backgroundColor: c.primaryLight,
     borderRadius: 12,
     marginHorizontal: 12,
     marginBottom: 12,
@@ -399,11 +401,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     borderWidth: 0.5,
-    borderColor: PRIMARY_BORDER,
+    borderColor: c.primaryBorder,
   },
-  errorText: { flex: 1, fontSize: 12, color: PRIMARY_DARK },
+  errorText: { flex: 1, fontSize: 12, color: c.primaryDark },
   errorRetryBtn: {
-    backgroundColor: PRIMARY,
+    backgroundColor: c.primary,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -415,16 +417,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#fff8ec',
+    backgroundColor: c.primaryLight,
     borderRadius: 8,
     marginHorizontal: 12,
     marginBottom: 6,
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderWidth: 0.5,
-    borderColor: PRIMARY_BORDER,
+    borderColor: c.primaryBorder,
   },
-  stockErrorText: { flex: 1, fontSize: 11, color: PRIMARY_DARK },
+  stockErrorText: { flex: 1, fontSize: 11, color: c.primaryDark },
 
   // Section header
   sectionHeader: {
@@ -436,9 +438,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  accentBar: { width: 4, height: 18, backgroundColor: PRIMARY, borderRadius: 2 },
-  sectionTitleText: { fontSize: 15, fontWeight: '500', color: '#1a1a1a' },
-  seeAll: { fontSize: 12, color: PRIMARY, fontWeight: '500' },
+  accentBar: { width: 4, height: 18, backgroundColor: c.primary, borderRadius: 2 },
+  sectionTitleText: { fontSize: 15, fontWeight: '500', color: c.text },
+  seeAll: { fontSize: 12, color: c.primary, fontWeight: '500' },
 
   // Market tabs
   mktTabsWrap: {
@@ -451,21 +453,21 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     borderRadius: 20,
     borderWidth: 0.5,
-    borderColor: '#e0e0e0',
-    backgroundColor: '#fff',
+    borderColor: c.border,
+    backgroundColor: c.white,
   },
-  mktTabActive: { backgroundColor: PRIMARY, borderColor: PRIMARY },
-  mktTabText: { fontSize: 12, color: '#888' },
+  mktTabActive: { backgroundColor: c.primary, borderColor: c.primary },
+  mktTabText: { fontSize: 12, color: c.subtext },
   mktTabTextActive: { color: '#fff', fontWeight: '500' },
 
   // Stock list
   stockList: {
     marginHorizontal: 12,
-    backgroundColor: '#fff',
+    backgroundColor: c.white,
     borderRadius: 14,
     overflow: 'hidden',
     borderWidth: 0.5,
-    borderColor: '#e8e8e8',
+    borderColor: c.border,
     elevation: 1,
     shadowColor: '#000',
     shadowOpacity: 0.03,
@@ -478,11 +480,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     gap: 10,
-    backgroundColor: '#fff',
+    backgroundColor: c.white,
   },
   stockRowFirst: { borderTopLeftRadius: 14, borderTopRightRadius: 14 },
   stockRowLast: { borderBottomLeftRadius: 14, borderBottomRightRadius: 14 },
-  stockRowBorder: { borderTopWidth: 0.5, borderTopColor: '#F5F5F5' },
+  stockRowBorder: { borderTopWidth: 0.5, borderTopColor: c.divider },
   stockIcon: {
     width: 36,
     height: 36,
@@ -493,9 +495,9 @@ const styles = StyleSheet.create({
   },
   stockTickerIcon: { fontSize: 10, fontWeight: '700' },
   stockInfo: { flex: 1, minWidth: 0 },
-  stockTicker: { fontSize: 13, fontWeight: '600', color: '#1a1a1a' },
-  stockName: { fontSize: 10, color: '#aaa', marginTop: 1 },
-  stockVol: { fontSize: 10, color: '#ccc', marginTop: 1 },
+  stockTicker: { fontSize: 13, fontWeight: '600', color: c.text },
+  stockName: { fontSize: 10, color: c.hint, marginTop: 1 },
+  stockVol: { fontSize: 10, color: c.hint, marginTop: 1 },
   sparkWrap: { width: 56, alignItems: 'center' },
   stockPriceCol: { alignItems: 'flex-end', minWidth: 78 },
   priceVal: { fontSize: 12, fontWeight: '600' },
@@ -528,12 +530,12 @@ const styles = StyleSheet.create({
 
   // Bottom bar
   bottomBar: {
-    backgroundColor: '#fff',
+    backgroundColor: c.white,
     paddingHorizontal: 16,
     paddingTop: 10,
     paddingBottom: 28,
     borderTopWidth: 0.5,
-    borderTopColor: '#F0F0F0',
+    borderTopColor: c.divider,
     gap: 8,
   },
   securityRow: {
@@ -542,11 +544,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 5,
   },
-  securityText: { fontSize: 10, color: '#ccc' },
+  securityText: { fontSize: 10, color: c.hint },
   ctaRow: { flexDirection: 'row', gap: 10 },
   btnBuy: {
     flex: 2,
-    backgroundColor: PRIMARY,
+    backgroundColor: c.primary,
     borderRadius: 12,
     height: 50,
     flexDirection: 'row',
@@ -557,7 +559,7 @@ const styles = StyleSheet.create({
   btnBuyText: { fontSize: 14, fontWeight: '600', color: '#fff' },
   btnSell: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: c.white,
     borderRadius: 12,
     height: 50,
     flexDirection: 'row',
@@ -576,7 +578,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   sheet: {
-    backgroundColor: '#fff',
+    backgroundColor: c.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 20,
@@ -587,7 +589,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: c.border,
     alignSelf: 'center',
     marginBottom: 16,
   },
@@ -597,24 +599,26 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   sheetHeaderInfo: { flex: 1 },
-  sheetTicker: { fontSize: 16, fontWeight: '700', color: '#1a1a1a' },
-  sheetName: { fontSize: 12, color: '#888', marginTop: 2 },
+  sheetTicker: { fontSize: 16, fontWeight: '700', color: c.text },
+  sheetName: { fontSize: 12, color: c.subtext, marginTop: 2 },
   sheetPrice: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: c.text,
     letterSpacing: -0.5,
     marginTop: 14,
   },
   sheetSpark: {
     alignItems: 'center',
-    backgroundColor: '#fafafa',
+    backgroundColor: c.bg,
     borderRadius: 14,
     paddingVertical: 14,
     marginTop: 12,
   },
-  sheetVol: { fontSize: 12, color: '#888', marginTop: 10, marginBottom: 4 },
+  sheetVol: { fontSize: 12, color: c.subtext, marginTop: 10, marginBottom: 4 },
 });
+
+type Styles = ReturnType<typeof makeStyles>;
 
 // ─── Sparkline components ─────────────────────────────────────────────────────
 
@@ -652,7 +656,7 @@ const SparkLine = ({ data, color, width = 52, height = 28 }: SparkProps) => {
   );
 };
 
-const PortfolioSparkLine = ({ data }: { data: number[] }) => {
+const PortfolioSparkLine = ({ data, color }: { data: number[]; color: string }) => {
   const w = SCREEN_WIDTH - 32 - 32;
   const h = 52;
   const n = data.length;
@@ -672,7 +676,7 @@ const PortfolioSparkLine = ({ data }: { data: number[] }) => {
       <Polyline
         points={pts}
         fill="none"
-        stroke={PRIMARY}
+        stroke={color}
         strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -684,31 +688,38 @@ const PortfolioSparkLine = ({ data }: { data: number[] }) => {
 // ─── Skeleton sub-components ──────────────────────────────────────────────────
 
 const SkeletonBox = ({
-  w, h, r = 6, shimmer,
+  w, h, r = 6, shimmer, bg,
 }: {
   w: number | string;
   h: number;
   r?: number;
   shimmer: Animated.Value;
+  bg: string;
 }) => (
   <Animated.View
-    style={{ width: w as number, height: h, borderRadius: r, backgroundColor: '#e8e8e8', opacity: shimmer as unknown as number }}
+    style={{ width: w as number, height: h, borderRadius: r, backgroundColor: bg, opacity: shimmer as unknown as number }}
   />
 );
 
-const SkeletonRateCard = ({ shimmer }: { shimmer: Animated.Value }) => (
+const SkeletonRateCard = ({
+  shimmer, styles, colors,
+}: {
+  shimmer: Animated.Value;
+  styles: Styles;
+  colors: ThemeColors;
+}) => (
   <View style={styles.rateCard}>
     <View style={styles.rateCardHeader}>
-      <SkeletonBox w={130} h={12} shimmer={shimmer} />
-      <SkeletonBox w={44} h={20} r={10} shimmer={shimmer} />
+      <SkeletonBox w={130} h={12} shimmer={shimmer} bg={colors.border} />
+      <SkeletonBox w={44} h={20} r={10} shimmer={shimmer} bg={colors.border} />
     </View>
     {[0, 1, 2].map(i => (
       <View key={i} style={[styles.rateRow, i > 0 && styles.rateRowBorder]}>
-        <SkeletonBox w={60} h={12} shimmer={shimmer} />
-        <SkeletonBox w={90} h={12} shimmer={shimmer} />
+        <SkeletonBox w={60} h={12} shimmer={shimmer} bg={colors.border} />
+        <SkeletonBox w={90} h={12} shimmer={shimmer} bg={colors.border} />
       </View>
     ))}
-    <SkeletonBox w={100} h={10} r={5} shimmer={shimmer} />
+    <SkeletonBox w={100} h={10} r={5} shimmer={shimmer} bg={colors.border} />
   </View>
 );
 
@@ -716,10 +727,14 @@ const SkeletonStockRow = ({
   shimmer,
   isFirst,
   isLast,
+  styles,
+  colors,
 }: {
   shimmer: Animated.Value;
   isFirst?: boolean;
   isLast?: boolean;
+  styles: Styles;
+  colors: ThemeColors;
 }) => (
   <View
     style={[
@@ -729,16 +744,16 @@ const SkeletonStockRow = ({
       !isFirst && styles.stockRowBorder,
     ]}>
     <Animated.View
-      style={[styles.stockIcon, { backgroundColor: '#e8e8e8', opacity: shimmer }]}
+      style={[styles.stockIcon, { backgroundColor: colors.border, opacity: shimmer }]}
     />
     <View style={[styles.stockInfo, { gap: 5 }]}>
-      <SkeletonBox w={36} h={12} shimmer={shimmer} />
-      <SkeletonBox w={70} h={10} shimmer={shimmer} />
+      <SkeletonBox w={36} h={12} shimmer={shimmer} bg={colors.border} />
+      <SkeletonBox w={70} h={10} shimmer={shimmer} bg={colors.border} />
     </View>
-    <SkeletonBox w={52} h={28} shimmer={shimmer} />
+    <SkeletonBox w={52} h={28} shimmer={shimmer} bg={colors.border} />
     <View style={[styles.stockPriceCol, { gap: 4 }]}>
-      <SkeletonBox w={72} h={12} shimmer={shimmer} />
-      <SkeletonBox w={52} h={20} r={6} shimmer={shimmer} />
+      <SkeletonBox w={72} h={12} shimmer={shimmer} bg={colors.border} />
+      <SkeletonBox w={52} h={20} r={6} shimmer={shimmer} bg={colors.border} />
     </View>
   </View>
 );
@@ -751,6 +766,8 @@ interface Props {
 
 const InvestmentScreen = ({ navigation }: Props) => {
   const { t } = useLanguage();
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   // ── State ──
   const [activeTab, setActiveTab] = useState<MarketTab>('HOSE');
@@ -894,7 +911,7 @@ const InvestmentScreen = ({ navigation }: Props) => {
           </View>
 
           <View style={styles.sparklineWrap}>
-            <PortfolioSparkLine data={PORTFOLIO_DATA} />
+            <PortfolioSparkLine data={PORTFOLIO_DATA} color={colors.primary} />
           </View>
 
           <View style={styles.allocRow}>
@@ -909,7 +926,7 @@ const InvestmentScreen = ({ navigation }: Props) => {
             </View>
             <View style={styles.allocDivider} />
             <View style={styles.allocItem}>
-              <Text style={[styles.allocNum, { color: PRIMARY }]}>
+              <Text style={[styles.allocNum, { color: colors.primary }]}>
                 {shortMoney(8_500_000)}
               </Text>
               <Text style={styles.allocLabel}>{t.investment.cash}</Text>
@@ -919,10 +936,10 @@ const InvestmentScreen = ({ navigation }: Props) => {
 
         {/* ── Live Rate Card ── */}
         {ratesLoading ? (
-          <SkeletonRateCard shimmer={shimmer} />
+          <SkeletonRateCard shimmer={shimmer} styles={styles} colors={colors} />
         ) : ratesError ? (
           <View style={styles.errorCard}>
-            <Icon type="ionicon" name="warning-outline" size={16} color={PRIMARY_DARK} />
+            <Icon type="ionicon" name="warning-outline" size={16} color={colors.primaryDark} />
             <Text style={styles.errorText}>{t.investment.errorRates}</Text>
             <TouchableOpacity style={styles.errorRetryBtn} onPress={fetchRates}>
               <Text style={styles.errorRetryText}>{t.investment.retry}</Text>
@@ -1015,9 +1032,9 @@ const InvestmentScreen = ({ navigation }: Props) => {
         {/* Stock error banner (above mock data) */}
         {showHOSEError && (
           <TouchableOpacity style={styles.stockErrorBanner} onPress={fetchStocks}>
-            <Icon type="ionicon" name="wifi-outline" size={14} color={PRIMARY_DARK} />
+            <Icon type="ionicon" name="wifi-outline" size={14} color={colors.primaryDark} />
             <Text style={styles.stockErrorText}>{t.investment.errorStock}</Text>
-            <Icon type="ionicon" name="refresh-outline" size={14} color={PRIMARY} />
+            <Icon type="ionicon" name="refresh-outline" size={14} color={colors.primary} />
           </TouchableOpacity>
         )}
 
@@ -1031,6 +1048,8 @@ const InvestmentScreen = ({ navigation }: Props) => {
                 shimmer={shimmer}
                 isFirst={i === 0}
                 isLast={i === 3}
+                styles={styles}
+                colors={colors}
               />
             ))
           ) : (

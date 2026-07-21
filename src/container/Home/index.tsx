@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   SafeAreaView,
@@ -12,12 +12,9 @@ import { useNavigation } from '@react-navigation/native';
 import { ProgressBar } from 'react-native-paper';
 import Chatbot from '../../components/Chatbot';
 import { useLanguage } from '../../context/LanguageContext';
+import { useThemeColors } from '../../context/ThemeContext';
+import { ThemeColors } from '../../theme/paperTheme';
 import { SKILLS, LEVEL_BADGE } from '../Skills/data';
-
-const PRIMARY = '#E89951';
-const PRIMARY_LIGHT = '#fdf3e7';
-const PRIMARY_BORDER = '#f0c48a';
-const PRIMARY_DARK = '#b36a1a';
 
 const AVATAR_URL =
   'https://i.pinimg.com/736x/d3/9d/85/d39d854ad761552a841304300c779f53.jpg';
@@ -58,16 +55,18 @@ const topSkills = SKILLS.slice(0, 4);
 
 // quickActions labels are built inside component using t
 
-const SectionTitle = ({ title }: { title: string }) => (
-  <View style={styles.sectionTitleRow}>
-    <View style={styles.accentBar} />
-    <Text style={styles.sectionTitleText}>{title}</Text>
-  </View>
-);
-
 const HomeScreen = () => {
   const navigation = useNavigation();
   const { t } = useLanguage();
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  const SectionTitle = ({ title }: { title: string }) => (
+    <View style={styles.sectionTitleRow}>
+      <View style={styles.accentBar} />
+      <Text style={styles.sectionTitleText}>{title}</Text>
+    </View>
+  );
 
   const quickActions = [
     { id: 1, label: t.home.bank,    icon: 'business',    screen: 'BankScreen' },
@@ -120,7 +119,7 @@ const HomeScreen = () => {
                 style={styles.qaBtn}
                 onPress={() => navigation.navigate(action.screen as never)}
               >
-                <Icon name={action.icon} type="ionicon" size={22} color={PRIMARY_DARK} />
+                <Icon name={action.icon} type="ionicon" size={22} color={colors.primaryDark} />
                 <Text style={styles.qaLabel}>{action.label}</Text>
               </TouchableOpacity>
             ))}
@@ -200,11 +199,11 @@ const HomeScreen = () => {
                   <Text style={styles.skillSub}>{item.keywords}</Text>
                   <ProgressBar
                     progress={item.percent / 100}
-                    color={PRIMARY}
+                    color={colors.primary}
                     style={styles.skillProgress}
                   />
                 </View>
-                <Icon name="chevron-forward" type="ionicon" size={16} color="#bbb" />
+                <Icon name="chevron-forward" type="ionicon" size={16} color={colors.muted} />
               </TouchableOpacity>
             ))}
           </View>
@@ -218,10 +217,10 @@ const HomeScreen = () => {
 
 export default HomeScreen;
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f5f5f7',
+    backgroundColor: c.bg,
   },
   scrollView: {
     flex: 1,
@@ -232,7 +231,7 @@ const styles = StyleSheet.create({
 
   // Header
   header: {
-    backgroundColor: PRIMARY,
+    backgroundColor: c.primary,
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 52,
@@ -275,13 +274,13 @@ const styles = StyleSheet.create({
 
   // Hero card
   heroCard: {
-    backgroundColor: '#fff',
+    backgroundColor: c.white,
     borderRadius: 20,
     marginHorizontal: 16,
     marginTop: -36,
     padding: 16,
     borderWidth: 0.5,
-    borderColor: '#e8e8e8',
+    borderColor: c.border,
     zIndex: 2,
     shadowColor: '#000',
     shadowOpacity: 0.05,
@@ -291,7 +290,7 @@ const styles = StyleSheet.create({
   },
   heroLabel: {
     fontSize: 11,
-    color: '#999',
+    color: c.subtext,
   },
   heroDesc: {
     fontSize: 12,
@@ -306,18 +305,18 @@ const styles = StyleSheet.create({
   },
   qaBtn: {
     flex: 1,
-    backgroundColor: PRIMARY_LIGHT,
+    backgroundColor: c.primaryLight,
     borderRadius: 10,
     paddingVertical: 10,
     paddingHorizontal: 4,
     alignItems: 'center',
     gap: 4,
     borderWidth: 0.5,
-    borderColor: PRIMARY_BORDER,
+    borderColor: c.primaryBorder,
   },
   qaLabel: {
     fontSize: 10,
-    color: PRIMARY_DARK,
+    color: c.primaryDark,
     fontWeight: '500',
   },
 
@@ -340,25 +339,25 @@ const styles = StyleSheet.create({
   accentBar: {
     width: 4,
     height: 18,
-    backgroundColor: PRIMARY,
+    backgroundColor: c.primary,
     borderRadius: 2,
   },
   sectionTitleText: {
     fontSize: 15,
     fontWeight: '500',
-    color: '#1a1a1a',
+    color: c.text,
   },
   seeAll: {
     fontSize: 12,
-    color: PRIMARY,
+    color: c.primary,
     fontWeight: '500',
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: c.white,
     borderRadius: 16,
     padding: 14,
     borderWidth: 0.5,
-    borderColor: '#e8e8e8',
+    borderColor: c.border,
   },
 
   // Icon grid (liên lạc)
@@ -396,7 +395,7 @@ const styles = StyleSheet.create({
   },
   skillRowBorder: {
     borderBottomWidth: 0.5,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: c.divider,
   },
   skillIconWrap: {
     width: 42,
@@ -417,7 +416,7 @@ const styles = StyleSheet.create({
   skillName: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#1a1a1a',
+    color: c.text,
     flexShrink: 1,
   },
   skillBadge: {
@@ -431,7 +430,7 @@ const styles = StyleSheet.create({
   },
   skillSub: {
     fontSize: 11,
-    color: '#999',
+    color: c.subtext,
     marginTop: 2,
   },
   skillProgress: {

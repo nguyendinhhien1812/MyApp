@@ -1,5 +1,5 @@
 // ─── 1. Imports ────────────────────────────────────────────────────────────
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -17,9 +17,10 @@ import {
   Dimensions,
 } from 'react-native';
 import { Icon } from '@rneui/themed';
-import { BRAND } from '../../theme/paperTheme';
+import { ThemeColors } from '../../theme/paperTheme';
 import { AppButton } from '../UI';
 import { useLanguage } from '../../context/LanguageContext';
+import { useThemeColors } from '../../context/ThemeContext';
 import type { Translations } from '../../i18n/translations';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -99,39 +100,41 @@ const askGemini = async (
   }
 };
 
-// ─── 5. Typing indicator (3 chấm nhấp nháy) ────────────────────────────────
-const TypingDots = () => {
-  const dots = [useRef(new Animated.Value(0.3)).current,
-                useRef(new Animated.Value(0.3)).current,
-                useRef(new Animated.Value(0.3)).current];
-
-  useEffect(() => {
-    const anims = dots.map((v, i) =>
-      Animated.loop(
-        Animated.sequence([
-          Animated.delay(i * 180),
-          Animated.timing(v, { toValue: 1, duration: 350, useNativeDriver: true }),
-          Animated.timing(v, { toValue: 0.3, duration: 350, useNativeDriver: true }),
-        ]),
-      ),
-    );
-    anims.forEach(a => a.start());
-    return () => anims.forEach(a => a.stop());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  return (
-    <View style={[styles.bubble, styles.botBubble, styles.typingBubble]}>
-      {dots.map((v, i) => (
-        <Animated.View key={i} style={[styles.typingDot, { opacity: v }]} />
-      ))}
-    </View>
-  );
-};
-
 // ─── 6. Main component ─────────────────────────────────────────────────────
 const Chatbot = () => {
   const { t } = useLanguage();
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  // Typing indicator (3 chấm nhấp nháy) — inner component để dùng `styles` theo theme
+  const TypingDots = () => {
+    const dots = [useRef(new Animated.Value(0.3)).current,
+                  useRef(new Animated.Value(0.3)).current,
+                  useRef(new Animated.Value(0.3)).current];
+
+    useEffect(() => {
+      const anims = dots.map((v, i) =>
+        Animated.loop(
+          Animated.sequence([
+            Animated.delay(i * 180),
+            Animated.timing(v, { toValue: 1, duration: 350, useNativeDriver: true }),
+            Animated.timing(v, { toValue: 0.3, duration: 350, useNativeDriver: true }),
+          ]),
+        ),
+      );
+      anims.forEach(a => a.start());
+      return () => anims.forEach(a => a.stop());
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    return (
+      <View style={[styles.bubble, styles.botBubble, styles.typingBubble]}>
+        {dots.map((v, i) => (
+          <Animated.View key={i} style={[styles.typingDot, { opacity: v }]} />
+        ))}
+      </View>
+    );
+  };
 
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [apiKey, setApiKey] = useState(cachedApiKey);
@@ -315,7 +318,7 @@ const Chatbot = () => {
               <TextInput
                 style={styles.textInput}
                 placeholder={t.chatbot.inputPlaceholder}
-                placeholderTextColor={BRAND.hint}
+                placeholderTextColor={colors.hint}
                 value={inputText}
                 onChangeText={setInputText}
                 multiline
@@ -335,14 +338,14 @@ const Chatbot = () => {
               <Pressable style={styles.keySheet} onPress={e => e.stopPropagation()}>
                 <View style={styles.keyHandle} />
                 <View style={styles.keyIconWrap}>
-                  <Icon name="key-outline" type="ionicon" color={BRAND.primaryDark} size={24} />
+                  <Icon name="key-outline" type="ionicon" color={colors.primaryDark} size={24} />
                 </View>
                 <Text style={styles.keyTitle}>{t.chatbot.keyTitle}</Text>
                 <Text style={styles.keyDesc}>{t.chatbot.keyDesc}</Text>
                 <TextInput
                   style={styles.keyInput}
                   placeholder={t.chatbot.keyPlaceholder}
-                  placeholderTextColor={BRAND.hint}
+                  placeholderTextColor={colors.hint}
                   value={keyDraft}
                   onChangeText={setKeyDraft}
                   autoCapitalize="none"
@@ -375,7 +378,7 @@ const Chatbot = () => {
 export default Chatbot;
 
 // ─── 7. Styles ─────────────────────────────────────────────────────────────
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   // FAB
   fabContainer: {
     position: 'absolute',
@@ -388,7 +391,7 @@ const styles = StyleSheet.create({
     width: BUTTON_SIZE,
     height: BUTTON_SIZE,
     borderRadius: BUTTON_SIZE / 2,
-    backgroundColor: BRAND.primary,
+    backgroundColor: c.primary,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -398,11 +401,11 @@ const styles = StyleSheet.create({
   },
 
   // Container
-  safe: { flex: 1, backgroundColor: BRAND.bg },
+  safe: { flex: 1, backgroundColor: c.bg },
 
   // Header
   header: {
-    backgroundColor: BRAND.primary,
+    backgroundColor: c.primary,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -444,23 +447,23 @@ const styles = StyleSheet.create({
   },
   userBubble: {
     alignSelf: 'flex-end',
-    backgroundColor: BRAND.primary,
+    backgroundColor: c.primary,
     borderBottomRightRadius: 4,
   },
   botBubble: {
     alignSelf: 'flex-start',
-    backgroundColor: BRAND.white,
+    backgroundColor: c.white,
     borderBottomLeftRadius: 4,
     borderWidth: 0.5,
-    borderColor: BRAND.border,
+    borderColor: c.border,
   },
   errorBubble: {
     backgroundColor: '#fdecea',
     borderColor: '#f5c6c0',
   },
   userText: { fontSize: 14, color: '#fff', lineHeight: 20 },
-  botText: { fontSize: 14, color: BRAND.text, lineHeight: 20 },
-  errorText: { fontSize: 13, color: BRAND.danger, lineHeight: 19 },
+  botText: { fontSize: 14, color: c.text, lineHeight: 20 },
+  errorText: { fontSize: 13, color: c.danger, lineHeight: 19 },
 
   // Typing indicator
   typingBubble: {
@@ -472,7 +475,7 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 3.5,
-    backgroundColor: BRAND.hint,
+    backgroundColor: c.hint,
   },
 
   // Suggestions
@@ -481,38 +484,38 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: BRAND.white,
+    backgroundColor: c.white,
     borderWidth: 0.5,
-    borderColor: BRAND.primaryBorder,
+    borderColor: c.primaryBorder,
   },
-  suggestionText: { fontSize: 12, color: BRAND.primaryDark, fontWeight: '500' },
+  suggestionText: { fontSize: 12, color: c.primaryDark, fontWeight: '500' },
 
   // Input bar
   inputBar: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     gap: 10,
-    backgroundColor: BRAND.white,
+    backgroundColor: c.white,
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderTopWidth: 0.5,
-    borderTopColor: BRAND.divider,
+    borderTopColor: c.divider,
   },
   textInput: {
     flex: 1,
     minHeight: 42,
     maxHeight: 100,
     borderWidth: 1,
-    borderColor: BRAND.border,
+    borderColor: c.border,
     borderRadius: 21,
     paddingHorizontal: 15,
     paddingTop: Platform.OS === 'ios' ? 11 : 8,
     paddingBottom: Platform.OS === 'ios' ? 11 : 8,
     fontSize: 14,
-    color: BRAND.text,
+    color: c.text,
   },
   sendButton: {
-    backgroundColor: BRAND.primary,
+    backgroundColor: c.primary,
     width: 42,
     height: 42,
     borderRadius: 21,
@@ -528,7 +531,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   keySheet: {
-    backgroundColor: BRAND.white,
+    backgroundColor: c.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 20,
@@ -547,15 +550,15 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: BRAND.primaryLight,
+    backgroundColor: c.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
   },
-  keyTitle: { fontSize: 16, fontWeight: '600', color: BRAND.text },
+  keyTitle: { fontSize: 16, fontWeight: '600', color: c.text },
   keyDesc: {
     fontSize: 12,
-    color: BRAND.subtext,
+    color: c.subtext,
     textAlign: 'center',
     lineHeight: 18,
     marginTop: 6,
@@ -564,12 +567,12 @@ const styles = StyleSheet.create({
   keyInput: {
     alignSelf: 'stretch',
     borderWidth: 1,
-    borderColor: BRAND.border,
+    borderColor: c.border,
     borderRadius: 12,
     paddingHorizontal: 14,
     height: 48,
     fontSize: 14,
-    color: BRAND.text,
+    color: c.text,
     marginBottom: 12,
   },
   keyBtn: { alignSelf: 'stretch', marginTop: 2 },

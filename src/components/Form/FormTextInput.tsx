@@ -1,5 +1,5 @@
 // ─── 1. Imports ────────────────────────────────────────────────────────────
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -10,10 +10,8 @@ import {
 } from 'react-native';
 import { Controller, Control, FieldValues, FieldPath } from 'react-hook-form';
 import { Icon } from '@rneui/themed';
-
-// ─── 2. Constants ──────────────────────────────────────────────────────────
-const PRIMARY      = '#E89951';
-const COLOR_DANGER = '#c0392b';
+import { ThemeColors } from '../../theme/paperTheme';
+import { useThemeColors } from '../../context/ThemeContext';
 
 // ─── 3. Types ──────────────────────────────────────────────────────────────
 interface FormTextInputProps<T extends FieldValues>
@@ -36,6 +34,8 @@ const FormTextInput = <T extends FieldValues>({
 }: FormTextInputProps<T>) => {
   const [hidden, setHidden] = useState(secure);
   const [focused, setFocused] = useState(false);
+  const c = useThemeColors();
+  const styles = useMemo(() => makeStyles(c), [c]);
 
   return (
     <Controller
@@ -56,7 +56,7 @@ const FormTextInput = <T extends FieldValues>({
                 type="ionicon"
                 name={icon}
                 size={18}
-                color={error ? COLOR_DANGER : focused ? PRIMARY : '#aaa'}
+                color={error ? c.danger : focused ? c.primary : c.hint}
               />
             ) : null}
 
@@ -69,7 +69,7 @@ const FormTextInput = <T extends FieldValues>({
                 setFocused(false);
                 onBlur();
               }}
-              placeholderTextColor="#aaa"
+              placeholderTextColor={c.hint}
               secureTextEntry={hidden}
               autoCapitalize="none"
               {...inputProps}
@@ -83,7 +83,7 @@ const FormTextInput = <T extends FieldValues>({
                   type="ionicon"
                   name={hidden ? 'eye-outline' : 'eye-off-outline'}
                   size={18}
-                  color="#aaa"
+                  color={c.hint}
                 />
               </TouchableOpacity>
             ) : null}
@@ -99,40 +99,41 @@ const FormTextInput = <T extends FieldValues>({
 export default FormTextInput;
 
 // ─── 5. Styles ─────────────────────────────────────────────────────────────
-const styles = StyleSheet.create({
-  field: {
-    gap: 6,
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#1a1a1a',
-  },
-  inputWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#e8e8e8',
-    paddingHorizontal: 14,
-    height: 50,
-  },
-  inputWrapFocused: {
-    borderColor: PRIMARY,
-  },
-  inputWrapError: {
-    borderColor: COLOR_DANGER,
-  },
-  input: {
-    flex: 1,
-    fontSize: 14,
-    color: '#1a1a1a',
-    paddingVertical: 0,
-  },
-  errorText: {
-    fontSize: 11,
-    color: COLOR_DANGER,
-  },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    field: {
+      gap: 6,
+    },
+    label: {
+      fontSize: 13,
+      fontWeight: '500',
+      color: c.text,
+    },
+    inputWrap: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      backgroundColor: c.white,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: c.border,
+      paddingHorizontal: 14,
+      height: 50,
+    },
+    inputWrapFocused: {
+      borderColor: c.primary,
+    },
+    inputWrapError: {
+      borderColor: c.danger,
+    },
+    input: {
+      flex: 1,
+      fontSize: 14,
+      color: c.text,
+      paddingVertical: 0,
+    },
+    errorText: {
+      fontSize: 11,
+      color: c.danger,
+    },
+  });

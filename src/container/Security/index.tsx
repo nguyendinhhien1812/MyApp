@@ -16,7 +16,8 @@ import { z } from 'zod';
 import { Icon } from '@rneui/themed';
 import { FormTextInput } from '../../components/Form';
 import { AppButton, AppSnackbar } from '../../components/UI';
-import { BRAND } from '../../theme/paperTheme';
+import { ThemeColors } from '../../theme/paperTheme';
+import { useThemeColors } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import type { Translations } from '../../i18n/translations';
 
@@ -43,6 +44,8 @@ interface Props {
 const SecurityScreen = ({ navigation }: Props) => {
   const { t } = useLanguage();
   const [saved, setSaved] = useState(false);
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const schema = useMemo(() => makeSchema(t), [t]);
   const { control, handleSubmit } = useForm<SecurityForm>({
@@ -72,7 +75,7 @@ const SecurityScreen = ({ navigation }: Props) => {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
           <View style={styles.iconWrap}>
-            <Icon type="ionicon" name="shield-checkmark-outline" size={30} color={BRAND.primaryDark} />
+            <Icon type="ionicon" name="shield-checkmark-outline" size={30} color={colors.primaryDark} />
           </View>
 
           <View style={styles.form}>
@@ -123,12 +126,12 @@ const SecurityScreen = ({ navigation }: Props) => {
 export default SecurityScreen;
 
 // ─── 4. Styles ─────────────────────────────────────────────────────────────
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: BRAND.bg },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: c.bg },
   flex: { flex: 1 },
 
   header: {
-    backgroundColor: BRAND.primary,
+    backgroundColor: c.primary,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -157,7 +160,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 18,
-    backgroundColor: BRAND.primaryLight,
+    backgroundColor: c.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'center',

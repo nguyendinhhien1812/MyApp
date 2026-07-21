@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -10,23 +10,13 @@ import {
 import { Icon } from '@rneui/themed';
 import { AppDialog, AppSnackbar } from '../../components/UI';
 import { useLanguage } from '../../context/LanguageContext';
-
-const PRIMARY = '#E89951';
-const PRIMARY_LIGHT = '#fdf3e7';
+import { useThemeColors } from '../../context/ThemeContext';
+import { ThemeColors } from '../../theme/paperTheme';
 
 interface ToggleProps {
   value: boolean;
   onToggle: () => void;
 }
-
-const Toggle = ({ value, onToggle }: ToggleProps) => (
-  <TouchableOpacity
-    style={[styles.toggle, value ? styles.toggleOn : styles.toggleOff]}
-    onPress={onToggle}
-    activeOpacity={0.8}>
-    <View style={[styles.toggleThumb, value ? styles.thumbOn : styles.thumbOff]} />
-  </TouchableOpacity>
-);
 
 interface Props {
   navigation: any;
@@ -34,6 +24,8 @@ interface Props {
 
 const CardManagementScreen = ({ navigation }: Props) => {
   const { t } = useLanguage();
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [onlinePayment, setOnlinePayment] = useState(true);
   const [intlPayment, setIntlPayment] = useState(false);
   const [notification, setNotification] = useState(true);
@@ -42,6 +34,15 @@ const CardManagementScreen = ({ navigation }: Props) => {
   const [lockDialog, setLockDialog] = useState(false);
   const [cancelDialog, setCancelDialog] = useState(false);
   const [toast, setToast] = useState('');
+
+  const Toggle = ({ value, onToggle }: ToggleProps) => (
+    <TouchableOpacity
+      style={[styles.toggle, value ? styles.toggleOn : styles.toggleOff]}
+      onPress={onToggle}
+      activeOpacity={0.8}>
+      <View style={[styles.toggleThumb, value ? styles.thumbOn : styles.thumbOff]} />
+    </TouchableOpacity>
+  );
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -144,8 +145,8 @@ const CardManagementScreen = ({ navigation }: Props) => {
             <TouchableOpacity
               style={styles.actionItem}
               onPress={() => setToast(t.common.demoFeature)}>
-              <View style={[styles.actionIcon, { backgroundColor: PRIMARY_LIGHT }]}>
-                <Icon type="ionicon" name="settings-outline" size={16} color={PRIMARY} />
+              <View style={[styles.actionIcon, { backgroundColor: colors.primaryLight }]}>
+                <Icon type="ionicon" name="settings-outline" size={16} color={colors.primary} />
               </View>
               <Text style={styles.actionLabel}>Cài đặt</Text>
             </TouchableOpacity>
@@ -245,11 +246,11 @@ const CardManagementScreen = ({ navigation }: Props) => {
 
 export default CardManagementScreen;
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F2F2F7' },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: c.bg },
 
   header: {
-    backgroundColor: PRIMARY,
+    backgroundColor: c.primary,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -270,7 +271,7 @@ const styles = StyleSheet.create({
 
   // Card visual
   cardVisual: {
-    backgroundColor: PRIMARY,
+    backgroundColor: c.primary,
     borderRadius: 20,
     padding: 20,
     position: 'relative',
@@ -318,8 +319,8 @@ const styles = StyleSheet.create({
   visaText: { fontSize: 18, color: 'rgba(255,255,255,0.85)', fontStyle: 'italic', fontWeight: '700' },
 
   // Card wrapper
-  card: { backgroundColor: '#fff', borderRadius: 16, overflow: 'hidden' },
-  divider: { height: 0.5, backgroundColor: '#F0F0F0', marginHorizontal: 16 },
+  card: { backgroundColor: c.white, borderRadius: 16, overflow: 'hidden' },
+  divider: { height: 0.5, backgroundColor: c.divider, marginHorizontal: 16 },
 
   // Status
   statusRow: {
@@ -330,14 +331,14 @@ const styles = StyleSheet.create({
   },
   statusDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#22c55e' },
   statusDotLocked: { backgroundColor: '#dc2626' },
-  statusText: { flex: 1, fontSize: 14, color: '#1a1a1a', fontWeight: '500' },
+  statusText: { flex: 1, fontSize: 14, color: c.text, fontWeight: '500' },
   statusBadge: {
     backgroundColor: '#F5F5F5',
     borderRadius: 20,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
-  statusBadgeText: { fontSize: 11, color: '#888', fontWeight: '500' },
+  statusBadgeText: { fontSize: 11, color: c.subtext, fontWeight: '500' },
 
   // Actions
   actionsRow: {
@@ -364,18 +365,18 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 10,
   },
-  limitTitle: { fontSize: 10, color: '#aaa', letterSpacing: 0.6, fontWeight: '500' },
-  limitPercent: { fontSize: 12, color: PRIMARY, fontWeight: '600' },
+  limitTitle: { fontSize: 10, color: c.hint, letterSpacing: 0.6, fontWeight: '500' },
+  limitPercent: { fontSize: 12, color: c.primary, fontWeight: '600' },
   progressBg: {
     marginHorizontal: 16,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: c.divider,
     borderRadius: 6,
     height: 8,
   },
   progressFill: {
     width: '25%',
     height: 8,
-    backgroundColor: PRIMARY,
+    backgroundColor: c.primary,
     borderRadius: 6,
   },
   limitRow: {
@@ -384,8 +385,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
   },
-  limitUsed: { fontSize: 13, fontWeight: '600', color: '#1a1a1a' },
-  limitTotal: { fontSize: 13, color: '#aaa' },
+  limitUsed: { fontSize: 13, fontWeight: '600', color: c.text },
+  limitTotal: { fontSize: 13, color: c.hint },
 
   // Toggles
   toggleRow: {
@@ -396,11 +397,11 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   toggleInfo: { flex: 1 },
-  toggleLabel: { fontSize: 14, fontWeight: '500', color: '#1a1a1a' },
-  toggleSub: { fontSize: 11, color: '#aaa', marginTop: 2 },
+  toggleLabel: { fontSize: 14, fontWeight: '500', color: c.text },
+  toggleSub: { fontSize: 11, color: c.hint, marginTop: 2 },
   toggle: { width: 46, height: 26, borderRadius: 13 },
-  toggleOn: { backgroundColor: PRIMARY },
-  toggleOff: { backgroundColor: '#E0E0E0' },
+  toggleOn: { backgroundColor: c.primary },
+  toggleOff: { backgroundColor: c.border },
   toggleThumb: {
     width: 22,
     height: 22,

@@ -17,7 +17,8 @@ import { z } from 'zod';
 import { Icon } from '@rneui/themed';
 import { FormTextInput } from '../../components/Form';
 import { AppButton, AppSnackbar } from '../../components/UI';
-import { BRAND } from '../../theme/paperTheme';
+import { ThemeColors } from '../../theme/paperTheme';
+import { useThemeColors } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import type { Translations } from '../../i18n/translations';
 
@@ -43,6 +44,8 @@ interface Props {
 const EditProfileScreen = ({ navigation }: Props) => {
   const { t } = useLanguage();
   const [saved, setSaved] = useState(false);
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const schema = useMemo(() => makeSchema(t), [t]);
   const { control, handleSubmit } = useForm<ProfileForm>({
@@ -131,58 +134,59 @@ const EditProfileScreen = ({ navigation }: Props) => {
 export default EditProfileScreen;
 
 // ─── 5. Styles ─────────────────────────────────────────────────────────────
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: BRAND.bg },
-  flex: { flex: 1 },
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    safe: { flex: 1, backgroundColor: c.bg },
+    flex: { flex: 1 },
 
-  header: {
-    backgroundColor: BRAND.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 8,
-  },
-  headerBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-  },
+    header: {
+      backgroundColor: c.primary,
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      gap: 8,
+    },
+    headerBtn: {
+      width: 34,
+      height: 34,
+      borderRadius: 17,
+      backgroundColor: 'rgba(255,255,255,0.2)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    headerTitle: {
+      flex: 1,
+      textAlign: 'center',
+      fontSize: 16,
+      fontWeight: '600',
+      color: '#fff',
+    },
 
-  scroll: { padding: 20, paddingBottom: 32 },
+    scroll: { padding: 20, paddingBottom: 32 },
 
-  avatarWrap: { alignSelf: 'center', marginBottom: 24 },
-  avatar: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-    borderWidth: 2,
-    borderColor: BRAND.primaryBorder,
-  },
-  avatarEditBadge: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: BRAND.primary,
-    borderWidth: 2,
-    borderColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+    avatarWrap: { alignSelf: 'center', marginBottom: 24 },
+    avatar: {
+      width: 84,
+      height: 84,
+      borderRadius: 42,
+      borderWidth: 2,
+      borderColor: c.primaryBorder,
+    },
+    avatarEditBadge: {
+      position: 'absolute',
+      bottom: 0,
+      right: 0,
+      width: 26,
+      height: 26,
+      borderRadius: 13,
+      backgroundColor: c.primary,
+      borderWidth: 2,
+      borderColor: '#fff',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
 
-  form: { gap: 16 },
-  saveBtn: { marginTop: 8 },
-});
+    form: { gap: 16 },
+    saveBtn: { marginTop: 8 },
+  });

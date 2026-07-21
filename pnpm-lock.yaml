@@ -7,6 +7,7 @@ settings:
 overrides:
   '@types/react': ^18.3.31
   react-native-gesture-handler: 2.16.2
+  '@react-native-async-storage/async-storage': 1.24.0
 
 importers:
 
@@ -15,6 +16,9 @@ importers:
       '@hookform/resolvers':
         specifier: ^5.4.0
         version: 5.4.0(react-hook-form@7.80.0(react@18.2.0))
+      '@react-native-async-storage/async-storage':
+        specifier: 1.24.0
+        version: 1.24.0(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))
       '@react-navigation/bottom-tabs':
         specifier: ^6.5.22
         version: 6.6.1(@react-navigation/native@6.1.18(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react@18.2.0))(react-native-safe-area-context@4.14.1(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react@18.2.0))(react-native-screens@3.37.0(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react@18.2.0))(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react@18.2.0)
@@ -25,11 +29,11 @@ importers:
         specifier: ^6.4.1
         version: 6.4.1(@react-navigation/native@6.1.18(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react@18.2.0))(react-native-gesture-handler@2.16.2(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react@18.2.0))(react-native-safe-area-context@4.14.1(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react@18.2.0))(react-native-screens@3.37.0(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react@18.2.0))(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react@18.2.0)
       '@rneui/base':
-        specifier: ^0.0.0-edge.2
-        version: 0.0.0-edge.2(@testing-library/jest-native@5.4.3(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react-test-renderer@19.2.7(react@18.2.0))(react@18.2.0))(@testing-library/react-native@13.3.3(jest@29.7.0(@types/node@26.0.1))(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react-test-renderer@19.2.7(react@18.2.0))(react@18.2.0))(react-native-safe-area-context@4.14.1(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react@18.2.0))(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))
+        specifier: ^5.0.0
+        version: 5.0.0(@testing-library/jest-native@5.4.3(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react-test-renderer@19.2.7(react@18.2.0))(react@18.2.0))(@testing-library/react-native@13.3.3(jest@29.7.0(@types/node@26.0.1))(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react-test-renderer@19.2.7(react@18.2.0))(react@18.2.0))(react-native-safe-area-context@4.14.1(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react@18.2.0))(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))
       '@rneui/themed':
-        specifier: ^0.0.0-edge.2
-        version: 0.0.0-edge.2
+        specifier: ^5.0.0
+        version: 5.0.0(@rneui/base@5.0.0(@testing-library/jest-native@5.4.3(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react-test-renderer@19.2.7(react@18.2.0))(react@18.2.0))(@testing-library/react-native@13.3.3(jest@29.7.0(@types/node@26.0.1))(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react-test-renderer@19.2.7(react@18.2.0))(react@18.2.0))(react-native-safe-area-context@4.14.1(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react@18.2.0))(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0)))
       iconoir-react-native:
         specifier: ^7.9.0
         version: 7.11.1(react-native-svg@15.15.5(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react@18.2.0))(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react@18.2.0)
@@ -1289,6 +1293,11 @@ packages:
   '@pinojs/redact@0.4.0':
     resolution: {integrity: sha512-k2ENnmBugE/rzQfEcdWHcCY+/FM3VLzH9cYEsbdsoqrvzAKRhUZeRNhAZvB8OitQJ1TBed3yqWtdjzS6wJKBwg==}
 
+  '@react-native-async-storage/async-storage@1.24.0':
+    resolution: {integrity: sha512-W4/vbwUOYOjco0x3toB8QCr7EjIP6nE9G7o8PMguvvjYT5Awg09lyV4enACRx4s++PPulBiBSjL0KTFx2u0Z/g==}
+    peerDependencies:
+      react-native: ^0.0.0-0 || >=0.60 <1.0
+
   '@react-native-community/cli-clean@10.1.1':
     resolution: {integrity: sha512-iNsrjzjIRv9yb5y309SWJ8NDHdwYtnCpmxZouQDyOljUdC9MwdZ4ChbtA4rwQyAwgOVfS9F/j56ML3Cslmvrxg==}
 
@@ -1519,23 +1528,17 @@ packages:
       react-native-safe-area-context: '>= 3.0.0'
       react-native-screens: '>= 3.0.0'
 
-  '@rneui/base@0.0.0-edge.2':
-    resolution: {integrity: sha512-MFyiK0Kz23v5mwOUotZdD8cudREa0t9lFwb2+6MyyG1SN2I8CUyqqsZBBwUMInXbspeOtJGtWOPv61TM/2esFQ==}
-
-  '@rneui/base@https://codeload.github.com/react-native-elements/react-native-elements/tar.gz/803f7453d751012ccf3daa81e1cae611de1a428c':
-    resolution: {tarball: https://codeload.github.com/react-native-elements/react-native-elements/tar.gz/803f7453d751012ccf3daa81e1cae611de1a428c}
-    version: 5.0.0
+  '@rneui/base@5.0.0':
+    resolution: {integrity: sha512-8nXCybRiLExmQlbTtCR5NEQudfTXTEkpoLBXinnxtBHPIF5L8YEdtuX00GlFoT/iU1h58AOl5koDMy35qSxgFQ==}
     peerDependencies:
       '@testing-library/jest-native': ^5.4.3
       '@testing-library/react-native': ^13.2.0
       react-native-safe-area-context: '>= 3.0.0'
 
-  '@rneui/themed@0.0.0-edge.2':
-    resolution: {integrity: sha512-MnsZarge+2V1//ov9jCAxkKzjS5RejZf/eRpE9tVOmvDZeEO1Q/9LIV00ZJxEHnjJHpozs5UvBkwb8KAwFL/0Q==}
-
-  '@rneui/themed@https://codeload.github.com/react-native-elements/react-native-elements/tar.gz/8a88727659dde9e35bf935a072e124fcfe9a4963':
-    resolution: {tarball: https://codeload.github.com/react-native-elements/react-native-elements/tar.gz/8a88727659dde9e35bf935a072e124fcfe9a4963}
-    version: 5.0.0
+  '@rneui/themed@5.0.0':
+    resolution: {integrity: sha512-bNmJLOnXqyot7+mN45Y9yNoANfGJAstnkT8J9W8pSMyDMd5yYxDhyYkDfTZOLuBAW7znNm0bPh6nJC64zMpE+Q==}
+    peerDependencies:
+      '@rneui/base': 5.0.0
 
   '@rnx-kit/chromium-edge-launcher@1.0.0':
     resolution: {integrity: sha512-lzD84av1ZQhYUS+jsGqJiCMaJO2dn9u+RTT9n9q6D3SaKVwWqv+7AoRKqBu19bkwyE+iFRl1ymr40QS90jVFYg==}
@@ -3350,6 +3353,10 @@ packages:
     resolution: {integrity: sha512-Fd4gABb+ycGAmKou8eMftCupSir5lRxqf4aD/vd0cD2qc4HL07OjCeuHMr8Ro4CoMaeCKDB0/ECBOVWjTwUvPQ==}
     engines: {node: '>=8'}
 
+  is-plain-obj@2.1.0:
+    resolution: {integrity: sha512-YWnfyRwxL/+SsrWYfOpUtz5b3YD+nyfkHvjbcanzk8zgyO4ASD67uVMRt8k5bM4lLMDnXfriRhOpemw+NfT1eA==}
+    engines: {node: '>=8'}
+
   is-plain-object@2.0.4:
     resolution: {integrity: sha512-h5PpgXkWitc38BBMYawTYMWJHFZJVnBquFE57xFpjB8pJFiF6gZ+bU+WyI/yqXiFR5mdLsgYNaPe8uao6Uv9Og==}
     engines: {node: '>=0.10.0'}
@@ -3828,6 +3835,10 @@ packages:
 
   memoize-one@5.2.1:
     resolution: {integrity: sha512-zYiwtZUcYyXKo/np96AGZAckk+FWWsUdJ3cHGGmld7+AhvcWmQyGCYUh1hc4Q/pkOhb65dQR/pqCyK0cOaHz4Q==}
+
+  merge-options@3.0.4:
+    resolution: {integrity: sha512-2Sug1+knBjkaMsMgf1ctR1Ujx+Ayku4EdJN4Z+C2+JzoeF7A3OZ9KM2GY0CpQS51NR61LTurMJrRKPhSs3ZRTQ==}
+    engines: {node: '>=10'}
 
   merge-stream@2.0.0:
     resolution: {integrity: sha512-abv/qOcuPfk3URPfDzmZU1LKmuw8kT+0nIHvKrKgFrwifol/doWcdA4ZqsWQ8ENrFKkd67Mfpo/LovbIUsbt3w==}
@@ -7000,6 +7011,11 @@ snapshots:
 
   '@pinojs/redact@0.4.0': {}
 
+  '@react-native-async-storage/async-storage@1.24.0(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))':
+    dependencies:
+      merge-options: 3.0.4
+      react-native: 0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0)
+
   '@react-native-community/cli-clean@10.1.1':
     dependencies:
       '@react-native-community/cli-tools': 10.1.1
@@ -7631,16 +7647,7 @@ snapshots:
       react-native-screens: 3.37.0(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react@18.2.0)
       warn-once: 0.1.1
 
-  '@rneui/base@0.0.0-edge.2(@testing-library/jest-native@5.4.3(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react-test-renderer@19.2.7(react@18.2.0))(react@18.2.0))(@testing-library/react-native@13.3.3(jest@29.7.0(@types/node@26.0.1))(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react-test-renderer@19.2.7(react@18.2.0))(react@18.2.0))(react-native-safe-area-context@4.14.1(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react@18.2.0))(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))':
-    dependencies:
-      '@rneui/base-edge': '@rneui/base@https://codeload.github.com/react-native-elements/react-native-elements/tar.gz/803f7453d751012ccf3daa81e1cae611de1a428c(@testing-library/jest-native@5.4.3(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react-test-renderer@19.2.7(react@18.2.0))(react@18.2.0))(@testing-library/react-native@13.3.3(jest@29.7.0(@types/node@26.0.1))(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react-test-renderer@19.2.7(react@18.2.0))(react@18.2.0))(react-native-safe-area-context@4.14.1(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react@18.2.0))(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))'
-    transitivePeerDependencies:
-      - '@testing-library/jest-native'
-      - '@testing-library/react-native'
-      - react-native
-      - react-native-safe-area-context
-
-  '@rneui/base@https://codeload.github.com/react-native-elements/react-native-elements/tar.gz/803f7453d751012ccf3daa81e1cae611de1a428c(@testing-library/jest-native@5.4.3(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react-test-renderer@19.2.7(react@18.2.0))(react@18.2.0))(@testing-library/react-native@13.3.3(jest@29.7.0(@types/node@26.0.1))(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react-test-renderer@19.2.7(react@18.2.0))(react@18.2.0))(react-native-safe-area-context@4.14.1(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react@18.2.0))(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))':
+  '@rneui/base@5.0.0(@testing-library/jest-native@5.4.3(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react-test-renderer@19.2.7(react@18.2.0))(react@18.2.0))(@testing-library/react-native@13.3.3(jest@29.7.0(@types/node@26.0.1))(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react-test-renderer@19.2.7(react@18.2.0))(react@18.2.0))(react-native-safe-area-context@4.14.1(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react@18.2.0))(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))':
     dependencies:
       '@testing-library/jest-native': 5.4.3(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react-test-renderer@19.2.7(react@18.2.0))(react@18.2.0)
       '@testing-library/react-native': 13.3.3(jest@29.7.0(@types/node@26.0.1))(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react-test-renderer@19.2.7(react@18.2.0))(react@18.2.0)
@@ -7652,11 +7659,9 @@ snapshots:
     transitivePeerDependencies:
       - react-native
 
-  '@rneui/themed@0.0.0-edge.2':
+  '@rneui/themed@5.0.0(@rneui/base@5.0.0(@testing-library/jest-native@5.4.3(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react-test-renderer@19.2.7(react@18.2.0))(react@18.2.0))(@testing-library/react-native@13.3.3(jest@29.7.0(@types/node@26.0.1))(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react-test-renderer@19.2.7(react@18.2.0))(react@18.2.0))(react-native-safe-area-context@4.14.1(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react@18.2.0))(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0)))':
     dependencies:
-      '@rneui/themed-edge': '@rneui/themed@https://codeload.github.com/react-native-elements/react-native-elements/tar.gz/8a88727659dde9e35bf935a072e124fcfe9a4963'
-
-  '@rneui/themed@https://codeload.github.com/react-native-elements/react-native-elements/tar.gz/8a88727659dde9e35bf935a072e124fcfe9a4963': {}
+      '@rneui/base': 5.0.0(@testing-library/jest-native@5.4.3(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react-test-renderer@19.2.7(react@18.2.0))(react@18.2.0))(@testing-library/react-native@13.3.3(jest@29.7.0(@types/node@26.0.1))(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react-test-renderer@19.2.7(react@18.2.0))(react@18.2.0))(react-native-safe-area-context@4.14.1(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))(react@18.2.0))(react-native@0.74.5(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.31)(react@18.2.0))
 
   '@rnx-kit/chromium-edge-launcher@1.0.0':
     dependencies:
@@ -9738,6 +9743,8 @@ snapshots:
 
   is-path-inside@3.0.3: {}
 
+  is-plain-obj@2.1.0: {}
+
   is-plain-object@2.0.4:
     dependencies:
       isobject: 3.0.1
@@ -10451,6 +10458,10 @@ snapshots:
       tslib: 2.8.1
 
   memoize-one@5.2.1: {}
+
+  merge-options@3.0.4:
+    dependencies:
+      is-plain-obj: 2.1.0
 
   merge-stream@2.0.0: {}
 
