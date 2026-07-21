@@ -1,5 +1,5 @@
 // ─── Imports ─────────────────────────────────────────────────────────────────
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -12,12 +12,13 @@ import {
 import { Icon } from '@rneui/themed';
 import Svg, { Rect, Text as SvgText, G } from 'react-native-svg';
 import { useLanguage } from '../../../context/LanguageContext';
+import { useThemeColors } from '../../../context/ThemeContext';
+import { ThemeColors } from '../../../theme/paperTheme';
 
 // ─── Brand colors ─────────────────────────────────────────────────────────────
+// Giữ lại để dùng cho dữ liệu tĩnh (CAT_STATS/TOP_TX) — không đổi theo theme.
 const PRIMARY        = '#E89951';
 const PRIMARY_DARK   = '#b36a1a';
-const PRIMARY_LIGHT  = '#fdf3e7';
-const PRIMARY_BORDER = '#f0c48a';
 const COLOR_DANGER   = '#c0392b';
 const COLOR_SUCCESS  = '#1a7a40';
 
@@ -105,6 +106,7 @@ interface BarChartProps {
 }
 
 const BarChart = ({ data, labels }: BarChartProps) => {
+  const colors     = useThemeColors();
   const max        = Math.max(...data, 1);
   const n          = data.length;
   const slotW      = CHART_W / n;
@@ -132,7 +134,7 @@ const BarChart = ({ data, labels }: BarChartProps) => {
                   width={tooltipW}
                   height={18}
                   rx={5} ry={5}
-                  fill={PRIMARY}
+                  fill={colors.primary}
                 />
                 <SvgText
                   x={tipX}
@@ -150,7 +152,7 @@ const BarChart = ({ data, labels }: BarChartProps) => {
               x={x} y={y}
               width={barW} height={barH}
               rx={Math.min(barW / 2, 6)} ry={Math.min(barW / 2, 6)}
-              fill={isHi ? PRIMARY : '#ebebeb'}
+              fill={isHi ? colors.primary : colors.border}
             />
 
             {/* Day label */}
@@ -159,7 +161,7 @@ const BarChart = ({ data, labels }: BarChartProps) => {
               y={CHART_H + 15}
               textAnchor="middle"
               fontSize={9}
-              fill={isHi ? PRIMARY_DARK : '#bbb'}>
+              fill={isHi ? colors.primaryDark : colors.muted}>
               {labels[i]}
             </SvgText>
           </G>
@@ -174,6 +176,8 @@ interface Props { navigation: any; }
 
 const ExpenseStats = ({ navigation }: Props) => {
   const { t } = useLanguage();
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [activePeriod, setActivePeriod] = useState(1); // 0=week 1=month 2=year
 
   const periodFilters = [t.expense.weekFilter, t.expense.monthFilter, t.expense.yearFilter];
@@ -284,12 +288,12 @@ const ExpenseStats = ({ navigation }: Props) => {
 export default ExpenseStats;
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F2F2F7' },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: c.bg },
 
   // Header
   header: {
-    backgroundColor: PRIMARY,
+    backgroundColor: c.primary,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -310,20 +314,20 @@ const styles = StyleSheet.create({
 
   // Hero card
   heroCard: {
-    backgroundColor: '#fff',
+    backgroundColor: c.white,
     borderRadius: 20,
     marginHorizontal: 16,
     marginTop: 16,
     padding: 20,
     borderWidth: 0.5,
-    borderColor: PRIMARY_BORDER,
+    borderColor: c.primaryBorder,
     elevation: 2,
     shadowColor: '#000',
     shadowOpacity: 0.04,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
   },
-  heroLabel: { fontSize: 10, color: '#aaa', letterSpacing: 0.6, fontWeight: '500' },
+  heroLabel: { fontSize: 10, color: c.hint, letterSpacing: 0.6, fontWeight: '500' },
   heroAmount: {
     fontSize: 28, fontWeight: '700', color: COLOR_DANGER,
     letterSpacing: -0.5, marginTop: 6,
@@ -338,25 +342,25 @@ const styles = StyleSheet.create({
 
   // Section label
   sectionLabel: {
-    fontSize: 11, color: '#aaa',
+    fontSize: 11, color: c.hint,
     letterSpacing: 0.6, fontWeight: '500',
     marginHorizontal: 20, marginTop: 20, marginBottom: 8,
   },
 
   // Card
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: c.white,
     borderRadius: 14,
     marginHorizontal: 16,
     padding: 16,
     borderWidth: 0.5,
-    borderColor: '#e8e8e8',
+    borderColor: c.border,
   },
 
   // Period tabs
   periodRow: {
     flexDirection: 'row',
-    backgroundColor: '#F2F2F7',
+    backgroundColor: c.bg,
     borderRadius: 10,
     padding: 3,
     marginBottom: 16,
@@ -367,9 +371,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 8,
   },
-  periodTabActive: { backgroundColor: '#fff', elevation: 1, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 3 },
-  periodText: { fontSize: 12, color: '#aaa', fontWeight: '500' },
-  periodTextActive: { color: PRIMARY_DARK, fontWeight: '600' },
+  periodTabActive: { backgroundColor: c.white, elevation: 1, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 3 },
+  periodText: { fontSize: 12, color: c.hint, fontWeight: '500' },
+  periodTextActive: { color: c.primaryDark, fontWeight: '600' },
 
   // Chart
   chartWrap: { alignItems: 'flex-start' },
@@ -388,16 +392,16 @@ const styles = StyleSheet.create({
   },
   catInfo: { flex: 1, gap: 6 },
   catLabelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  catName: { fontSize: 12, fontWeight: '500', color: '#1a1a1a' },
-  catAmount: { fontSize: 12, color: '#888' },
+  catName: { fontSize: 12, fontWeight: '500', color: c.text },
+  catAmount: { fontSize: 12, color: c.subtext },
   progressBg: {
     height: 5,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: c.divider,
     borderRadius: 3,
     overflow: 'hidden',
   },
   progressFill: { height: '100%', borderRadius: 3 },
-  catPercent: { fontSize: 12, color: '#aaa', fontWeight: '500', width: 32, textAlign: 'right' },
+  catPercent: { fontSize: 12, color: c.hint, fontWeight: '500', width: 32, textAlign: 'right' },
 
   // Top transactions
   txRow: {
@@ -410,8 +414,8 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   txInfo: { flex: 1 },
-  txName: { fontSize: 13, fontWeight: '500', color: '#1a1a1a' },
-  txCat: { fontSize: 11, color: '#aaa', marginTop: 2 },
+  txName: { fontSize: 13, fontWeight: '500', color: c.text },
+  txCat: { fontSize: 11, color: c.hint, marginTop: 2 },
   txAmount: { fontSize: 13, fontWeight: '600', color: COLOR_DANGER },
-  txDivider: { height: 0.5, backgroundColor: '#F0F0F0', marginLeft: 52 },
+  txDivider: { height: 0.5, backgroundColor: c.divider, marginLeft: 52 },
 });

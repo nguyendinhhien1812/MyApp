@@ -606,6 +606,11 @@ import { AppButton, AppDialog } from '../../components/UI';
 Ví dụ thật: nút submit ở `src/container/Login/index.tsx`, dialog đăng xuất ở
 `src/container/ProfileScreen/index.tsx`.
 
+> ⚠️ **Bẫy z-order**: `AppDialog`/`AppSnackbar` render qua Portal của Paper (nằm ở root),
+> còn `<Modal>` của React Native là modal native — **luôn đè lên Portal**.
+> Nếu cần mở dialog từ trong bottom sheet (Modal), phải **đóng Modal trước** rồi mới
+> set state mở dialog (xem `placeOrder` trong `src/container/Investment/index.tsx`).
+
 ### 6.12 Form (react-hook-form + zod)
 
 Component form dùng chung nằm ở `src/components/Form/` (`FormTextInput`, `FormCheckbox`).

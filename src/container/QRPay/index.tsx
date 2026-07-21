@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,11 @@ import {
   Share,
 } from 'react-native';
 import { Icon } from '@rneui/themed';
-import Svg, { Rect, Line } from 'react-native-svg';
+import Svg, { Rect } from 'react-native-svg';
+import { AppSnackbar } from '../../components/UI';
+import { useLanguage } from '../../context/LanguageContext';
+import { useThemeColors } from '../../context/ThemeContext';
+import { ThemeColors } from '../../theme/paperTheme';
 
 const PRIMARY = '#E89951';
 const PRIMARY_DARK = '#b36a1a';
@@ -78,8 +82,13 @@ interface Props {
 }
 
 const QRPayScreen = ({ navigation }: Props) => {
+  const { t } = useLanguage();
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [activeTab, setActiveTab] = useState<'myqr' | 'scan'>('myqr');
   const [amountEnabled, setAmountEnabled] = useState(false);
+  const [flashOn, setFlashOn] = useState(false);
+  const [toast, setToast] = useState('');
 
   const handleShare = async () => {
     try {
@@ -95,7 +104,9 @@ const QRPayScreen = ({ navigation }: Props) => {
           <Icon type="ionicon" name="arrow-back" size={18} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>QR Pay</Text>
-        <TouchableOpacity style={styles.headerBtn}>
+        <TouchableOpacity
+          style={styles.headerBtn}
+          onPress={() => setToast(t.common.demoFeature)}>
           <Icon type="ionicon" name="ellipsis-horizontal" size={18} color="#fff" />
         </TouchableOpacity>
       </View>
@@ -136,7 +147,7 @@ const QRPayScreen = ({ navigation }: Props) => {
               <Text style={styles.qrName}>Nguyễn Đình Hiến</Text>
               <Text style={styles.qrAccount}>Vietcombank · 9876 5432 10</Text>
               <View style={styles.qrPill}>
-                <Icon type="ionicon" name="scan-outline" size={12} color={PRIMARY_DARK} />
+                <Icon type="ionicon" name="scan-outline" size={12} color={colors.primaryDark} />
                 <Text style={styles.qrPillText}>Scan để chuyển tiền</Text>
               </View>
               <View style={{ height: 16 }} />
@@ -167,9 +178,11 @@ const QRPayScreen = ({ navigation }: Props) => {
           {/* Bottom actions */}
           <View style={styles.bottomActions}>
             <View style={styles.actionRow}>
-              <TouchableOpacity style={styles.btnOutline}>
-                <Icon type="ionicon" name="download-outline" size={16} color={PRIMARY_DARK} />
-                <Text style={styles.btnOutlineText}>Lưu ảnh</Text>
+              <TouchableOpacity
+                style={styles.btnOutline}
+                onPress={() => setToast(t.qrpay.qrSaved)}>
+                <Icon type="ionicon" name="download-outline" size={16} color={colors.primaryDark} />
+                <Text style={styles.btnOutlineText}>{t.qrpay.saveImage}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.btnSolid} onPress={handleShare}>
                 <Icon type="ionicon" name="share-outline" size={16} color="#fff" />
@@ -179,7 +192,7 @@ const QRPayScreen = ({ navigation }: Props) => {
             <TouchableOpacity
               style={styles.btnOutlineFull}
               onPress={() => setActiveTab('scan')}>
-              <Icon type="ionicon" name="qr-code-outline" size={16} color={PRIMARY_DARK} />
+              <Icon type="ionicon" name="qr-code-outline" size={16} color={colors.primaryDark} />
               <Text style={styles.btnOutlineText}>Quét mã QR người khác</Text>
             </TouchableOpacity>
           </View>
@@ -209,16 +222,25 @@ const QRPayScreen = ({ navigation }: Props) => {
           {/* Controls */}
           <View style={styles.scanControls}>
             <View style={styles.controlItem}>
-              <TouchableOpacity style={styles.controlBtn}>
-                <Icon type="ionicon" name="flashlight-outline" size={20} color="#fff" />
+              <TouchableOpacity
+                style={[styles.controlBtn, flashOn && styles.controlBtnActive]}
+                onPress={() => setFlashOn(v => !v)}>
+                <Icon
+                  type="ionicon"
+                  name={flashOn ? 'flashlight' : 'flashlight-outline'}
+                  size={20}
+                  color={flashOn ? colors.primaryDark : '#fff'}
+                />
               </TouchableOpacity>
-              <Text style={styles.controlLabel}>Đèn pin</Text>
+              <Text style={styles.controlLabel}>{t.qrpay.flash}</Text>
             </View>
             <View style={styles.controlItem}>
-              <TouchableOpacity style={styles.controlBtn}>
+              <TouchableOpacity
+                style={styles.controlBtn}
+                onPress={() => setToast(t.common.demoFeature)}>
                 <Icon type="ionicon" name="images-outline" size={20} color="#fff" />
               </TouchableOpacity>
-              <Text style={styles.controlLabel}>Thư viện</Text>
+              <Text style={styles.controlLabel}>{t.qrpay.gallery}</Text>
             </View>
           </View>
 
@@ -240,17 +262,25 @@ const QRPayScreen = ({ navigation }: Props) => {
           </View>
         </View>
       )}
+
+      <AppSnackbar
+        visible={!!toast}
+        onDismiss={() => setToast('')}
+        message={toast}
+        tone={toast === t.qrpay.qrSaved ? 'success' : 'default'}
+        duration={1800}
+      />
     </SafeAreaView>
   );
 };
 
 export default QRPayScreen;
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F2F2F7' },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: c.bg },
 
   header: {
-    backgroundColor: PRIMARY,
+    backgroundColor: c.primary,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -269,7 +299,7 @@ const styles = StyleSheet.create({
 
   // Tab
   tabArea: {
-    backgroundColor: PRIMARY,
+    backgroundColor: c.primary,
     paddingHorizontal: 16,
     paddingBottom: 12,
   },
@@ -281,16 +311,16 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   tab: { flex: 1, height: 30, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  tabActive: { backgroundColor: '#fff' },
+  tabActive: { backgroundColor: c.white },
   tabText: { fontSize: 12, color: 'rgba(255,255,255,0.8)', fontWeight: '500' },
-  tabTextActive: { color: PRIMARY_DARK, fontWeight: '600' },
+  tabTextActive: { color: c.primaryDark, fontWeight: '600' },
 
   // My QR
   scroll: { padding: 16, gap: 12, paddingBottom: 20 },
-  card: { backgroundColor: '#fff', borderRadius: 16, overflow: 'hidden', alignItems: 'center' },
+  card: { backgroundColor: c.white, borderRadius: 16, overflow: 'hidden', alignItems: 'center' },
   sectionLabel: {
     fontSize: 10,
-    color: '#aaa',
+    color: c.hint,
     letterSpacing: 0.6,
     fontWeight: '500',
     marginTop: 16,
@@ -298,26 +328,26 @@ const styles = StyleSheet.create({
   },
   qrWrapper: {
     padding: 12,
-    backgroundColor: '#fff',
+    backgroundColor: c.white,
     borderRadius: 12,
     borderWidth: 0.5,
-    borderColor: '#eee',
+    borderColor: c.border,
   },
-  qrName: { fontSize: 16, fontWeight: '600', color: '#1a1a1a', marginTop: 12 },
-  qrAccount: { fontSize: 12, color: '#888', marginTop: 4 },
+  qrName: { fontSize: 16, fontWeight: '600', color: c.text, marginTop: 12 },
+  qrAccount: { fontSize: 12, color: c.subtext, marginTop: 4 },
   qrPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: PRIMARY_LIGHT,
+    backgroundColor: c.primaryLight,
     borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 5,
     marginTop: 10,
     borderWidth: 0.5,
-    borderColor: PRIMARY_BORDER,
+    borderColor: c.primaryBorder,
   },
-  qrPillText: { fontSize: 11, color: PRIMARY_DARK, fontWeight: '500' },
+  qrPillText: { fontSize: 11, color: c.primaryDark, fontWeight: '500' },
 
   // Amount toggle
   toggleRow: {
@@ -329,11 +359,11 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
   },
   toggleInfo: { flex: 1 },
-  toggleLabel: { fontSize: 14, fontWeight: '500', color: '#1a1a1a' },
-  toggleSub: { fontSize: 11, color: '#aaa', marginTop: 2 },
+  toggleLabel: { fontSize: 14, fontWeight: '500', color: c.text },
+  toggleSub: { fontSize: 11, color: c.hint, marginTop: 2 },
   toggle: { width: 46, height: 26, borderRadius: 13 },
-  toggleOn: { backgroundColor: PRIMARY },
-  toggleOff: { backgroundColor: '#E0E0E0' },
+  toggleOn: { backgroundColor: c.primary },
+  toggleOff: { backgroundColor: c.border },
   toggleThumb: {
     width: 22,
     height: 22,
@@ -352,15 +382,15 @@ const styles = StyleSheet.create({
   amountInput: {
     marginHorizontal: 16,
     marginBottom: 14,
-    backgroundColor: '#F7F7F7',
+    backgroundColor: c.divider,
     borderRadius: 10,
     padding: 12,
     alignSelf: 'stretch',
   },
-  amountPlaceholder: { fontSize: 14, color: '#ccc', fontStyle: 'italic' },
+  amountPlaceholder: { fontSize: 14, color: c.muted, fontStyle: 'italic' },
 
   // Bottom actions
-  bottomActions: { padding: 16, gap: 10, backgroundColor: '#F2F2F7' },
+  bottomActions: { padding: 16, gap: 10, backgroundColor: c.bg },
   actionRow: { flexDirection: 'row', gap: 10 },
   btnOutline: {
     flex: 1,
@@ -371,9 +401,9 @@ const styles = StyleSheet.create({
     height: 46,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: PRIMARY,
+    borderColor: c.primary,
   },
-  btnOutlineText: { fontSize: 13, fontWeight: '500', color: PRIMARY_DARK },
+  btnOutlineText: { fontSize: 13, fontWeight: '500', color: c.primaryDark },
   btnSolid: {
     flex: 1,
     flexDirection: 'row',
@@ -382,7 +412,7 @@ const styles = StyleSheet.create({
     gap: 6,
     height: 46,
     borderRadius: 12,
-    backgroundColor: PRIMARY,
+    backgroundColor: c.primary,
   },
   btnSolidText: { fontSize: 13, fontWeight: '600', color: '#fff' },
   btnOutlineFull: {
@@ -393,7 +423,7 @@ const styles = StyleSheet.create({
     height: 46,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: PRIMARY,
+    borderColor: c.primary,
   },
 
   // Scanner
@@ -422,7 +452,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 22,
     height: 22,
-    borderColor: PRIMARY,
+    borderColor: c.primary,
     borderStyle: 'solid',
   },
   cornerTL: { top: 0, left: 0, borderTopWidth: 3, borderLeftWidth: 3, borderRadius: 3 },
@@ -449,6 +479,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  controlBtnActive: {
+    backgroundColor: '#fff',
+  },
   controlLabel: { fontSize: 10, color: 'rgba(255,255,255,0.5)' },
 
   // Scan bottom sheet
@@ -457,7 +490,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#fff',
+    backgroundColor: c.white,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 16,
@@ -466,28 +499,28 @@ const styles = StyleSheet.create({
   sheetHandle: {
     width: 36,
     height: 4,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: c.border,
     borderRadius: 2,
     alignSelf: 'center',
     marginBottom: 12,
   },
   sheetRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   sheetQR: {
-    backgroundColor: '#F7F7F7',
+    backgroundColor: c.divider,
     borderRadius: 10,
     padding: 4,
     borderWidth: 0.5,
-    borderColor: '#eee',
+    borderColor: c.border,
   },
-  sheetName: { fontSize: 14, fontWeight: '600', color: '#1a1a1a' },
-  sheetBank: { fontSize: 11, color: '#888', marginTop: 2 },
+  sheetName: { fontSize: 14, fontWeight: '600', color: c.text },
+  sheetBank: { fontSize: 11, color: c.subtext, marginTop: 2 },
   sheetShare: {
-    backgroundColor: PRIMARY_LIGHT,
+    backgroundColor: c.primaryLight,
     borderWidth: 0.5,
-    borderColor: PRIMARY_BORDER,
+    borderColor: c.primaryBorder,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
-  sheetShareText: { fontSize: 12, color: PRIMARY_DARK, fontWeight: '500' },
+  sheetShareText: { fontSize: 12, color: c.primaryDark, fontWeight: '500' },
 });

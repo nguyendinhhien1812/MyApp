@@ -1,7 +1,6 @@
 import React from 'react';
 import { StyleSheet } from 'react-native';
 import { Snackbar } from 'react-native-paper';
-import { BRAND } from '../../theme/paperTheme';
 
 type Tone = 'default' | 'success' | 'danger' | 'info';
 
@@ -15,11 +14,12 @@ interface AppSnackbarProps {
   onAction?: () => void;
 }
 
+// Toast luôn dùng nền tối bão hoà (chuẩn toast) → chữ trắng đọc tốt ở cả 2 mode
 const TONE_BG: Record<Tone, string> = {
-  default: BRAND.text,
-  success: BRAND.success,
-  danger: BRAND.danger,
-  info: BRAND.info,
+  default: '#2c2c2c',
+  success: '#1a7a40',
+  danger: '#c0392b',
+  info: '#1a4a7a',
 };
 
 const AppSnackbar = ({
@@ -38,7 +38,7 @@ const AppSnackbar = ({
     style={[styles.bar, { backgroundColor: TONE_BG[tone] }]}
     action={
       actionLabel
-        ? { label: actionLabel, textColor: BRAND.white, onPress: onAction ?? onDismiss }
+        ? { label: actionLabel, textColor: '#fff', onPress: onAction ?? onDismiss }
         : undefined
     }>
     {message}

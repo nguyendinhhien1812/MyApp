@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -11,59 +11,12 @@ import {
 import { Icon } from '@rneui/themed';
 import { useNavigation } from '@react-navigation/native';
 import { useLanguage } from '../../context/LanguageContext';
+import { useThemeColors } from '../../context/ThemeContext';
+import { ThemeColors } from '../../theme/paperTheme';
 import { AppDialog } from '../../components/UI';
-
-const PRIMARY_DARK = '#b36a1a';
-const PRIMARY_LIGHT = '#fdf3e7';
-const PRIMARY_BORDER = '#f0c48a';
 
 const AVATAR_URL =
   'https://i.pinimg.com/736x/d3/9d/85/d39d854ad761552a841304300c779f53.jpg';
-
-// ─── Row component ────────────────────────────────────────────────────────────
-
-const ProfileRow = ({
-  icon,
-  label,
-  value,
-  iconBg,
-  iconColor,
-  isLast = false,
-  danger = false,
-  onPress,
-}: {
-  icon: string;
-  label: string;
-  value?: string;
-  iconBg?: string;
-  iconColor?: string;
-  isLast?: boolean;
-  danger?: boolean;
-  onPress?: () => void;
-}) => (
-  <>
-    <TouchableOpacity style={styles.profileRow} onPress={onPress} activeOpacity={0.7}>
-      <View style={styles.rowLeft}>
-        <View style={[styles.rowIconWrap, { backgroundColor: iconBg ?? PRIMARY_LIGHT }]}>
-          <Icon
-            type="ionicon"
-            name={icon}
-            size={17}
-            color={danger ? '#ef4444' : (iconColor ?? PRIMARY_DARK)}
-          />
-        </View>
-        <Text style={[styles.rowLabel, danger && styles.rowLabelDanger]}>{label}</Text>
-      </View>
-      {!danger && (
-        <View style={styles.rowRight}>
-          {value ? <Text style={styles.rowValue}>{value}</Text> : null}
-          <Icon type="ionicon" name="chevron-forward" size={15} color="#ccc" />
-        </View>
-      )}
-    </TouchableOpacity>
-    {!isLast && <View style={styles.rowDivider} />}
-  </>
-);
 
 // ─── Screen ──────────────────────────────────────────────────────────────────
 
@@ -72,7 +25,53 @@ const TECH_TAGS = ['React Native', 'TypeScript', 'i18n', 'SVG', 'Real API'];
 const ProfileScreen = () => {
   const { t } = useLanguage();
   const navigation = useNavigation();
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [logoutModal, setLogoutModal] = useState(false);
+
+  // ─── Row component (inner: đóng trên styles + colors) ──────────────────────
+  const ProfileRow = ({
+    icon,
+    label,
+    value,
+    iconBg,
+    iconColor,
+    isLast = false,
+    danger = false,
+    onPress,
+  }: {
+    icon: string;
+    label: string;
+    value?: string;
+    iconBg?: string;
+    iconColor?: string;
+    isLast?: boolean;
+    danger?: boolean;
+    onPress?: () => void;
+  }) => (
+    <>
+      <TouchableOpacity style={styles.profileRow} onPress={onPress} activeOpacity={0.7}>
+        <View style={styles.rowLeft}>
+          <View style={[styles.rowIconWrap, { backgroundColor: iconBg ?? colors.primaryLight }]}>
+            <Icon
+              type="ionicon"
+              name={icon}
+              size={17}
+              color={danger ? '#ef4444' : (iconColor ?? colors.primaryDark)}
+            />
+          </View>
+          <Text style={[styles.rowLabel, danger && styles.rowLabelDanger]}>{label}</Text>
+        </View>
+        {!danger && (
+          <View style={styles.rowRight}>
+            {value ? <Text style={styles.rowValue}>{value}</Text> : null}
+            <Icon type="ionicon" name="chevron-forward" size={15} color={colors.muted} />
+          </View>
+        )}
+      </TouchableOpacity>
+      {!isLast && <View style={styles.rowDivider} />}
+    </>
+  );
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -91,14 +90,18 @@ const ProfileScreen = () => {
         </View>
         <View style={styles.nameBlock}>
           <Text style={styles.nameText}>Nguyễn Đình Hiến</Text>
-          <Text style={styles.emailText}>nguyenhien@gmail.com</Text>
+          <Text style={styles.roleText}>{t.profile.role}</Text>
+          <Text style={styles.emailText}>Kyonguyen00775@gmail.com</Text>
           <View style={styles.levelBadge}>
-            <Icon type="ionicon" name="star" size={11} color={PRIMARY_DARK} />
+            <Icon type="ionicon" name="star" size={11} color={colors.primaryDark} />
             <Text style={styles.levelText}>{t.profile.level}: {t.profile.levelValue}</Text>
           </View>
+          <Text style={styles.memberText}>{t.profile.member} 02/2021</Text>
         </View>
-        <TouchableOpacity style={styles.editBtn}>
-          <Icon type="ionicon" name="create-outline" size={18} color={PRIMARY_DARK} />
+        <TouchableOpacity
+          style={styles.editBtn}
+          onPress={() => (navigation as any).navigate('EditProfileScreen')}>
+          <Icon type="ionicon" name="create-outline" size={18} color={colors.primaryDark} />
           <Text style={styles.editText}>{t.profile.editProfile}</Text>
         </TouchableOpacity>
       </View>
@@ -111,12 +114,14 @@ const ProfileScreen = () => {
           label={t.profile.history}
           iconBg="#e8f0f8"
           iconColor="#1a4a7a"
+          onPress={() => navigation.navigate('Notification' as never)}
         />
         <ProfileRow
           icon="card-outline"
           label={t.profile.personalAccount}
           iconBg="#e8f8f0"
           iconColor="#1a7a40"
+          onPress={() => navigation.navigate('BankScreen' as never)}
           isLast
         />
       </View>
@@ -128,13 +133,15 @@ const ProfileScreen = () => {
           icon="shield-checkmark-outline"
           label={t.profile.security}
           iconBg="#fff4e8"
-          iconColor={PRIMARY_DARK}
+          iconColor={colors.primaryDark}
+          onPress={() => (navigation as any).navigate('SecurityScreen')}
         />
         <ProfileRow
           icon="document-text-outline"
           label={t.profile.terms}
           iconBg="#f5f0ff"
           iconColor="#6c3fc4"
+          onPress={() => (navigation as any).navigate('TermsScreen')}
           isLast
         />
       </View>
@@ -146,7 +153,7 @@ const ProfileScreen = () => {
         onPress={() => (navigation as any).navigate('AboutScreen')}>
         <View style={styles.aboutLeft}>
           <View style={styles.aboutIconWrap}>
-            <Icon type="ionicon" name="layers-outline" size={20} color={PRIMARY_DARK} />
+            <Icon type="ionicon" name="layers-outline" size={20} color={colors.primaryDark} />
           </View>
           <View style={styles.aboutInfo}>
             <Text style={styles.aboutTitle}>{t.profile.aboutApp}</Text>
@@ -159,7 +166,7 @@ const ProfileScreen = () => {
             </View>
           </View>
         </View>
-        <Icon type="ionicon" name="chevron-forward" size={16} color="#ccc" />
+        <Icon type="ionicon" name="chevron-forward" size={16} color={colors.muted} />
       </TouchableOpacity>
 
       {/* ── Đăng xuất ── */}
@@ -198,23 +205,23 @@ export default ProfileScreen;
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F2F2F7' },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: c.bg },
 
   header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8 },
-  headerTitle: { fontSize: 26, fontWeight: '700', color: '#1a1a1a' },
+  headerTitle: { fontSize: 26, fontWeight: '700', color: c.text },
 
   // Avatar card
   avatarCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: c.white,
     borderRadius: 16,
     marginHorizontal: 16,
     marginTop: 4,
     padding: 16,
     borderWidth: 0.5,
-    borderColor: PRIMARY_BORDER,
+    borderColor: c.primaryBorder,
     gap: 14,
   },
   avatarWrap: { position: 'relative' },
@@ -223,7 +230,7 @@ const styles = StyleSheet.create({
     height: 58,
     borderRadius: 29,
     borderWidth: 2,
-    borderColor: PRIMARY_BORDER,
+    borderColor: c.primaryBorder,
   },
   onlineDot: {
     position: 'absolute',
@@ -234,39 +241,41 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     backgroundColor: '#1a7a40',
     borderWidth: 2,
-    borderColor: '#fff',
+    borderColor: c.white,
   },
   nameBlock: { flex: 1 },
-  nameText: { fontSize: 16, fontWeight: '600', color: '#1a1a1a' },
-  emailText: { fontSize: 12, color: '#aaa', marginTop: 2 },
+  nameText: { fontSize: 16, fontWeight: '600', color: c.text },
+  roleText: { fontSize: 11, color: c.primaryDark, fontWeight: '500', marginTop: 2 },
+  emailText: { fontSize: 12, color: c.hint, marginTop: 2 },
+  memberText: { fontSize: 10, color: c.muted, marginTop: 5 },
   levelBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: PRIMARY_LIGHT,
+    backgroundColor: c.primaryLight,
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 3,
     alignSelf: 'flex-start',
     marginTop: 6,
   },
-  levelText: { fontSize: 10, color: PRIMARY_DARK, fontWeight: '500' },
+  levelText: { fontSize: 10, color: c.primaryDark, fontWeight: '500' },
   editBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: PRIMARY_LIGHT,
+    backgroundColor: c.primaryLight,
     borderRadius: 10,
     paddingHorizontal: 10,
     paddingVertical: 7,
     borderWidth: 0.5,
-    borderColor: PRIMARY_BORDER,
+    borderColor: c.primaryBorder,
   },
-  editText: { fontSize: 11, color: PRIMARY_DARK, fontWeight: '500' },
+  editText: { fontSize: 11, color: c.primaryDark, fontWeight: '500' },
 
   sectionLabel: {
     fontSize: 11,
-    color: '#aaa',
+    color: c.hint,
     letterSpacing: 0.6,
     fontWeight: '500',
     marginHorizontal: 20,
@@ -274,12 +283,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: c.white,
     borderRadius: 14,
     marginHorizontal: 16,
     overflow: 'hidden',
     borderWidth: 0.5,
-    borderColor: '#e8e8e8',
+    borderColor: c.border,
   },
   profileRow: {
     flexDirection: 'row',
@@ -296,17 +305,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  rowLabel: { fontSize: 14, color: '#1a1a1a' },
+  rowLabel: { fontSize: 14, color: c.text },
   rowLabelDanger: { color: '#ef4444', fontWeight: '500' },
   rowRight: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  rowValue: { fontSize: 13, color: '#aaa' },
-  rowDivider: { height: 0.5, backgroundColor: '#F0F0F0', marginLeft: 60 },
+  rowValue: { fontSize: 13, color: c.hint },
+  rowDivider: { height: 0.5, backgroundColor: c.divider, marginLeft: 60 },
 
   scrollContent: { paddingBottom: 32 },
 
   // About card
   aboutCard: {
-    backgroundColor: '#fff',
+    backgroundColor: c.white,
     borderRadius: 14,
     marginHorizontal: 16,
     marginTop: 12,
@@ -315,25 +324,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 0.5,
-    borderColor: PRIMARY_BORDER,
+    borderColor: c.primaryBorder,
   },
   aboutLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
   aboutIconWrap: {
     width: 38,
     height: 38,
     borderRadius: 10,
-    backgroundColor: PRIMARY_LIGHT,
+    backgroundColor: c.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
   aboutInfo: { flex: 1 },
-  aboutTitle: { fontSize: 14, fontWeight: '500', color: '#1a1a1a' },
+  aboutTitle: { fontSize: 14, fontWeight: '500', color: c.text },
   aboutTagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 6 },
   aboutTag: {
-    backgroundColor: '#F0F0F5',
+    backgroundColor: c.divider,
     borderRadius: 6,
     paddingHorizontal: 7,
     paddingVertical: 2,
   },
-  aboutTagText: { fontSize: 9, color: '#666', fontWeight: '500' },
+  aboutTagText: { fontSize: 9, color: c.subtext, fontWeight: '500' },
 });

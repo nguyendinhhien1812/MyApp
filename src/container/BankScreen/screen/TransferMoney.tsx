@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -10,11 +10,10 @@ import {
 } from 'react-native';
 import { Icon } from '@rneui/themed';
 import { StackScreenProps } from '@react-navigation/stack';
-
-const PRIMARY = '#E89951';
-const PRIMARY_DARK = '#b36a1a';
-const PRIMARY_LIGHT = '#fdf3e7';
-const PRIMARY_BORDER = '#f0c48a';
+import { AppDialog, AppSnackbar } from '../../../components/UI';
+import { useLanguage } from '../../../context/LanguageContext';
+import { useThemeColors } from '../../../context/ThemeContext';
+import { ThemeColors } from '../../../theme/paperTheme';
 
 const RECIPIENT = {
   name: 'John Smith',
@@ -35,7 +34,14 @@ const money = (n: number) =>
 interface Props extends StackScreenProps<any> {}
 
 const TransferMoney = ({ navigation, route }: Props) => {
+  const { t } = useLanguage();
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const balance = (route.params as any)?.balance ?? 1000000000;
+  // Người nhận truyền từ Gửi nhanh / Gửi lại — mặc định RECIPIENT demo
+  const recipient = { ...RECIPIENT, ...((route.params as any)?.contact ?? {}) };
+  const [confirmVisible, setConfirmVisible] = useState(false);
+  const [successVisible, setSuccessVisible] = useState(false);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -56,11 +62,11 @@ const TransferMoney = ({ navigation, route }: Props) => {
         <View style={styles.card}>
           <Text style={styles.sectionLabel}>NGƯỜI NHẬN</Text>
           <View style={styles.recipientRow}>
-            <Image source={{ uri: RECIPIENT.avatar }} style={styles.avatar} />
+            <Image source={{ uri: recipient.avatar }} style={styles.avatar} />
             <View style={styles.recipientInfo}>
-              <Text style={styles.recipientName}>{RECIPIENT.name}</Text>
+              <Text style={styles.recipientName}>{recipient.name}</Text>
               <Text style={styles.recipientBank}>
-                {RECIPIENT.bank} · {RECIPIENT.accountMasked}
+                {recipient.bank} · {recipient.accountMasked}
               </Text>
             </View>
             <View style={styles.verifiedBadge}>
@@ -106,7 +112,7 @@ const TransferMoney = ({ navigation, route }: Props) => {
 
         {/* Security note */}
         <View style={styles.securityRow}>
-          <Icon type="ionicon" name="shield-checkmark-outline" size={14} color="#bbb" />
+          <Icon type="ionicon" name="shield-checkmark-outline" size={14} color={colors.muted} />
           <Text style={styles.securityText}>Giao dịch được mã hoá 256-bit SSL</Text>
         </View>
 
@@ -115,26 +121,55 @@ const TransferMoney = ({ navigation, route }: Props) => {
       {/* Bottom CTA */}
       <View style={styles.bottom}>
         <View style={styles.securityRowCenter}>
-          <Icon type="ionicon" name="lock-closed-outline" size={13} color="#aaa" />
+          <Icon type="ionicon" name="lock-closed-outline" size={13} color={colors.hint} />
           <Text style={styles.securityTextSmall}>Bảo mật bởi Face ID</Text>
         </View>
-        <TouchableOpacity style={styles.confirmBtn} activeOpacity={0.85}>
+        <TouchableOpacity
+          style={styles.confirmBtn}
+          activeOpacity={0.85}
+          onPress={() => setConfirmVisible(true)}>
           <Icon type="ionicon" name="happy-outline" size={20} color="#fff" />
           <Text style={styles.confirmText}>Xác nhận bằng Face ID</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Xác nhận + thông báo thành công */}
+      <AppDialog
+        visible={confirmVisible}
+        onDismiss={() => setConfirmVisible(false)}
+        icon="swap-horizontal"
+        tone="primary"
+        title={t.bank.transferConfirmTitle}
+        description={`${money(AMOUNT)} → ${recipient.name}. ${t.bank.transferConfirmDesc}`}
+        cancelText={t.common.cancel}
+        confirmText={t.common.confirm}
+        onConfirm={() => {
+          setConfirmVisible(false);
+          setSuccessVisible(true);
+        }}
+      />
+      <AppSnackbar
+        visible={successVisible}
+        onDismiss={() => {
+          setSuccessVisible(false);
+          navigation.goBack();
+        }}
+        message={t.bank.transferSuccess}
+        tone="success"
+        duration={1600}
+      />
     </SafeAreaView>
   );
 };
 
 export default TransferMoney;
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F2F2F7' },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: c.bg },
 
   // Header
   header: {
-    backgroundColor: PRIMARY,
+    backgroundColor: c.primary,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -162,13 +197,13 @@ const styles = StyleSheet.create({
 
   // Card
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: c.white,
     borderRadius: 16,
     overflow: 'hidden',
   },
   sectionLabel: {
     fontSize: 10,
-    color: '#aaa',
+    color: c.hint,
     letterSpacing: 0.6,
     fontWeight: '500',
     paddingHorizontal: 16,
@@ -189,11 +224,11 @@ const styles = StyleSheet.create({
     height: 46,
     borderRadius: 23,
     borderWidth: 1.5,
-    borderColor: PRIMARY_BORDER,
+    borderColor: c.primaryBorder,
   },
   recipientInfo: { flex: 1 },
-  recipientName: { fontSize: 15, fontWeight: '600', color: '#1a1a1a' },
-  recipientBank: { fontSize: 12, color: '#888', marginTop: 3 },
+  recipientName: { fontSize: 15, fontWeight: '600', color: c.text },
+  recipientBank: { fontSize: 12, color: c.subtext, marginTop: 3 },
   verifiedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -215,7 +250,7 @@ const styles = StyleSheet.create({
   amountBig: {
     fontSize: 34,
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: c.text,
     letterSpacing: -0.5,
   },
   freeBadge: {
@@ -230,7 +265,7 @@ const styles = StyleSheet.create({
   freeText: { fontSize: 11, color: '#16a34a', fontWeight: '500' },
 
   // Rows
-  divider: { height: 0.5, backgroundColor: '#F0F0F0', marginHorizontal: 16 },
+  divider: { height: 0.5, backgroundColor: c.divider, marginHorizontal: 16 },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -238,9 +273,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 13,
   },
-  rowLabel: { fontSize: 14, color: '#888' },
-  rowValue: { fontSize: 14, color: '#1a1a1a', fontWeight: '500' },
-  rowRemain: { fontSize: 14, color: PRIMARY, fontWeight: '700' },
+  rowLabel: { fontSize: 14, color: c.subtext },
+  rowValue: { fontSize: 14, color: c.text, fontWeight: '500' },
+  rowRemain: { fontSize: 14, color: c.primary, fontWeight: '700' },
 
   // Security
   securityRow: {
@@ -250,14 +285,14 @@ const styles = StyleSheet.create({
     gap: 5,
     paddingVertical: 4,
   },
-  securityText: { fontSize: 11, color: '#bbb' },
+  securityText: { fontSize: 11, color: c.muted },
 
   // Bottom
   bottom: {
     padding: 16,
     paddingBottom: 24,
     gap: 10,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: c.bg,
   },
   securityRowCenter: {
     flexDirection: 'row',
@@ -265,9 +300,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 5,
   },
-  securityTextSmall: { fontSize: 11, color: '#aaa' },
+  securityTextSmall: { fontSize: 11, color: c.hint },
   confirmBtn: {
-    backgroundColor: PRIMARY,
+    backgroundColor: c.primary,
     borderRadius: 14,
     height: 52,
     flexDirection: 'row',

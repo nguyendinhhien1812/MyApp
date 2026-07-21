@@ -1,5 +1,5 @@
 // ─── Imports ─────────────────────────────────────────────────────────────────
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -10,13 +10,12 @@ import {
   TextInput,
 } from 'react-native';
 import { Icon } from '@rneui/themed';
+import { AppSnackbar } from '../../../components/UI';
 import { useLanguage } from '../../../context/LanguageContext';
+import { useThemeColors } from '../../../context/ThemeContext';
+import { ThemeColors } from '../../../theme/paperTheme';
 
 // ─── Brand colors ─────────────────────────────────────────────────────────────
-const PRIMARY        = '#E89951';
-const PRIMARY_DARK   = '#b36a1a';
-const PRIMARY_LIGHT  = '#fdf3e7';
-const PRIMARY_BORDER = '#f0c48a';
 const COLOR_DANGER   = '#c0392b';
 const COLOR_SUCCESS  = '#1a7a40';
 
@@ -25,6 +24,7 @@ type TxItem = {
   id: number;
   name: string;
   category: string;
+  categoryId: string;
   icon: string;
   iconBg: string;
   iconColor: string;
@@ -54,34 +54,37 @@ const getCatName = (id: string, t: any): string => {
   return map[id] ?? id;
 };
 
-// ─── Sub-component: Detail row ────────────────────────────────────────────────
-const DetailRow = ({
-  label,
-  value,
-  isLast = false,
-  valueColor,
-}: {
-  label: string;
-  value: string;
-  isLast?: boolean;
-  valueColor?: string;
-}) => (
-  <>
-    <View style={styles.detailRow}>
-      <Text style={styles.detailLabel}>{label}</Text>
-      <Text style={[styles.detailValue, valueColor ? { color: valueColor } : {}]}>{value}</Text>
-    </View>
-    {!isLast && <View style={styles.rowDivider} />}
-  </>
-);
-
 // ─── Screen ───────────────────────────────────────────────────────────────────
 interface Props { navigation: any; route: any; }
 
 const ExpenseDetail = ({ navigation, route }: Props) => {
   const { t } = useLanguage();
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const item = (route.params as any)?.item as TxItem | undefined;
   const [note, setNote] = useState('');
+  const [toast, setToast] = useState('');
+
+  // ─── Sub-component: Detail row (dùng styles theo theme) ───────────────────
+  const DetailRow = ({
+    label,
+    value,
+    isLast = false,
+    valueColor,
+  }: {
+    label: string;
+    value: string;
+    isLast?: boolean;
+    valueColor?: string;
+  }) => (
+    <>
+      <View style={styles.detailRow}>
+        <Text style={styles.detailLabel}>{label}</Text>
+        <Text style={[styles.detailValue, valueColor ? { color: valueColor } : {}]}>{value}</Text>
+      </View>
+      {!isLast && <View style={styles.rowDivider} />}
+    </>
+  );
 
   if (!item) {
     return (
@@ -164,7 +167,7 @@ const ExpenseDetail = ({ navigation, route }: Props) => {
             value={note}
             onChangeText={setNote}
             placeholder={t.expense.notePlaceholder}
-            placeholderTextColor="#ccc"
+            placeholderTextColor={colors.muted}
             multiline
             numberOfLines={3}
           />
@@ -172,15 +175,18 @@ const ExpenseDetail = ({ navigation, route }: Props) => {
 
         {/* ── Receipt row ── */}
         <Text style={styles.sectionLabel}>{t.expense.receipt}</Text>
-        <TouchableOpacity style={styles.receiptCard} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={styles.receiptCard}
+          activeOpacity={0.7}
+          onPress={() => setToast(t.common.demoFeature)}>
           <View style={styles.receiptIcon}>
-            <Icon type="ionicon" name="cloud-upload-outline" size={24} color={PRIMARY_DARK} />
+            <Icon type="ionicon" name="cloud-upload-outline" size={24} color={colors.primaryDark} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.receiptTitle}>{t.expense.uploadReceipt}</Text>
             <Text style={styles.receiptSub}>JPG, PNG, PDF · tối đa 5MB</Text>
           </View>
-          <Icon type="ionicon" name="chevron-forward" size={16} color="#ccc" />
+          <Icon type="ionicon" name="chevron-forward" size={16} color={colors.muted} />
         </TouchableOpacity>
 
         <View style={{ height: 16 }} />
@@ -189,15 +195,25 @@ const ExpenseDetail = ({ navigation, route }: Props) => {
       {/* ── Bottom bar ── */}
       <View style={styles.bottomBar}>
         <View style={styles.sslRow}>
-          <Icon type="ionicon" name="lock-closed-outline" size={11} color="#ccc" />
+          <Icon type="ionicon" name="lock-closed-outline" size={11} color={colors.muted} />
           <Text style={styles.sslText}>{t.expense.ssl}</Text>
         </View>
-        <TouchableOpacity style={styles.primaryBtn} activeOpacity={0.85}>
+        <TouchableOpacity
+          style={styles.primaryBtn}
+          activeOpacity={0.85}
+          onPress={() => setToast(t.expense.noteSaved)}>
           <Icon type="ionicon" name="checkmark-circle-outline" size={18} color="#fff" />
           <Text style={styles.primaryBtnText}>{t.expense.saveNote}</Text>
         </TouchableOpacity>
       </View>
 
+      <AppSnackbar
+        visible={!!toast}
+        onDismiss={() => setToast('')}
+        message={toast}
+        tone={toast === t.expense.noteSaved ? 'success' : 'default'}
+        duration={1800}
+      />
     </SafeAreaView>
   );
 };
@@ -205,12 +221,12 @@ const ExpenseDetail = ({ navigation, route }: Props) => {
 export default ExpenseDetail;
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F2F2F7' },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: c.bg },
 
   // Header
   header: {
-    backgroundColor: PRIMARY,
+    backgroundColor: c.primary,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -240,7 +256,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     marginBottom: 12,
   },
-  heroName: { fontSize: 18, fontWeight: '600', color: '#1a1a1a', marginBottom: 6 },
+  heroName: { fontSize: 18, fontWeight: '600', color: c.text, marginBottom: 6 },
   heroAmount: { fontSize: 28, fontWeight: '700', color: COLOR_DANGER, letterSpacing: -0.5 },
   statusBadge: {
     flexDirection: 'row',
@@ -257,11 +273,11 @@ const styles = StyleSheet.create({
 
   // Card
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: c.white,
     borderRadius: 14,
     marginHorizontal: 16,
     borderWidth: 0.5,
-    borderColor: '#e8e8e8',
+    borderColor: c.border,
     overflow: 'hidden',
   },
 
@@ -273,20 +289,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
-  detailLabel: { fontSize: 13, color: '#888' },
-  detailValue: { fontSize: 13, fontWeight: '500', color: '#1a1a1a' },
-  rowDivider: { height: 0.5, backgroundColor: '#F0F0F0', marginHorizontal: 16 },
+  detailLabel: { fontSize: 13, color: c.subtext },
+  detailValue: { fontSize: 13, fontWeight: '500', color: c.text },
+  rowDivider: { height: 0.5, backgroundColor: c.divider, marginHorizontal: 16 },
 
   // Section label
   sectionLabel: {
-    fontSize: 11, color: '#aaa',
+    fontSize: 11, color: c.hint,
     letterSpacing: 0.6, fontWeight: '500',
     marginHorizontal: 20, marginTop: 20, marginBottom: 8,
   },
 
   // Note input
   noteInput: {
-    fontSize: 13, color: '#1a1a1a',
+    fontSize: 13, color: c.text,
     minHeight: 60,
     textAlignVertical: 'top',
     paddingVertical: 4,
@@ -296,37 +312,37 @@ const styles = StyleSheet.create({
   receiptCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: c.white,
     borderRadius: 14,
     marginHorizontal: 16,
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderWidth: 0.5,
-    borderColor: '#e8e8e8',
+    borderColor: c.border,
     gap: 12,
   },
   receiptIcon: {
     width: 44, height: 44, borderRadius: 12,
-    backgroundColor: PRIMARY_LIGHT,
+    backgroundColor: c.primaryLight,
     alignItems: 'center', justifyContent: 'center',
   },
-  receiptTitle: { fontSize: 13, fontWeight: '500', color: '#1a1a1a' },
-  receiptSub: { fontSize: 11, color: '#aaa', marginTop: 2 },
+  receiptTitle: { fontSize: 13, fontWeight: '500', color: c.text },
+  receiptSub: { fontSize: 11, color: c.hint, marginTop: 2 },
 
   // Bottom bar
   bottomBar: {
-    backgroundColor: '#fff',
+    backgroundColor: c.white,
     paddingHorizontal: 16,
     paddingTop: 10,
     paddingBottom: 28,
     gap: 8,
     borderTopWidth: 0.5,
-    borderTopColor: '#F0F0F0',
+    borderTopColor: c.divider,
   },
   sslRow: { flexDirection: 'row', alignItems: 'center', gap: 4, justifyContent: 'center' },
-  sslText: { fontSize: 10, color: '#ccc' },
+  sslText: { fontSize: 10, color: c.muted },
   primaryBtn: {
-    backgroundColor: PRIMARY,
+    backgroundColor: c.primary,
     borderRadius: 12,
     height: 50,
     flexDirection: 'row',

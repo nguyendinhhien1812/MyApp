@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -9,12 +9,12 @@ import {
   Dimensions,
 } from 'react-native';
 import { Icon } from '@rneui/themed';
+import { AppDialog, AppSnackbar } from '../../components/UI';
+import { useLanguage } from '../../context/LanguageContext';
+import { useThemeColors } from '../../context/ThemeContext';
+import { ThemeColors } from '../../theme/paperTheme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const PRIMARY = '#E89951';
-const PRIMARY_DARK = '#b36a1a';
-const PRIMARY_LIGHT = '#fdf3e7';
-const PRIMARY_BORDER = '#f0c48a';
 
 const money = (n: number) =>
   new Intl.NumberFormat('vi-VN', {
@@ -45,8 +45,13 @@ interface Props {
 }
 
 const TopUpScreen = ({ navigation }: Props) => {
+  const { t } = useLanguage();
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [selectedCarrier, setSelectedCarrier] = useState('viettel');
   const [selectedAmount, setSelectedAmount] = useState(50000);
+  const [confirmVisible, setConfirmVisible] = useState(false);
+  const [successVisible, setSuccessVisible] = useState(false);
 
   const currentCarrier = CARRIERS.find(c => c.id === selectedCarrier) ?? CARRIERS[0];
 
@@ -156,22 +161,51 @@ const TopUpScreen = ({ navigation }: Props) => {
 
       {/* CTA */}
       <View style={styles.bottom}>
-        <TouchableOpacity style={styles.ctaBtn} activeOpacity={0.85}>
+        <TouchableOpacity
+          style={styles.ctaBtn}
+          activeOpacity={0.85}
+          onPress={() => setConfirmVisible(true)}>
           <Icon type="ionicon" name="phone-portrait-outline" size={18} color="#fff" />
           <Text style={styles.ctaText}>Nạp ngay {money(selectedAmount)}</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Xác nhận + thông báo thành công */}
+      <AppDialog
+        visible={confirmVisible}
+        onDismiss={() => setConfirmVisible(false)}
+        icon="phone-portrait-outline"
+        tone="primary"
+        title={t.bank.topUpConfirmTitle}
+        description={`${currentCarrier.name} · ${money(selectedAmount)}. ${t.bank.topUpConfirmDesc}`}
+        cancelText={t.common.cancel}
+        confirmText={t.common.confirm}
+        onConfirm={() => {
+          setConfirmVisible(false);
+          setSuccessVisible(true);
+        }}
+      />
+      <AppSnackbar
+        visible={successVisible}
+        onDismiss={() => {
+          setSuccessVisible(false);
+          navigation.goBack();
+        }}
+        message={t.bank.topUpSuccess}
+        tone="success"
+        duration={1600}
+      />
     </SafeAreaView>
   );
 };
 
 export default TopUpScreen;
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F2F2F7' },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: c.bg },
 
   header: {
-    backgroundColor: PRIMARY,
+    backgroundColor: c.primary,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -191,15 +225,15 @@ const styles = StyleSheet.create({
   scroll: { padding: 16, gap: 14, paddingBottom: 20 },
 
   // Phone card
-  card: { backgroundColor: '#fff', borderRadius: 16, padding: 16 },
+  card: { backgroundColor: c.white, borderRadius: 16, padding: 16 },
   sectionLabel: {
     fontSize: 10,
-    color: '#aaa',
+    color: c.hint,
     letterSpacing: 0.6,
     fontWeight: '500',
     marginBottom: 8,
   },
-  phoneNumber: { fontSize: 26, fontWeight: '700', color: '#1a1a1a', letterSpacing: 0.5 },
+  phoneNumber: { fontSize: 26, fontWeight: '700', color: c.text, letterSpacing: 0.5 },
   autoDetectRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -214,12 +248,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   carrierLogoSmText: { fontSize: 7, fontWeight: '700', color: '#fff' },
-  autoDetectText: { fontSize: 12, color: '#555', flex: 1 },
+  autoDetectText: { fontSize: 12, color: c.subtext, flex: 1 },
 
   // Section title
   sectionTitle: {
     fontSize: 10,
-    color: '#aaa',
+    color: c.hint,
     letterSpacing: 0.6,
     fontWeight: '500',
     marginBottom: 8,
@@ -231,17 +265,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
-    backgroundColor: '#fff',
+    backgroundColor: c.white,
     borderRadius: 10,
     paddingVertical: 9,
     paddingHorizontal: 12,
     borderWidth: 0.5,
-    borderColor: '#E8E8E8',
+    borderColor: c.border,
   },
   carrierItemActive: {
-    backgroundColor: PRIMARY_LIGHT,
+    backgroundColor: c.primaryLight,
     borderWidth: 1.5,
-    borderColor: PRIMARY,
+    borderColor: c.primary,
   },
   carrierLogo: {
     width: 20,
@@ -251,52 +285,52 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   carrierLogoText: { fontSize: 8, fontWeight: '700', color: '#fff' },
-  carrierName: { fontSize: 12, color: '#555', fontWeight: '500' },
-  carrierNameActive: { color: PRIMARY_DARK },
+  carrierName: { fontSize: 12, color: c.subtext, fontWeight: '500' },
+  carrierNameActive: { color: c.primaryDark },
 
   // Denomination
   denomGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   denomItem: {
-    backgroundColor: '#fff',
+    backgroundColor: c.white,
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 8,
     alignItems: 'center',
     borderWidth: 0.5,
-    borderColor: '#E8E8E8',
+    borderColor: c.border,
   },
   denomItemActive: {
-    backgroundColor: PRIMARY_LIGHT,
+    backgroundColor: c.primaryLight,
     borderWidth: 1.5,
-    borderColor: PRIMARY,
+    borderColor: c.primary,
   },
-  denomValue: { fontSize: 16, fontWeight: '700', color: '#1a1a1a' },
-  denomValueActive: { color: PRIMARY_DARK },
-  denomUnit: { fontSize: 10, color: '#aaa', marginTop: 2 },
-  popularLabel: { fontSize: 10, color: PRIMARY, marginTop: 2, fontWeight: '500' },
+  denomValue: { fontSize: 16, fontWeight: '700', color: c.text },
+  denomValueActive: { color: c.primaryDark },
+  denomUnit: { fontSize: 10, color: c.hint, marginTop: 2 },
+  popularLabel: { fontSize: 10, color: c.primary, marginTop: 2, fontWeight: '500' },
 
   // Summary
   summaryCard: {
-    backgroundColor: PRIMARY_LIGHT,
+    backgroundColor: c.primaryLight,
     borderRadius: 14,
     borderWidth: 0.5,
-    borderColor: PRIMARY_BORDER,
+    borderColor: c.primaryBorder,
     padding: 14,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   summaryLeft: {},
-  summaryLabel: { fontSize: 10, color: '#aaa', letterSpacing: 0.5, fontWeight: '500' },
-  summaryAmount: { fontSize: 20, fontWeight: '700', color: PRIMARY_DARK, marginTop: 4 },
+  summaryLabel: { fontSize: 10, color: c.hint, letterSpacing: 0.5, fontWeight: '500' },
+  summaryAmount: { fontSize: 20, fontWeight: '700', color: c.primaryDark, marginTop: 4 },
   summaryRight: { alignItems: 'flex-end' },
-  summaryBalanceLabel: { fontSize: 10, color: '#aaa' },
-  summaryBalance: { fontSize: 13, fontWeight: '600', color: '#1a1a1a', marginTop: 3 },
+  summaryBalanceLabel: { fontSize: 10, color: c.hint },
+  summaryBalance: { fontSize: 13, fontWeight: '600', color: c.text, marginTop: 3 },
 
   // Bottom
-  bottom: { padding: 16, paddingBottom: 24, backgroundColor: '#F2F2F7' },
+  bottom: { padding: 16, paddingBottom: 24, backgroundColor: c.bg },
   ctaBtn: {
-    backgroundColor: PRIMARY,
+    backgroundColor: c.primary,
     borderRadius: 14,
     height: 52,
     flexDirection: 'row',

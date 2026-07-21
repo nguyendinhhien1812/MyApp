@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -11,11 +11,10 @@ import {
   ScrollView,
 } from 'react-native';
 import { Icon } from '@rneui/themed';
-
-const PRIMARY = '#E89951';
-const PRIMARY_DARK = '#b36a1a';
-const PRIMARY_LIGHT = '#fdf3e7';
-const PRIMARY_BORDER = '#f0c48a';
+import { AppSnackbar } from '../../components/UI';
+import { useLanguage } from '../../context/LanguageContext';
+import { useThemeColors } from '../../context/ThemeContext';
+import { ThemeColors } from '../../theme/paperTheme';
 
 const money = (n: number) =>
   new Intl.NumberFormat('vi-VN', {
@@ -52,7 +51,11 @@ interface Props {
 }
 
 const AllContactsScreen = ({ navigation }: Props) => {
+  const { t } = useLanguage();
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [search, setSearch] = useState('');
+  const [toast, setToast] = useState('');
 
   const filtered = ALL_CONTACTS.filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -66,25 +69,27 @@ const AllContactsScreen = ({ navigation }: Props) => {
         <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.goBack()}>
           <Icon type="ionicon" name="arrow-back" size={18} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Gửi nhanh</Text>
-        <TouchableOpacity style={styles.headerBtn}>
+        <Text style={styles.headerTitle}>{t.contacts.title}</Text>
+        <TouchableOpacity
+          style={styles.headerBtn}
+          onPress={() => setToast(t.common.demoFeature)}>
           <Icon type="ionicon" name="person-add-outline" size={18} color="#fff" />
         </TouchableOpacity>
       </View>
 
       {/* Search */}
       <View style={styles.searchWrap}>
-        <Icon type="ionicon" name="search-outline" size={16} color="#aaa" />
+        <Icon type="ionicon" name="search-outline" size={16} color={colors.subtext} />
         <TextInput
           style={styles.searchInput}
-          placeholder="Tên, số tài khoản..."
-          placeholderTextColor="#ccc"
+          placeholder={t.contacts.searchPlaceholder}
+          placeholderTextColor={colors.muted}
           value={search}
           onChangeText={setSearch}
         />
         {search.length > 0 && (
           <TouchableOpacity onPress={() => setSearch('')}>
-            <Icon type="ionicon" name="close-circle" size={16} color="#ccc" />
+            <Icon type="ionicon" name="close-circle" size={16} color={colors.muted} />
           </TouchableOpacity>
         )}
       </View>
@@ -98,13 +103,20 @@ const AllContactsScreen = ({ navigation }: Props) => {
           search.length === 0 ? (
             <View>
               {/* Recent */}
-              <Text style={styles.sectionTitle}>GẦN ĐÂY NHẤT</Text>
+              <Text style={styles.sectionTitle}>{t.contacts.recent}</Text>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.recentList}>
                 {RECENT.map(item => (
-                  <TouchableOpacity key={item.id} style={styles.recentItem}>
+                  <TouchableOpacity
+                    key={item.id}
+                    style={styles.recentItem}
+                    onPress={() =>
+                      navigation.navigate('TransferMoney', {
+                        contact: { name: item.name, avatar: item.avatar },
+                      })
+                    }>
                     <View style={styles.recentAvatarWrap}>
                       <Image source={{ uri: item.avatar }} style={styles.recentAvatar} />
                     </View>
@@ -113,16 +125,18 @@ const AllContactsScreen = ({ navigation }: Props) => {
                   </TouchableOpacity>
                 ))}
                 {/* Add new */}
-                <TouchableOpacity style={styles.recentItem}>
+                <TouchableOpacity
+                  style={styles.recentItem}
+                  onPress={() => setToast(t.common.demoFeature)}>
                   <View style={styles.addAvatarBtn}>
-                    <Icon type="ionicon" name="add" size={18} color={PRIMARY} />
+                    <Icon type="ionicon" name="add" size={18} color={colors.primary} />
                   </View>
-                  <Text style={[styles.recentName, { color: PRIMARY }]}>Thêm</Text>
+                  <Text style={[styles.recentName, { color: colors.primary }]}>{t.contacts.add}</Text>
                   <Text style={styles.recentAmount}> </Text>
                 </TouchableOpacity>
               </ScrollView>
 
-              <Text style={[styles.sectionTitle, { marginTop: 8 }]}>TẤT CẢ LIÊN LẠC</Text>
+              <Text style={[styles.sectionTitle, { marginTop: 8 }]}>{t.contacts.all}</Text>
             </View>
           ) : null
         }
@@ -141,18 +155,32 @@ const AllContactsScreen = ({ navigation }: Props) => {
             </View>
             <View style={styles.contactRight}>
               <Text style={styles.contactAmount}>-{money(item.lastAmount)}</Text>
-              <TouchableOpacity style={styles.sendAgainBtn}>
-                <Text style={styles.sendAgainText}>Gửi lại</Text>
+              <TouchableOpacity
+                style={styles.sendAgainBtn}
+                onPress={() =>
+                  navigation.navigate('TransferMoney', {
+                    contact: { name: item.name, bank: item.bank, avatar: item.avatar },
+                  })
+                }>
+                <Text style={styles.sendAgainText}>{t.contacts.sendAgain}</Text>
               </TouchableOpacity>
             </View>
           </View>
         )}
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Icon type="ionicon" name="search-outline" size={32} color="#ddd" />
-            <Text style={styles.emptyText}>Không tìm thấy liên lạc</Text>
+            <Icon type="ionicon" name="search-outline" size={32} color={colors.muted} />
+            <Text style={styles.emptyText}>{t.contacts.empty}</Text>
           </View>
         }
+      />
+
+      <AppSnackbar
+        visible={!!toast}
+        onDismiss={() => setToast('')}
+        message={toast}
+        tone="default"
+        duration={1800}
       />
     </SafeAreaView>
   );
@@ -160,11 +188,11 @@ const AllContactsScreen = ({ navigation }: Props) => {
 
 export default AllContactsScreen;
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F2F2F7' },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: c.bg },
 
   header: {
-    backgroundColor: PRIMARY,
+    backgroundColor: c.primary,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -188,24 +216,24 @@ const styles = StyleSheet.create({
     gap: 8,
     margin: 16,
     marginBottom: 8,
-    backgroundColor: '#fff',
+    backgroundColor: c.white,
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderWidth: 0.5,
-    borderColor: '#E8E8E8',
+    borderColor: c.border,
   },
   searchInput: {
     flex: 1,
     fontSize: 14,
-    color: '#1a1a1a',
+    color: c.text,
     paddingVertical: 0,
   },
 
   listContent: { paddingHorizontal: 16, paddingBottom: 40 },
   sectionTitle: {
     fontSize: 10,
-    color: '#aaa',
+    color: c.subtext,
     letterSpacing: 0.6,
     fontWeight: '500',
     marginBottom: 10,
@@ -221,17 +249,17 @@ const styles = StyleSheet.create({
     height: 52,
     borderRadius: 26,
     borderWidth: 1.5,
-    borderColor: PRIMARY_BORDER,
+    borderColor: c.primaryBorder,
   },
-  recentName: { fontSize: 11, color: '#555', fontWeight: '500', maxWidth: 56, textAlign: 'center' },
-  recentAmount: { fontSize: 10, color: '#aaa', textAlign: 'center' },
+  recentName: { fontSize: 11, color: c.subtext, fontWeight: '500', maxWidth: 56, textAlign: 'center' },
+  recentAmount: { fontSize: 10, color: c.subtext, textAlign: 'center' },
   addAvatarBtn: {
     width: 52,
     height: 52,
     borderRadius: 26,
     borderWidth: 1.5,
     borderStyle: 'dashed',
-    borderColor: PRIMARY,
+    borderColor: c.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -241,34 +269,34 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: '#fff',
+    backgroundColor: c.white,
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
   contactRowFirst: { borderTopLeftRadius: 14, borderTopRightRadius: 14 },
   contactRowLast: { borderBottomLeftRadius: 14, borderBottomRightRadius: 14 },
-  separator: { height: 0.5, backgroundColor: '#F0F0F0', marginLeft: 72 },
+  separator: { height: 0.5, backgroundColor: c.divider, marginLeft: 72 },
   avatar: {
     width: 44,
     height: 44,
     borderRadius: 22,
     borderWidth: 1.5,
-    borderColor: PRIMARY_BORDER,
+    borderColor: c.primaryBorder,
   },
   contactInfo: { flex: 1 },
-  contactName: { fontSize: 14, fontWeight: '500', color: '#1a1a1a' },
-  contactBank: { fontSize: 11, color: '#aaa', marginTop: 3 },
+  contactName: { fontSize: 14, fontWeight: '500', color: c.text },
+  contactBank: { fontSize: 11, color: c.subtext, marginTop: 3 },
   contactRight: { alignItems: 'flex-end', gap: 5 },
   contactAmount: { fontSize: 12, fontWeight: '600', color: '#ef4444' },
   sendAgainBtn: {
-    backgroundColor: PRIMARY_LIGHT,
+    backgroundColor: c.primaryLight,
     borderRadius: 6,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderWidth: 0.5,
-    borderColor: PRIMARY_BORDER,
+    borderColor: c.primaryBorder,
   },
-  sendAgainText: { fontSize: 11, color: PRIMARY_DARK, fontWeight: '500' },
+  sendAgainText: { fontSize: 11, color: c.primaryDark, fontWeight: '500' },
 
   // Empty
   emptyState: {
@@ -277,5 +305,5 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingVertical: 40,
   },
-  emptyText: { fontSize: 14, color: '#ccc' },
+  emptyText: { fontSize: 14, color: c.muted },
 });

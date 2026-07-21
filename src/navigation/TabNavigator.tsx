@@ -5,16 +5,15 @@ import SettingScreen from '../container/SettingScreen';
 import ProfileScreen from '../container/ProfileScreen';
 import Icon from '../components/Icon';
 import { ICON_TYPE } from '../components/Icon/style';
-import { useTheme } from '@rneui/themed';
 import HomeNavigator from './HomeNavigator';
-import { HomeScreen } from '../container';
 import { useLanguage } from '../context/LanguageContext';
+import { useThemeColors } from '../context/ThemeContext';
 
 const Tabs = createBottomTabNavigator();
 
 const TabNavigator = () => {
-  const colors = useTheme().theme.colors;
   const { t } = useLanguage();
+  const colors = useThemeColors();
 
   return (
     <Tabs.Navigator
@@ -39,9 +38,9 @@ const TabNavigator = () => {
           top: 2,
         },
         tabBarStyle: {
-          backgroundColor: '#fff',
+          backgroundColor: colors.white,
           borderTopWidth: 0.5,
-          borderTopColor: '#e8e8e8',
+          borderTopColor: colors.border,
           elevation: 0,
           height: 80,
         },

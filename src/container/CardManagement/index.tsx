@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -8,34 +8,41 @@ import {
   ScrollView,
 } from 'react-native';
 import { Icon } from '@rneui/themed';
-
-const PRIMARY = '#E89951';
-const PRIMARY_DARK = '#b36a1a';
-const PRIMARY_LIGHT = '#fdf3e7';
-const PRIMARY_BORDER = '#f0c48a';
+import { AppDialog, AppSnackbar } from '../../components/UI';
+import { useLanguage } from '../../context/LanguageContext';
+import { useThemeColors } from '../../context/ThemeContext';
+import { ThemeColors } from '../../theme/paperTheme';
 
 interface ToggleProps {
   value: boolean;
   onToggle: () => void;
 }
 
-const Toggle = ({ value, onToggle }: ToggleProps) => (
-  <TouchableOpacity
-    style={[styles.toggle, value ? styles.toggleOn : styles.toggleOff]}
-    onPress={onToggle}
-    activeOpacity={0.8}>
-    <View style={[styles.toggleThumb, value ? styles.thumbOn : styles.thumbOff]} />
-  </TouchableOpacity>
-);
-
 interface Props {
   navigation: any;
 }
 
 const CardManagementScreen = ({ navigation }: Props) => {
+  const { t } = useLanguage();
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [onlinePayment, setOnlinePayment] = useState(true);
   const [intlPayment, setIntlPayment] = useState(false);
   const [notification, setNotification] = useState(true);
+  const [locked, setLocked] = useState(false);
+  const [showNumber, setShowNumber] = useState(false);
+  const [lockDialog, setLockDialog] = useState(false);
+  const [cancelDialog, setCancelDialog] = useState(false);
+  const [toast, setToast] = useState('');
+
+  const Toggle = ({ value, onToggle }: ToggleProps) => (
+    <TouchableOpacity
+      style={[styles.toggle, value ? styles.toggleOn : styles.toggleOff]}
+      onPress={onToggle}
+      activeOpacity={0.8}>
+      <View style={[styles.toggleThumb, value ? styles.thumbOn : styles.thumbOff]} />
+    </TouchableOpacity>
+  );
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -45,7 +52,9 @@ const CardManagementScreen = ({ navigation }: Props) => {
           <Icon type="ionicon" name="arrow-back" size={18} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Thẻ của tôi</Text>
-        <TouchableOpacity style={styles.headerBtn}>
+        <TouchableOpacity
+          style={styles.headerBtn}
+          onPress={() => setToast(t.common.demoFeature)}>
           <Icon type="ionicon" name="add-outline" size={20} color="#fff" />
         </TouchableOpacity>
       </View>
@@ -59,7 +68,9 @@ const CardManagementScreen = ({ navigation }: Props) => {
           <View style={styles.decoCircle1} />
           <View style={styles.decoCircle2} />
           <View style={styles.chip} />
-          <Text style={styles.cardNumber}>••••  ••••  ••••  8842</Text>
+          <Text style={styles.cardNumber}>
+            {showNumber ? '4532  8721  9034  8842' : '••••  ••••  ••••  8842'}
+          </Text>
           <View style={styles.cardBottom}>
             <View>
               <Text style={styles.cardFieldLabel}>CHỦ THẺ</Text>
@@ -77,8 +88,10 @@ const CardManagementScreen = ({ navigation }: Props) => {
         <View style={styles.card}>
           {/* Status */}
           <View style={styles.statusRow}>
-            <View style={styles.statusDot} />
-            <Text style={styles.statusText}>Đang hoạt động</Text>
+            <View style={[styles.statusDot, locked && styles.statusDotLocked]} />
+            <Text style={styles.statusText}>
+              {locked ? t.card.lockedStatus : t.card.activeStatus}
+            </Text>
             <View style={styles.statusBadge}>
               <Text style={styles.statusBadgeText}>Visa Debit</Text>
             </View>
@@ -86,27 +99,54 @@ const CardManagementScreen = ({ navigation }: Props) => {
           <View style={styles.divider} />
           {/* 4 actions */}
           <View style={styles.actionsRow}>
-            <TouchableOpacity style={styles.actionItem}>
+            <TouchableOpacity
+              style={styles.actionItem}
+              onPress={() => {
+                if (locked) {
+                  setLocked(false);
+                  setToast(t.card.unlockedToast);
+                } else {
+                  setLockDialog(true);
+                }
+              }}>
               <View style={[styles.actionIcon, { backgroundColor: '#fee2e2' }]}>
-                <Icon type="ionicon" name="lock-closed-outline" size={16} color="#dc2626" />
+                <Icon
+                  type="ionicon"
+                  name={locked ? 'lock-open-outline' : 'lock-closed-outline'}
+                  size={16}
+                  color="#dc2626"
+                />
               </View>
-              <Text style={styles.actionLabel}>Khóa thẻ</Text>
+              <Text style={styles.actionLabel}>
+                {locked ? t.card.unlockAction : t.card.lockAction}
+              </Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionItem}>
+            <TouchableOpacity
+              style={styles.actionItem}
+              onPress={() => setShowNumber(v => !v)}>
               <View style={[styles.actionIcon, { backgroundColor: '#dbeafe' }]}>
-                <Icon type="ionicon" name="eye-outline" size={16} color="#2563eb" />
+                <Icon
+                  type="ionicon"
+                  name={showNumber ? 'eye-off-outline' : 'eye-outline'}
+                  size={16}
+                  color="#2563eb"
+                />
               </View>
               <Text style={styles.actionLabel}>Số thẻ</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionItem}>
+            <TouchableOpacity
+              style={styles.actionItem}
+              onPress={() => setToast(t.common.demoFeature)}>
               <View style={[styles.actionIcon, { backgroundColor: '#f3e8ff' }]}>
                 <Icon type="ionicon" name="document-text-outline" size={16} color="#7c3aed" />
               </View>
               <Text style={styles.actionLabel}>Sao kê</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionItem}>
-              <View style={[styles.actionIcon, { backgroundColor: PRIMARY_LIGHT }]}>
-                <Icon type="ionicon" name="settings-outline" size={16} color={PRIMARY} />
+            <TouchableOpacity
+              style={styles.actionItem}
+              onPress={() => setToast(t.common.demoFeature)}>
+              <View style={[styles.actionIcon, { backgroundColor: colors.primaryLight }]}>
+                <Icon type="ionicon" name="settings-outline" size={16} color={colors.primary} />
               </View>
               <Text style={styles.actionLabel}>Cài đặt</Text>
             </TouchableOpacity>
@@ -156,23 +196,61 @@ const CardManagementScreen = ({ navigation }: Props) => {
         </View>
 
         {/* Danger zone */}
-        <TouchableOpacity style={styles.dangerBtn}>
+        <TouchableOpacity style={styles.dangerBtn} onPress={() => setCancelDialog(true)}>
           <Icon type="ionicon" name="trash-outline" size={16} color="#dc2626" />
           <Text style={styles.dangerText}>Hủy thẻ</Text>
         </TouchableOpacity>
 
       </ScrollView>
+
+      {/* Dialogs + toast */}
+      <AppDialog
+        visible={lockDialog}
+        onDismiss={() => setLockDialog(false)}
+        icon="lock-closed-outline"
+        tone="danger"
+        title={t.card.lockTitle}
+        description={t.card.lockDesc}
+        cancelText={t.common.cancel}
+        confirmText={t.card.lockAction}
+        onConfirm={() => {
+          setLockDialog(false);
+          setLocked(true);
+          setToast(t.card.lockedToast);
+        }}
+      />
+      <AppDialog
+        visible={cancelDialog}
+        onDismiss={() => setCancelDialog(false)}
+        icon="trash-outline"
+        tone="danger"
+        title={t.card.cancelTitle}
+        description={t.card.cancelDesc}
+        cancelText={t.common.cancel}
+        confirmText={t.common.confirm}
+        onConfirm={() => {
+          setCancelDialog(false);
+          setToast(t.common.demoFeature);
+        }}
+      />
+      <AppSnackbar
+        visible={!!toast}
+        onDismiss={() => setToast('')}
+        message={toast}
+        tone="default"
+        duration={1800}
+      />
     </SafeAreaView>
   );
 };
 
 export default CardManagementScreen;
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F2F2F7' },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: c.bg },
 
   header: {
-    backgroundColor: PRIMARY,
+    backgroundColor: c.primary,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -193,7 +271,7 @@ const styles = StyleSheet.create({
 
   // Card visual
   cardVisual: {
-    backgroundColor: PRIMARY,
+    backgroundColor: c.primary,
     borderRadius: 20,
     padding: 20,
     position: 'relative',
@@ -241,8 +319,8 @@ const styles = StyleSheet.create({
   visaText: { fontSize: 18, color: 'rgba(255,255,255,0.85)', fontStyle: 'italic', fontWeight: '700' },
 
   // Card wrapper
-  card: { backgroundColor: '#fff', borderRadius: 16, overflow: 'hidden' },
-  divider: { height: 0.5, backgroundColor: '#F0F0F0', marginHorizontal: 16 },
+  card: { backgroundColor: c.white, borderRadius: 16, overflow: 'hidden' },
+  divider: { height: 0.5, backgroundColor: c.divider, marginHorizontal: 16 },
 
   // Status
   statusRow: {
@@ -252,14 +330,15 @@ const styles = StyleSheet.create({
     padding: 14,
   },
   statusDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#22c55e' },
-  statusText: { flex: 1, fontSize: 14, color: '#1a1a1a', fontWeight: '500' },
+  statusDotLocked: { backgroundColor: '#dc2626' },
+  statusText: { flex: 1, fontSize: 14, color: c.text, fontWeight: '500' },
   statusBadge: {
     backgroundColor: '#F5F5F5',
     borderRadius: 20,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
-  statusBadgeText: { fontSize: 11, color: '#888', fontWeight: '500' },
+  statusBadgeText: { fontSize: 11, color: c.subtext, fontWeight: '500' },
 
   // Actions
   actionsRow: {
@@ -286,18 +365,18 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 10,
   },
-  limitTitle: { fontSize: 10, color: '#aaa', letterSpacing: 0.6, fontWeight: '500' },
-  limitPercent: { fontSize: 12, color: PRIMARY, fontWeight: '600' },
+  limitTitle: { fontSize: 10, color: c.hint, letterSpacing: 0.6, fontWeight: '500' },
+  limitPercent: { fontSize: 12, color: c.primary, fontWeight: '600' },
   progressBg: {
     marginHorizontal: 16,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: c.divider,
     borderRadius: 6,
     height: 8,
   },
   progressFill: {
     width: '25%',
     height: 8,
-    backgroundColor: PRIMARY,
+    backgroundColor: c.primary,
     borderRadius: 6,
   },
   limitRow: {
@@ -306,8 +385,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
   },
-  limitUsed: { fontSize: 13, fontWeight: '600', color: '#1a1a1a' },
-  limitTotal: { fontSize: 13, color: '#aaa' },
+  limitUsed: { fontSize: 13, fontWeight: '600', color: c.text },
+  limitTotal: { fontSize: 13, color: c.hint },
 
   // Toggles
   toggleRow: {
@@ -318,11 +397,11 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   toggleInfo: { flex: 1 },
-  toggleLabel: { fontSize: 14, fontWeight: '500', color: '#1a1a1a' },
-  toggleSub: { fontSize: 11, color: '#aaa', marginTop: 2 },
+  toggleLabel: { fontSize: 14, fontWeight: '500', color: c.text },
+  toggleSub: { fontSize: 11, color: c.hint, marginTop: 2 },
   toggle: { width: 46, height: 26, borderRadius: 13 },
-  toggleOn: { backgroundColor: PRIMARY },
-  toggleOff: { backgroundColor: '#E0E0E0' },
+  toggleOn: { backgroundColor: c.primary },
+  toggleOff: { backgroundColor: c.border },
   toggleThumb: {
     width: 22,
     height: 22,

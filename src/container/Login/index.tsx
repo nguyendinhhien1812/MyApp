@@ -15,13 +15,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Icon } from '@rneui/themed';
 import { FormTextInput, FormCheckbox } from '../../components/Form';
-import { AppButton } from '../../components/UI';
+import { AppButton, AppDialog } from '../../components/UI';
 import { useLanguage } from '../../context/LanguageContext';
+import { useThemeColors } from '../../context/ThemeContext';
+import { ThemeColors } from '../../theme/paperTheme';
 import type { Translations } from '../../i18n/translations';
-
-// ─── 2. Constants ──────────────────────────────────────────────────────────
-const PRIMARY_DARK   = '#b36a1a';
-const PRIMARY_LIGHT  = '#fdf3e7';
 
 // ─── 3. Validation schema ──────────────────────────────────────────────────
 const makeSchema = (t: Translations) =>
@@ -46,7 +44,10 @@ interface Props {
 
 const LoginScreen = ({ navigation }: Props) => {
   const { t } = useLanguage();
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [submitting, setSubmitting] = useState(false);
+  const [forgotVisible, setForgotVisible] = useState(false);
 
   const schema = useMemo(() => makeSchema(t), [t]);
   const { control, handleSubmit } = useForm<LoginForm>({
@@ -76,7 +77,7 @@ const LoginScreen = ({ navigation }: Props) => {
           keyboardShouldPersistTaps="handled">
           {/* Logo + welcome */}
           <View style={styles.logoWrap}>
-            <Icon type="ionicon" name="wallet-outline" size={34} color={PRIMARY_DARK} />
+            <Icon type="ionicon" name="wallet-outline" size={34} color={colors.primaryDark} />
           </View>
           <Text style={styles.title}>{t.login.welcome}</Text>
           <Text style={styles.subtitle}>{t.login.subtitle}</Text>
@@ -102,7 +103,7 @@ const LoginScreen = ({ navigation }: Props) => {
 
             <View style={styles.optionsRow}>
               <FormCheckbox control={control} name="remember" label={t.login.remember} />
-              <TouchableOpacity activeOpacity={0.7}>
+              <TouchableOpacity activeOpacity={0.7} onPress={() => setForgotVisible(true)}>
                 <Text style={styles.forgotText}>{t.login.forgot}</Text>
               </TouchableOpacity>
             </View>
@@ -115,12 +116,23 @@ const LoginScreen = ({ navigation }: Props) => {
             />
 
             <View style={styles.securityRow}>
-              <Icon type="ionicon" name="lock-closed-outline" size={11} color="#ccc" />
+              <Icon type="ionicon" name="lock-closed-outline" size={11} color={colors.muted} />
               <Text style={styles.securityText}>{t.login.ssl}</Text>
             </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <AppDialog
+        visible={forgotVisible}
+        onDismiss={() => setForgotVisible(false)}
+        icon="help-circle-outline"
+        tone="info"
+        title={t.login.forgotTitle}
+        description={t.login.forgotDesc}
+        confirmText={t.login.forgotOk}
+        onConfirm={() => setForgotVisible(false)}
+      />
     </SafeAreaView>
   );
 };
@@ -128,9 +140,9 @@ const LoginScreen = ({ navigation }: Props) => {
 export default LoginScreen;
 
 // ─── 5. Styles ─────────────────────────────────────────────────────────────
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   // 1. Container chính
-  safe: { flex: 1, backgroundColor: '#F2F2F7' },
+  safe: { flex: 1, backgroundColor: c.bg },
   flex: { flex: 1 },
 
   // 2. Scroll / main content
@@ -146,7 +158,7 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 20,
-    backgroundColor: PRIMARY_LIGHT,
+    backgroundColor: c.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'center',
@@ -155,12 +167,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 26,
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: c.text,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 13,
-    color: '#888',
+    color: c.subtext,
     textAlign: 'center',
     marginTop: 6,
     marginBottom: 28,
@@ -178,7 +190,7 @@ const styles = StyleSheet.create({
   forgotText: {
     fontSize: 13,
     fontWeight: '500',
-    color: PRIMARY_DARK,
+    color: c.primaryDark,
   },
 
   // 5. Bottom CTA
@@ -193,6 +205,6 @@ const styles = StyleSheet.create({
   },
   securityText: {
     fontSize: 11,
-    color: '#ccc',
+    color: c.muted,
   },
 });
