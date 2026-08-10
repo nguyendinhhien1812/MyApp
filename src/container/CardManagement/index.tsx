@@ -7,11 +7,14 @@ import {
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
-import { Icon } from '@rneui/themed';
+import AppIcon from '../../components/Icon';
+import { ICON_TYPE } from '../../components/Icon/style';
+import SubHeader from '../../components/UI/SubHeader';
 import { AppDialog, AppSnackbar } from '../../components/UI';
 import { useLanguage } from '../../context/LanguageContext';
 import { useThemeColors } from '../../context/ThemeContext';
 import { ThemeColors } from '../../theme/paperTheme';
+import { RADII, TYPE, SPACING, FONT } from '../../theme/tokens';
 
 interface ToggleProps {
   value: boolean;
@@ -24,8 +27,8 @@ interface Props {
 
 const CardManagementScreen = ({ navigation }: Props) => {
   const { t } = useLanguage();
-  const colors = useThemeColors();
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const c = useThemeColors();
+  const styles = useMemo(() => makeStyles(c), [c]);
   const [onlinePayment, setOnlinePayment] = useState(true);
   const [intlPayment, setIntlPayment] = useState(false);
   const [notification, setNotification] = useState(true);
@@ -44,29 +47,30 @@ const CardManagementScreen = ({ navigation }: Props) => {
     </TouchableOpacity>
   );
 
+  const toggleData: { label: string; sub: string; value: boolean; onToggle: () => void }[] = [
+    { label: t.card.onlinePayment, sub: t.card.onlinePaymentSub, value: onlinePayment, onToggle: () => setOnlinePayment(v => !v) },
+    { label: t.card.intlPayment, sub: t.card.intlPaymentSub, value: intlPayment, onToggle: () => setIntlPayment(v => !v) },
+    { label: t.card.txNotification, sub: t.card.txNotificationSub, value: notification, onToggle: () => setNotification(v => !v) },
+  ];
+
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.goBack()}>
-          <Icon type="ionicon" name="arrow-back" size={18} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Thẻ của tôi</Text>
-        <TouchableOpacity
-          style={styles.headerBtn}
-          onPress={() => setToast(t.common.demoFeature)}>
-          <Icon type="ionicon" name="add-outline" size={20} color="#fff" />
-        </TouchableOpacity>
-      </View>
+      <SubHeader
+        title={t.card.title}
+        onBack={() => navigation.goBack()}
+        right={
+          <TouchableOpacity onPress={() => setToast(t.common.demoFeature)} hitSlop={8}>
+            <AppIcon type={ICON_TYPE.Iconoir} name="plus" size={22} color={c.accent700} />
+          </TouchableOpacity>
+        }
+      />
 
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}>
 
-        {/* Card visual */}
+        {/* Card visual — thẻ Visa tối */}
         <View style={styles.cardVisual}>
-          <View style={styles.decoCircle1} />
-          <View style={styles.decoCircle2} />
           <View style={styles.chip} />
           <Text style={styles.cardNumber}>
             {showNumber ? '4532  8721  9034  8842' : '••••  ••••  ••••  8842'}
@@ -76,7 +80,7 @@ const CardManagementScreen = ({ navigation }: Props) => {
               <Text style={styles.cardFieldLabel}>CHỦ THẺ</Text>
               <Text style={styles.cardFieldValue}>N. DINH HIEN</Text>
             </View>
-            <View style={{ alignItems: 'center' }}>
+            <View>
               <Text style={styles.cardFieldLabel}>HẾT HẠN</Text>
               <Text style={styles.cardFieldValue}>12/28</Text>
             </View>
@@ -84,121 +88,73 @@ const CardManagementScreen = ({ navigation }: Props) => {
           </View>
         </View>
 
-        {/* Status + Quick Actions */}
-        <View style={styles.card}>
-          {/* Status */}
-          <View style={styles.statusRow}>
-            <View style={[styles.statusDot, locked && styles.statusDotLocked]} />
-            <Text style={styles.statusText}>
-              {locked ? t.card.lockedStatus : t.card.activeStatus}
-            </Text>
-            <View style={styles.statusBadge}>
-              <Text style={styles.statusBadgeText}>Visa Debit</Text>
-            </View>
-          </View>
-          <View style={styles.divider} />
-          {/* 4 actions */}
-          <View style={styles.actionsRow}>
-            <TouchableOpacity
-              style={styles.actionItem}
-              onPress={() => {
-                if (locked) {
-                  setLocked(false);
-                  setToast(t.card.unlockedToast);
-                } else {
-                  setLockDialog(true);
-                }
-              }}>
-              <View style={[styles.actionIcon, { backgroundColor: '#fee2e2' }]}>
-                <Icon
-                  type="ionicon"
-                  name={locked ? 'lock-open-outline' : 'lock-closed-outline'}
-                  size={16}
-                  color="#dc2626"
-                />
-              </View>
-              <Text style={styles.actionLabel}>
-                {locked ? t.card.unlockAction : t.card.lockAction}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.actionItem}
-              onPress={() => setShowNumber(v => !v)}>
-              <View style={[styles.actionIcon, { backgroundColor: '#dbeafe' }]}>
-                <Icon
-                  type="ionicon"
-                  name={showNumber ? 'eye-off-outline' : 'eye-outline'}
-                  size={16}
-                  color="#2563eb"
-                />
-              </View>
-              <Text style={styles.actionLabel}>Số thẻ</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.actionItem}
-              onPress={() => setToast(t.common.demoFeature)}>
-              <View style={[styles.actionIcon, { backgroundColor: '#f3e8ff' }]}>
-                <Icon type="ionicon" name="document-text-outline" size={16} color="#7c3aed" />
-              </View>
-              <Text style={styles.actionLabel}>Sao kê</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.actionItem}
-              onPress={() => setToast(t.common.demoFeature)}>
-              <View style={[styles.actionIcon, { backgroundColor: colors.primaryLight }]}>
-                <Icon type="ionicon" name="settings-outline" size={16} color={colors.primary} />
-              </View>
-              <Text style={styles.actionLabel}>Cài đặt</Text>
-            </TouchableOpacity>
+        {/* Status */}
+        <View style={styles.statusRow}>
+          <View style={[styles.statusDot, locked && styles.statusDotLocked]} />
+          <Text style={styles.statusText}>
+            {locked ? t.card.lockedStatus : t.card.activeStatus}
+          </Text>
+          <View style={styles.statusBadge}>
+            <Text style={styles.statusBadgeText}>Visa Debit</Text>
           </View>
         </View>
 
+        {/* 3 secondary buttons */}
+        <View style={styles.btnRow}>
+          <TouchableOpacity
+            style={styles.secBtn}
+            onPress={() => {
+              if (locked) { setLocked(false); setToast(t.card.unlockedToast); }
+              else { setLockDialog(true); }
+            }}>
+            <Text style={styles.secBtnText}>{locked ? t.card.unlockAction : t.card.lockAction}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.secBtn} onPress={() => setShowNumber(v => !v)}>
+            <Text style={styles.secBtnText}>{t.card.cardNumber}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.secBtn} onPress={() => setToast(t.common.demoFeature)}>
+            <Text style={styles.secBtnText}>{t.card.statement}</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.divider} />
+
         {/* Hạn mức */}
-        <View style={styles.card}>
+        <View style={styles.limitBlock}>
           <View style={styles.limitHeader}>
-            <Text style={styles.limitTitle}>HẠN MỨC THÁNG NÀY</Text>
-            <Text style={styles.limitPercent}>25% đã dùng</Text>
+            <Text style={styles.limitTitle}>{t.card.limitTitle}</Text>
+            <Text style={styles.limitPercent}>25% {t.card.limitUsed}</Text>
           </View>
           <View style={styles.progressBg}>
             <View style={styles.progressFill} />
           </View>
           <View style={styles.limitRow}>
-            <Text style={styles.limitUsed}>12.500.000 đ</Text>
-            <Text style={styles.limitTotal}>/ 50.000.000 đ</Text>
+            <Text style={styles.limitUsed}>12.500.000 ₫</Text>
+            <Text style={styles.limitTotal}>/ 50.000.000 ₫</Text>
           </View>
         </View>
 
+        <View style={styles.divider} />
+
         {/* Toggle list */}
-        <View style={styles.card}>
-          <View style={styles.toggleRow}>
-            <View style={styles.toggleInfo}>
-              <Text style={styles.toggleLabel}>Thanh toán online</Text>
-              <Text style={styles.toggleSub}>Website, ứng dụng</Text>
+        <View style={styles.toggleList}>
+          {toggleData.map((r, i) => (
+            <View
+              key={r.label}
+              style={[styles.toggleRow, i < toggleData.length - 1 && styles.toggleRowBorder]}>
+              <View style={styles.toggleInfo}>
+                <Text style={styles.toggleLabel}>{r.label}</Text>
+                <Text style={styles.toggleSub}>{r.sub}</Text>
+              </View>
+              <Toggle value={r.value} onToggle={r.onToggle} />
             </View>
-            <Toggle value={onlinePayment} onToggle={() => setOnlinePayment(v => !v)} />
-          </View>
-          <View style={styles.divider} />
-          <View style={styles.toggleRow}>
-            <View style={styles.toggleInfo}>
-              <Text style={styles.toggleLabel}>Thanh toán quốc tế</Text>
-              <Text style={styles.toggleSub}>Ngoài Việt Nam</Text>
-            </View>
-            <Toggle value={intlPayment} onToggle={() => setIntlPayment(v => !v)} />
-          </View>
-          <View style={styles.divider} />
-          <View style={styles.toggleRow}>
-            <View style={styles.toggleInfo}>
-              <Text style={styles.toggleLabel}>Thông báo giao dịch</Text>
-              <Text style={styles.toggleSub}>Push + SMS</Text>
-            </View>
-            <Toggle value={notification} onToggle={() => setNotification(v => !v)} />
-          </View>
+          ))}
         </View>
 
         {/* Danger zone */}
         <TouchableOpacity style={styles.dangerBtn} onPress={() => setCancelDialog(true)}>
-          <Icon type="ionicon" name="trash-outline" size={16} color="#dc2626" />
-          <Text style={styles.dangerText}>Hủy thẻ</Text>
+          <AppIcon type={ICON_TYPE.Iconoir} name="trash" size={16} color={c.danger} />
+          <Text style={styles.dangerText}>{t.card.cancelCard}</Text>
         </TouchableOpacity>
 
       </ScrollView>
@@ -246,189 +202,127 @@ const CardManagementScreen = ({ navigation }: Props) => {
 
 export default CardManagementScreen;
 
-const makeStyles = (c: ThemeColors) => StyleSheet.create({
-  safe: { flex: 1, backgroundColor: c.bg },
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    safe: { flex: 1, backgroundColor: c.bg },
+    scroll: { padding: SPACING.screenX, gap: SPACING.s4, paddingBottom: 40 },
 
-  header: {
-    backgroundColor: c.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 8,
-  },
-  headerBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: { flex: 1, textAlign: 'center', fontSize: 16, fontWeight: '600', color: '#fff' },
+    // Card visual — thẻ Visa tối
+    cardVisual: {
+      backgroundColor: c.heroDark,
+      borderRadius: RADII.card,
+      padding: SPACING.s4,
+      gap: SPACING.s4,
+    },
+    chip: {
+      width: 30,
+      height: 21,
+      borderRadius: RADII.chip,
+      backgroundColor: 'rgba(216,183,131,0.5)',
+    },
+    cardNumber: {
+      fontFamily: FONT.medium,
+      fontSize: TYPE.itemTitle,
+      letterSpacing: 3,
+      color: 'rgba(253,252,251,0.92)',
+    },
+    cardBottom: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-end',
+    },
+    cardFieldLabel: {
+      fontFamily: FONT.regular,
+      fontSize: 8.5,
+      letterSpacing: 1.4,
+      color: 'rgba(253,252,251,0.5)',
+      marginBottom: 3,
+    },
+    cardFieldValue: {
+      fontFamily: FONT.medium,
+      fontSize: TYPE.caption,
+      letterSpacing: 0.6,
+      color: c.offWhite,
+    },
+    visaText: {
+      fontFamily: FONT.semibold,
+      fontSize: TYPE.title,
+      fontStyle: 'italic',
+      color: c.accent300,
+    },
 
-  scroll: { padding: 16, gap: 14, paddingBottom: 32 },
+    divider: { height: StyleSheet.hairlineWidth, backgroundColor: c.divider },
 
-  // Card visual
-  cardVisual: {
-    backgroundColor: c.primary,
-    borderRadius: 20,
-    padding: 20,
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  decoCircle1: {
-    position: 'absolute',
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    top: -30,
-    right: -30,
-  },
-  decoCircle2: {
-    position: 'absolute',
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    bottom: -20,
-    left: '40%',
-  },
-  chip: {
-    width: 28,
-    height: 20,
-    borderRadius: 4,
-    backgroundColor: 'rgba(255,255,255,0.35)',
-    marginBottom: 14,
-  },
-  cardNumber: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.9)',
-    letterSpacing: 2,
-    marginBottom: 14,
-    fontWeight: '500',
-  },
-  cardBottom: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-  },
-  cardFieldLabel: { fontSize: 9, color: 'rgba(255,255,255,0.6)', marginBottom: 3 },
-  cardFieldValue: { fontSize: 11, color: '#fff', fontWeight: '600', letterSpacing: 0.3 },
-  visaText: { fontSize: 18, color: 'rgba(255,255,255,0.85)', fontStyle: 'italic', fontWeight: '700' },
+    // Status
+    statusRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.s2 },
+    statusDot: { width: 7, height: 7, borderRadius: RADII.pill, backgroundColor: c.success },
+    statusDotLocked: { backgroundColor: c.danger },
+    statusText: { flex: 1, fontFamily: FONT.medium, fontSize: TYPE.body, color: c.text },
+    statusBadge: {
+      backgroundColor: c.white,
+      borderRadius: RADII.pill,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+    },
+    statusBadgeText: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.subtext },
 
-  // Card wrapper
-  card: { backgroundColor: c.white, borderRadius: 16, overflow: 'hidden' },
-  divider: { height: 0.5, backgroundColor: c.divider, marginHorizontal: 16 },
+    // Secondary buttons
+    btnRow: { flexDirection: 'row', gap: SPACING.s2 },
+    secBtn: {
+      flex: 1,
+      backgroundColor: c.white,
+      borderRadius: RADII.item,
+      paddingVertical: 11,
+      alignItems: 'center',
+    },
+    secBtnText: { fontFamily: FONT.medium, fontSize: TYPE.caption, color: c.text },
 
-  // Status
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    padding: 14,
-  },
-  statusDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#22c55e' },
-  statusDotLocked: { backgroundColor: '#dc2626' },
-  statusText: { flex: 1, fontSize: 14, color: c.text, fontWeight: '500' },
-  statusBadge: {
-    backgroundColor: '#F5F5F5',
-    borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  statusBadgeText: { fontSize: 11, color: c.subtext, fontWeight: '500' },
+    // Limit
+    limitBlock: { gap: SPACING.s2 },
+    limitHeader: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
+    limitTitle: {
+      fontFamily: FONT.regular,
+      fontSize: TYPE.caption,
+      letterSpacing: 1.8,
+      textTransform: 'uppercase',
+      color: c.muted,
+    },
+    limitPercent: { fontFamily: FONT.medium, fontSize: TYPE.caption, color: c.accent700 },
+    progressBg: { height: 4, borderRadius: 2, backgroundColor: c.divider, overflow: 'hidden' },
+    progressFill: { width: '25%', height: 4, borderRadius: 2, backgroundColor: c.accent },
+    limitRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
+    limitUsed: { fontFamily: FONT.medium, fontSize: TYPE.body, color: c.text },
+    limitTotal: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.muted },
 
-  // Actions
-  actionsRow: {
-    flexDirection: 'row',
-    paddingHorizontal: 8,
-    paddingVertical: 14,
-    gap: 4,
-  },
-  actionItem: { flex: 1, alignItems: 'center', gap: 6 },
-  actionIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  actionLabel: { fontSize: 10, color: '#555', textAlign: 'center', fontWeight: '500' },
+    // Toggles
+    toggleList: {},
+    toggleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: SPACING.s3,
+      paddingVertical: SPACING.s3,
+    },
+    toggleRowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.divider },
+    toggleInfo: { flex: 1, gap: 2 },
+    toggleLabel: { fontFamily: FONT.medium, fontSize: TYPE.body, color: c.text },
+    toggleSub: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.subtext },
+    toggle: { width: 40, height: 22, borderRadius: 11, justifyContent: 'center', borderWidth: 1 },
+    toggleOn: { backgroundColor: c.accent, borderColor: c.accent },
+    toggleOff: { backgroundColor: 'transparent', borderColor: c.border },
+    toggleThumb: { width: 16, height: 16, borderRadius: 8, position: 'absolute' },
+    thumbOn: { right: 2, backgroundColor: c.offWhite },
+    thumbOff: { left: 2, backgroundColor: c.muted },
 
-  // Limit
-  limitHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    paddingBottom: 10,
-  },
-  limitTitle: { fontSize: 10, color: c.hint, letterSpacing: 0.6, fontWeight: '500' },
-  limitPercent: { fontSize: 12, color: c.primary, fontWeight: '600' },
-  progressBg: {
-    marginHorizontal: 16,
-    backgroundColor: c.divider,
-    borderRadius: 6,
-    height: 8,
-  },
-  progressFill: {
-    width: '25%',
-    height: 8,
-    backgroundColor: c.primary,
-    borderRadius: 6,
-  },
-  limitRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-  limitUsed: { fontSize: 13, fontWeight: '600', color: c.text },
-  limitTotal: { fontSize: 13, color: c.hint },
-
-  // Toggles
-  toggleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    gap: 12,
-  },
-  toggleInfo: { flex: 1 },
-  toggleLabel: { fontSize: 14, fontWeight: '500', color: c.text },
-  toggleSub: { fontSize: 11, color: c.hint, marginTop: 2 },
-  toggle: { width: 46, height: 26, borderRadius: 13 },
-  toggleOn: { backgroundColor: c.primary },
-  toggleOff: { backgroundColor: c.border },
-  toggleThumb: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: '#fff',
-    position: 'absolute',
-    top: 2,
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 2,
-  },
-  thumbOn: { right: 2 },
-  thumbOff: { left: 2 },
-
-  // Danger
-  dangerBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 0.5,
-    borderColor: '#fee2e2',
-  },
-  dangerText: { fontSize: 14, color: '#dc2626', fontWeight: '500' },
-});
+    // Danger
+    dangerBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: SPACING.s2,
+      backgroundColor: c.white,
+      borderRadius: RADII.item,
+      paddingVertical: 14,
+      marginTop: SPACING.s2,
+    },
+    dangerText: { fontFamily: FONT.medium, fontSize: TYPE.body, color: c.danger },
+  });

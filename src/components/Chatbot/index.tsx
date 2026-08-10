@@ -18,6 +18,8 @@ import {
 } from 'react-native';
 import { Icon } from '@rneui/themed';
 import { ThemeColors } from '../../theme/paperTheme';
+import { logger } from '../../utils/logger';
+import { RADII, TYPE, FONT } from '../../theme/tokens';
 import { AppButton } from '../UI';
 import { useLanguage } from '../../context/LanguageContext';
 import { useThemeColors } from '../../context/ThemeContext';
@@ -89,13 +91,16 @@ const askGemini = async (
       if (code === 400 || code === 401 || code === 403) {
         return { text: t.chatbot.errInvalidKey, isError: true };
       }
-      return { text: `${t.chatbot.errNetwork} (${data.error?.message ?? code})`, isError: true };
+      // Chi tiết lỗi thô chỉ vào log — user cuối chỉ thấy thông báo thân thiện
+      logger.error('chatbot', `Gemini trả lỗi ${code}`, data.error?.message);
+      return { text: t.chatbot.errNetwork, isError: true };
     }
 
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!text) {return { text: t.chatbot.errNetwork, isError: true };}
     return { text, isError: false };
-  } catch {
+  } catch (err) {
+    logger.error('chatbot', 'gọi Gemini thất bại', err);
     return { text: t.chatbot.errNetwork, isError: true };
   }
 };
@@ -338,7 +343,7 @@ const Chatbot = () => {
               <Pressable style={styles.keySheet} onPress={e => e.stopPropagation()}>
                 <View style={styles.keyHandle} />
                 <View style={styles.keyIconWrap}>
-                  <Icon name="key-outline" type="ionicon" color={colors.primaryDark} size={24} />
+                  <Icon name="key-outline" type="ionicon" color={colors.accent700} size={24} />
                 </View>
                 <Text style={styles.keyTitle}>{t.chatbot.keyTitle}</Text>
                 <Text style={styles.keyDesc}>{t.chatbot.keyDesc}</Text>
@@ -391,13 +396,16 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     width: BUTTON_SIZE,
     height: BUTTON_SIZE,
     borderRadius: BUTTON_SIZE / 2,
-    backgroundColor: c.primary,
+    backgroundColor: c.heroDark,
     justifyContent: 'center',
     alignItems: 'center',
+    // Viền đồng mờ để nút vẫn tách khỏi nền ở chế độ Tối
+    borderWidth: 1,
+    borderColor: 'rgba(216,183,131,0.35)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
   },
 
   // Container
@@ -405,7 +413,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
 
   // Header
   header: {
-    backgroundColor: c.primary,
+    backgroundColor: c.heroDark,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -416,22 +424,22 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: 'rgba(255,255,255,0.25)',
+    backgroundColor: 'rgba(253,252,251,0.15)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerInfo: { flex: 1 },
-  headerTitle: { fontSize: 16, fontWeight: '600', color: '#fff' },
+  headerTitle: { fontFamily: FONT.semibold, fontSize: TYPE.title, color: c.offWhite },
   statusRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 2 },
   statusDot: { width: 7, height: 7, borderRadius: 3.5 },
   statusDotAi: { backgroundColor: '#7dffb0' },
   statusDotDemo: { backgroundColor: '#ffe08a' },
-  statusText: { fontSize: 11, color: 'rgba(255,255,255,0.85)' },
+  statusText: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: 'rgba(253,252,251,0.75)' },
   headerBtn: {
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(253,252,251,0.15)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -443,27 +451,26 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     maxWidth: '82%',
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 16,
+    borderRadius: RADII.item,
   },
   userBubble: {
     alignSelf: 'flex-end',
-    backgroundColor: c.primary,
+    backgroundColor: c.accent100,
     borderBottomRightRadius: 4,
   },
   botBubble: {
     alignSelf: 'flex-start',
-    backgroundColor: c.white,
+    backgroundColor: 'transparent',
     borderBottomLeftRadius: 4,
-    borderWidth: 0.5,
-    borderColor: c.border,
+    paddingHorizontal: 2,
   },
   errorBubble: {
     backgroundColor: '#fdecea',
-    borderColor: '#f5c6c0',
+    paddingHorizontal: 14,
   },
-  userText: { fontSize: 14, color: '#fff', lineHeight: 20 },
-  botText: { fontSize: 14, color: c.text, lineHeight: 20 },
-  errorText: { fontSize: 13, color: c.danger, lineHeight: 19 },
+  userText: { fontFamily: FONT.regular, fontSize: TYPE.body, color: c.accent700, lineHeight: 20 },
+  botText: { fontFamily: FONT.regular, fontSize: TYPE.body, color: c.text, lineHeight: 20 },
+  errorText: { fontFamily: FONT.regular, fontSize: TYPE.body, color: c.danger, lineHeight: 19 },
 
   // Typing indicator
   typingBubble: {
@@ -475,7 +482,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 3.5,
-    backgroundColor: c.hint,
+    backgroundColor: c.accent,
   },
 
   // Suggestions
@@ -483,12 +490,10 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   suggestionChip: {
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: c.white,
-    borderWidth: 0.5,
-    borderColor: c.primaryBorder,
+    borderRadius: RADII.pill,
+    backgroundColor: c.accent100,
   },
-  suggestionText: { fontSize: 12, color: c.primaryDark, fontWeight: '500' },
+  suggestionText: { fontFamily: FONT.medium, fontSize: TYPE.body, color: c.accent700 },
 
   // Input bar
   inputBar: {
@@ -498,7 +503,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     backgroundColor: c.white,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    borderTopWidth: 0.5,
+    borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: c.divider,
   },
   textInput: {
@@ -511,11 +516,12 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     paddingHorizontal: 15,
     paddingTop: Platform.OS === 'ios' ? 11 : 8,
     paddingBottom: Platform.OS === 'ios' ? 11 : 8,
-    fontSize: 14,
+    fontFamily: FONT.regular,
+    fontSize: TYPE.body,
     color: c.text,
   },
   sendButton: {
-    backgroundColor: c.primary,
+    backgroundColor: c.heroDark,
     width: 42,
     height: 42,
     borderRadius: 21,
@@ -550,12 +556,12 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: c.primaryLight,
+    backgroundColor: c.accent100,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
   },
-  keyTitle: { fontSize: 16, fontWeight: '600', color: c.text },
+  keyTitle: { fontFamily: FONT.semibold, fontSize: TYPE.title, color: c.text },
   keyDesc: {
     fontSize: 12,
     color: c.subtext,

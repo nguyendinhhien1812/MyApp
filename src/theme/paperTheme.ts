@@ -13,6 +13,15 @@ export type ThemeColors = {
   primaryLight: string;  // nền badge/icon cam nhạt
   primaryBorder: string;
 
+  // ─── Design "Classical": accent vàng đồng + nền tối + trắng ngà ────────────
+  accent: string;     // vàng đồng chính #b68235 (dot, progress, nhấn nhẹ)
+  accent100: string;  // nền accent nhạt (bell/badge/ô icon)
+  accent300: string;  // đồng SÁNG cho chữ/icon trên nền tối — cố định 2 mode
+  accent700: string;  // accent đậm cho CHỮ/ICON trên nền sáng (đảo theo mode)
+  heroCopper: string; // nền đồng ấm cho hero Home — cố định đậm ở cả 2 mode
+  heroDark: string;   // nền tối cho header/hero mini-app (#1a1815)
+  offWhite: string;   // trắng ngà #fdfcfb (chữ/nút trên nền tối)
+
   success: string;
   danger: string;
   info: string;
@@ -34,6 +43,14 @@ export const LIGHT: ThemeColors = {
   primaryLight:  '#fdf3e7',
   primaryBorder: '#f0c48a',
 
+  accent:     '#b68235',
+  accent100:  '#f4ebdb',
+  accent300:  '#d8b783', // đồng sáng cho nền tối
+  accent700:  '#8a5e1c', // đồng ấm cho chữ/icon trên nền sáng
+  heroCopper: '#8a5e1c', // nền hero đồng ấm
+  heroDark:   '#1a1815',
+  offWhite:   '#fdfcfb',
+
   success: '#1a7a40',
   danger:  '#c0392b',
   info:    '#1a4a7a',
@@ -54,6 +71,14 @@ export const DARK: ThemeColors = {
   primaryDark:   '#f0b070', // sáng hơn để đọc được trên nền tối
   primaryLight:  '#2a2016', // cam trầm làm nền badge
   primaryBorder: '#4a3a22',
+
+  accent:     '#c99a54', // vàng đồng sáng hơn cho nền tối
+  accent100:  '#2a2016', // nền accent trầm
+  accent300:  '#d8b783', // đồng sáng cho nền tối (giống light)
+  accent700:  '#e0b877', // accent sáng để đọc chữ/icon trên nền tối
+  heroCopper: '#8a5e1c', // nền hero giữ đồng ấm đậm ở cả 2 mode
+  heroDark:   '#1a1815',
+  offWhite:   '#fdfcfb',
 
   success: '#4ade80',
   danger:  '#f87171',

@@ -41,6 +41,10 @@ target 'MyApp' do
     
     installer.pods_project.build_configurations.each do |config|
       config.build_settings["EXCLUDED_ARCHS[sdk=iphonesimulator*]"] = "arm64"
+      # Cố định port dev-server 8088 cho MyApp (chạy song song với project RN khác
+      # đang ở 8081). Port runtime nung vào React-Core lúc biên dịch từ build setting
+      # này (kRCTBundleURLProviderDefaultPort = RCT_METRO_PORT). .xcode.env KHÔNG đủ.
+      config.build_settings["RCT_METRO_PORT"] = "8088"
     end
   end
 end

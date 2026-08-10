@@ -4,7 +4,7 @@ import { Button } from 'react-native-paper';
 import { ThemeColors } from '../../theme/paperTheme';
 import { useThemeColors } from '../../context/ThemeContext';
 
-type Variant = 'primary' | 'danger' | 'outline' | 'ghost';
+type Variant = 'primary' | 'danger' | 'outline' | 'ghost' | 'dark';
 
 interface AppButtonProps {
   title: string;
@@ -21,6 +21,7 @@ const MODE: Record<Variant, 'contained' | 'outlined' | 'text'> = {
   danger: 'contained',
   outline: 'outlined',
   ghost: 'text',
+  dark: 'contained',
 };
 
 const AppButton = ({
@@ -40,12 +41,14 @@ const AppButton = ({
     danger: c.danger,
     outline: undefined,
     ghost: undefined,
+    dark: c.heroDark,
   };
   const textColor: Record<Variant, string> = {
     primary: '#fff', // text trên nền cam
     danger: '#fff',
     outline: c.primaryDark,
     ghost: c.primaryDark,
+    dark: c.offWhite,
   };
 
   return (

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Cổng dev server riêng cho app này (mặc định RN là 8081) để chạy song song với các project RN khác. -->
+    <integer name="react_native_dev_server_port">8088</integer>
+</resources>

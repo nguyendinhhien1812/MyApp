@@ -69,8 +69,8 @@ const makeStyles = (c: ThemeColors) =>
       justifyContent: 'center',
     },
     boxChecked: {
-      backgroundColor: c.primary,
-      borderColor: c.primary,
+      backgroundColor: c.accent,
+      borderColor: c.accent,
     },
     label: {
       fontSize: 13,

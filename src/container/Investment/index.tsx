@@ -14,9 +14,18 @@ import {
 import { Icon } from '@rneui/themed';
 import Svg, { Polyline } from 'react-native-svg';
 import { AppDialog, AppSnackbar } from '../../components/UI';
+import SubHeader from '../../components/UI/SubHeader';
+import Icon2 from '../../components/Icon';
+import { ICON_TYPE } from '../../components/Icon/style';
 import { useLanguage } from '../../context/LanguageContext';
 import { useThemeColors } from '../../context/ThemeContext';
 import { ThemeColors } from '../../theme/paperTheme';
+import { logger } from '../../utils/logger';
+import { RADII, TYPE, SPACING, FONT } from '../../theme/tokens';
+
+// Màu lãi/lỗ dùng bản SÁNG khi đứng trên nền tối (portfolio hero)
+const UP_ON_DARK = '#4ade80';
+const DOWN_ON_DARK = '#f87171';
 
 const PRIMARY      = '#E89951';
 const PRIMARY_DARK = '#b36a1a';
@@ -237,7 +246,9 @@ const parseTCBSItem = (raw: any): StockItem | null => {
       iconBg:    cfg?.bg ?? '#e8f0f8',
       iconColor: cfg?.fg ?? '#1a4a7a',
     };
-  } catch {
+  } catch (err) {
+    // Một mã lỗi thì bỏ mã đó, không làm sập cả danh sách
+    logger.warn('invest', 'không parse được dữ liệu 1 mã cổ phiếu', err);
     return null;
   }
 };
@@ -248,104 +259,71 @@ const parseTCBSItem = (raw: any): StockItem | null => {
 const makeStyles = (c: ThemeColors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: c.bg },
 
-  // Header
-  header: {
-    backgroundColor: c.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 8,
-  },
-  headerBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-  },
-
   scroll: { paddingBottom: 8 },
 
-  // Portfolio card
+  // Portfolio card — hero tối
   portfolioCard: {
-    backgroundColor: c.white,
-    borderRadius: 16,
-    margin: 12,
-    padding: 16,
-    borderWidth: 0.5,
-    borderColor: c.primaryBorder,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
+    backgroundColor: c.heroDark,
+    borderRadius: RADII.card,
+    marginHorizontal: SPACING.screenX,
+    marginTop: SPACING.s4,
+    padding: SPACING.s4,
   },
   portLabel: {
-    fontSize: 10,
-    color: c.hint,
-    letterSpacing: 0.6,
-    fontWeight: '500',
+    fontFamily: FONT.regular,
+    fontSize: TYPE.caption,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: c.accent300,
   },
   portValue: {
+    fontFamily: FONT.semibold,
     fontSize: 28,
-    fontWeight: '700',
-    color: c.text,
+    color: c.offWhite,
     marginTop: 6,
-    letterSpacing: -0.5,
   },
   portPnlRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: SPACING.s2,
     marginTop: 6,
   },
   pnlBadgeUp: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#e8f8f0',
-    borderRadius: 10,
+    backgroundColor: 'rgba(74,222,128,0.16)',
+    borderRadius: RADII.chip,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
-  pnlTextUp: { fontSize: 11, color: '#1a7a40', fontWeight: '500' },
-  pnlAmount: { fontSize: 12, color: '#1a7a40', fontWeight: '500' },
+  pnlTextUp: { fontFamily: FONT.medium, fontSize: TYPE.caption, color: UP_ON_DARK },
+  pnlAmount: { fontFamily: FONT.medium, fontSize: TYPE.body, color: UP_ON_DARK },
   sparklineWrap: { marginTop: 12, marginBottom: 4 },
   allocRow: {
     flexDirection: 'row',
     marginTop: 12,
     paddingTop: 12,
-    borderTopWidth: 0.5,
-    borderTopColor: c.divider,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(253,252,251,0.14)',
   },
   allocItem: { flex: 1, alignItems: 'center' },
-  allocDivider: { width: 0.5, backgroundColor: c.divider },
-  allocNum: { fontSize: 13, fontWeight: '600' },
-  allocLabel: { fontSize: 10, color: c.hint, marginTop: 3 },
+  allocDivider: { width: StyleSheet.hairlineWidth, backgroundColor: 'rgba(253,252,251,0.14)' },
+  allocNum: { fontFamily: FONT.semibold, fontSize: TYPE.body },
+  allocLabel: {
+    fontFamily: FONT.regular,
+    fontSize: TYPE.caption,
+    color: 'rgba(253,252,251,0.6)',
+    marginTop: 3,
+  },
 
   // Live rate card
   rateCard: {
     backgroundColor: c.white,
-    borderRadius: 14,
-    marginHorizontal: 12,
-    marginBottom: 12,
-    padding: 14,
-    borderWidth: 0.5,
-    borderColor: c.primaryBorder,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 1 },
+    borderRadius: RADII.card,
+    marginHorizontal: SPACING.screenX,
+    marginTop: SPACING.s3,
+    padding: SPACING.s4,
   },
   rateCardHeader: {
     flexDirection: 'row',
@@ -354,17 +332,18 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     marginBottom: 10,
   },
   rateCardTitle: {
-    fontSize: 10,
-    color: c.hint,
-    letterSpacing: 0.6,
-    fontWeight: '600',
+    fontFamily: FONT.regular,
+    fontSize: TYPE.caption,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: c.subtext,
   },
   liveBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#e8f8f0',
-    borderRadius: 10,
+    backgroundColor: 'rgba(26,122,64,0.12)',
+    borderRadius: RADII.chip,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
@@ -372,9 +351,9 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#1a7a40',
+    backgroundColor: c.success,
   },
-  liveBadgeText: { fontSize: 9, color: '#1a7a40', fontWeight: '700' },
+  liveBadgeText: { fontFamily: FONT.semibold, fontSize: 9, color: c.success },
   rateRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -382,97 +361,86 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     paddingVertical: 8,
   },
   rateRowBorder: {
-    borderTopWidth: 0.5,
+    borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: c.divider,
   },
-  rateCurrency: { fontSize: 13, fontWeight: '500', color: c.text },
-  rateValue: { fontSize: 13, fontWeight: '600', color: c.primaryDark },
-  rateUpdated: { fontSize: 10, color: c.hint, marginTop: 8 },
+  rateCurrency: { fontFamily: FONT.medium, fontSize: TYPE.body, color: c.text },
+  rateValue: { fontFamily: FONT.semibold, fontSize: TYPE.body, color: c.accent700 },
+  rateUpdated: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.muted, marginTop: 8 },
 
   // Error states
   errorCard: {
-    backgroundColor: c.primaryLight,
-    borderRadius: 12,
-    marginHorizontal: 12,
-    marginBottom: 12,
+    backgroundColor: c.accent100,
+    borderRadius: RADII.item,
+    marginHorizontal: SPACING.screenX,
+    marginTop: SPACING.s3,
     paddingVertical: 10,
     paddingHorizontal: 14,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    borderWidth: 0.5,
-    borderColor: c.primaryBorder,
   },
-  errorText: { flex: 1, fontSize: 12, color: c.primaryDark },
+  errorText: { flex: 1, fontFamily: FONT.regular, fontSize: TYPE.body, color: c.accent700 },
   errorRetryBtn: {
-    backgroundColor: c.primary,
-    borderRadius: 8,
+    backgroundColor: c.heroDark,
+    borderRadius: RADII.chip,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
-  errorRetryText: { fontSize: 11, fontWeight: '600', color: '#fff' },
+  errorRetryText: { fontFamily: FONT.semibold, fontSize: TYPE.caption, color: c.offWhite },
 
   // Stock error banner (shown above mock data)
   stockErrorBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: c.primaryLight,
-    borderRadius: 8,
-    marginHorizontal: 12,
+    backgroundColor: c.accent100,
+    borderRadius: RADII.item,
+    marginHorizontal: SPACING.screenX,
     marginBottom: 6,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    borderWidth: 0.5,
-    borderColor: c.primaryBorder,
   },
-  stockErrorText: { flex: 1, fontSize: 11, color: c.primaryDark },
+  stockErrorText: { flex: 1, fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.accent700 },
 
   // Section header
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginHorizontal: 16,
-    marginTop: 4,
+    marginHorizontal: SPACING.screenX,
+    marginTop: SPACING.s5,
     marginBottom: 10,
   },
   sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  accentBar: { width: 4, height: 18, backgroundColor: c.primary, borderRadius: 2 },
-  sectionTitleText: { fontSize: 15, fontWeight: '500', color: c.text },
-  seeAll: { fontSize: 12, color: c.primary, fontWeight: '500' },
+  accentBar: { width: 0, height: 0 },
+  sectionTitleText: { fontFamily: FONT.semibold, fontSize: TYPE.title, color: c.text },
+  seeAll: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.accent700 },
 
-  // Market tabs
+  // Market tabs — pill đồng
   mktTabsWrap: {
-    paddingHorizontal: 16,
+    paddingHorizontal: SPACING.screenX,
     gap: 8,
     marginBottom: 10,
   },
   mktTab: {
-    paddingHorizontal: 18,
+    paddingHorizontal: 16,
     paddingVertical: 7,
-    borderRadius: 20,
-    borderWidth: 0.5,
-    borderColor: c.border,
+    borderRadius: RADII.pill,
     backgroundColor: c.white,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: c.border,
   },
-  mktTabActive: { backgroundColor: c.primary, borderColor: c.primary },
-  mktTabText: { fontSize: 12, color: c.subtext },
-  mktTabTextActive: { color: '#fff', fontWeight: '500' },
+  mktTabActive: { backgroundColor: c.accent100, borderColor: c.accent100 },
+  mktTabText: { fontFamily: FONT.regular, fontSize: TYPE.body, color: c.subtext },
+  mktTabTextActive: { fontFamily: FONT.medium, color: c.accent700 },
 
   // Stock list
   stockList: {
-    marginHorizontal: 12,
+    marginHorizontal: SPACING.screenX,
     backgroundColor: c.white,
-    borderRadius: 14,
+    borderRadius: RADII.card,
     overflow: 'hidden',
-    borderWidth: 0.5,
-    borderColor: c.border,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 1 },
   },
   stockRow: {
     flexDirection: 'row',
@@ -482,40 +450,40 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     gap: 10,
     backgroundColor: c.white,
   },
-  stockRowFirst: { borderTopLeftRadius: 14, borderTopRightRadius: 14 },
-  stockRowLast: { borderBottomLeftRadius: 14, borderBottomRightRadius: 14 },
-  stockRowBorder: { borderTopWidth: 0.5, borderTopColor: c.divider },
+  stockRowFirst: {},
+  stockRowLast: {},
+  stockRowBorder: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.divider },
   stockIcon: {
     width: 36,
     height: 36,
-    borderRadius: 10,
+    borderRadius: RADII.item,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
   },
-  stockTickerIcon: { fontSize: 10, fontWeight: '700' },
+  stockTickerIcon: { fontFamily: FONT.bold, fontSize: 10 },
   stockInfo: { flex: 1, minWidth: 0 },
-  stockTicker: { fontSize: 13, fontWeight: '600', color: c.text },
-  stockName: { fontSize: 10, color: c.hint, marginTop: 1 },
-  stockVol: { fontSize: 10, color: c.hint, marginTop: 1 },
+  stockTicker: { fontFamily: FONT.semibold, fontSize: TYPE.body, color: c.text },
+  stockName: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.muted, marginTop: 1 },
+  stockVol: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.muted, marginTop: 1 },
   sparkWrap: { width: 56, alignItems: 'center' },
   stockPriceCol: { alignItems: 'flex-end', minWidth: 78 },
-  priceVal: { fontSize: 12, fontWeight: '600' },
+  priceVal: { fontFamily: FONT.semibold, fontSize: TYPE.body },
   changeBadge: {
-    borderRadius: 6,
+    borderRadius: RADII.chip,
     paddingHorizontal: 6,
     paddingVertical: 2,
     marginTop: 3,
   },
-  changeText: { fontSize: 10, fontWeight: '500' },
+  changeText: { fontFamily: FONT.medium, fontSize: 10 },
 
   // Live indicator next to market title
   liveIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#e8f8f0',
-    borderRadius: 8,
+    backgroundColor: 'rgba(26,122,64,0.12)',
+    borderRadius: RADII.chip,
     paddingHorizontal: 7,
     paddingVertical: 2,
     marginLeft: 6,
@@ -524,17 +492,17 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     width: 5,
     height: 5,
     borderRadius: 2.5,
-    backgroundColor: '#1a7a40',
+    backgroundColor: c.success,
   },
-  liveIndicatorText: { fontSize: 9, fontWeight: '700', color: '#1a7a40' },
+  liveIndicatorText: { fontFamily: FONT.semibold, fontSize: 9, color: c.success },
 
   // Bottom bar
   bottomBar: {
     backgroundColor: c.white,
-    paddingHorizontal: 16,
+    paddingHorizontal: SPACING.screenX,
     paddingTop: 10,
     paddingBottom: 28,
-    borderTopWidth: 0.5,
+    borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: c.divider,
     gap: 8,
   },
@@ -544,32 +512,32 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     justifyContent: 'center',
     gap: 5,
   },
-  securityText: { fontSize: 10, color: c.hint },
+  securityText: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.muted },
   ctaRow: { flexDirection: 'row', gap: 10 },
   btnBuy: {
     flex: 2,
-    backgroundColor: c.primary,
-    borderRadius: 12,
+    backgroundColor: c.heroDark,
+    borderRadius: RADII.item,
     height: 50,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
   },
-  btnBuyText: { fontSize: 14, fontWeight: '600', color: '#fff' },
+  btnBuyText: { fontFamily: FONT.semibold, fontSize: TYPE.itemTitle, color: c.offWhite },
   btnSell: {
     flex: 1,
     backgroundColor: c.white,
-    borderRadius: 12,
+    borderRadius: RADII.item,
     height: 50,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
     borderWidth: 1,
-    borderColor: '#c0392b',
+    borderColor: c.danger,
   },
-  btnSellText: { fontSize: 14, fontWeight: '600', color: '#c0392b' },
+  btnSellText: { fontFamily: FONT.semibold, fontSize: TYPE.itemTitle, color: c.danger },
 
   // Stock detail bottom sheet
   sheetOverlay: {
@@ -599,23 +567,22 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     gap: 12,
   },
   sheetHeaderInfo: { flex: 1 },
-  sheetTicker: { fontSize: 16, fontWeight: '700', color: c.text },
-  sheetName: { fontSize: 12, color: c.subtext, marginTop: 2 },
+  sheetTicker: { fontFamily: FONT.bold, fontSize: TYPE.title, color: c.text },
+  sheetName: { fontFamily: FONT.regular, fontSize: TYPE.body, color: c.subtext, marginTop: 2 },
   sheetPrice: {
+    fontFamily: FONT.semibold,
     fontSize: 28,
-    fontWeight: '700',
     color: c.text,
-    letterSpacing: -0.5,
     marginTop: 14,
   },
   sheetSpark: {
     alignItems: 'center',
     backgroundColor: c.bg,
-    borderRadius: 14,
+    borderRadius: RADII.card,
     paddingVertical: 14,
     marginTop: 12,
   },
-  sheetVol: { fontSize: 12, color: c.subtext, marginTop: 10, marginBottom: 4 },
+  sheetVol: { fontFamily: FONT.regular, fontSize: TYPE.body, color: c.subtext, marginTop: 10, marginBottom: 4 },
 });
 
 type Styles = ReturnType<typeof makeStyles>;
@@ -830,7 +797,8 @@ const InvestmentScreen = ({ navigation }: Props) => {
         goldPerGram: Math.round(goldPerGram),
         updatedAt:   fmtTime(),
       });
-    } catch {
+    } catch (err) {
+      logger.error('invest', 'không tải được tỷ giá', err);
       setRatesError(true);
     } finally {
       setRatesLoading(false);
@@ -851,9 +819,9 @@ const InvestmentScreen = ({ navigation }: Props) => {
       const parsed = arr.map(parseTCBSItem).filter(Boolean) as StockItem[];
       if (parsed.length === 0) throw new Error('Parse failed');
       setLiveHOSE(parsed);
-    } catch {
+    } catch (err) {
+      logger.error('invest', 'không tải được dữ liệu cổ phiếu, dùng dữ liệu mẫu', err);
       setStockError(true);
-      // liveHOSE stays null → will show mock + error banner
     } finally {
       setStockLoading(false);
     }
@@ -880,18 +848,16 @@ const InvestmentScreen = ({ navigation }: Props) => {
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.headerBtn}
-          onPress={() => navigation.goBack()}>
-          <Icon type="ionicon" name="arrow-back" size={18} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t.investment.title}</Text>
-        <TouchableOpacity style={styles.headerBtn} onPress={handleRefresh}>
-          <Icon type="ionicon" name="refresh-outline" size={18} color="#fff" />
-        </TouchableOpacity>
-      </View>
+      {/* Sub-header */}
+      <SubHeader
+        title={t.investment.title}
+        onBack={() => navigation.goBack()}
+        right={
+          <TouchableOpacity onPress={handleRefresh} hitSlop={8}>
+            <Icon2 type={ICON_TYPE.Iconoir} name="refresh-double" size={20} color={colors.accent700} />
+          </TouchableOpacity>
+        }
+      />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -904,29 +870,29 @@ const InvestmentScreen = ({ navigation }: Props) => {
 
           <View style={styles.portPnlRow}>
             <View style={styles.pnlBadgeUp}>
-              <Icon type="ionicon" name="trending-up" size={11} color="#1a7a40" />
+              <Icon type="ionicon" name="trending-up" size={11} color={UP_ON_DARK} />
               <Text style={styles.pnlTextUp}>+5.2% {t.investment.todayPnl}</Text>
             </View>
             <Text style={styles.pnlAmount}>+{money(2_100_000)}</Text>
           </View>
 
           <View style={styles.sparklineWrap}>
-            <PortfolioSparkLine data={PORTFOLIO_DATA} color={colors.primary} />
+            <PortfolioSparkLine data={PORTFOLIO_DATA} color={colors.accent300} />
           </View>
 
           <View style={styles.allocRow}>
             <View style={styles.allocItem}>
-              <Text style={[styles.allocNum, { color: '#1a7a40' }]}>3 CP</Text>
+              <Text style={[styles.allocNum, { color: UP_ON_DARK }]}>3 CP</Text>
               <Text style={styles.allocLabel}>{t.investment.profit}</Text>
             </View>
             <View style={styles.allocDivider} />
             <View style={styles.allocItem}>
-              <Text style={[styles.allocNum, { color: '#c0392b' }]}>1 CP</Text>
+              <Text style={[styles.allocNum, { color: DOWN_ON_DARK }]}>1 CP</Text>
               <Text style={styles.allocLabel}>{t.investment.loss}</Text>
             </View>
             <View style={styles.allocDivider} />
             <View style={styles.allocItem}>
-              <Text style={[styles.allocNum, { color: colors.primary }]}>
+              <Text style={[styles.allocNum, { color: colors.accent300 }]}>
                 {shortMoney(8_500_000)}
               </Text>
               <Text style={styles.allocLabel}>{t.investment.cash}</Text>

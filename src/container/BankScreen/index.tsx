@@ -1,21 +1,20 @@
-import { Icon } from '@rneui/themed';
 import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
-  Image,
+  ScrollView,
   TouchableOpacity,
   SafeAreaView,
 } from 'react-native';
 import { QuickAction } from './components';
 import { StackScreenProps } from '@react-navigation/stack';
+import SubHeader from '../../components/UI/SubHeader';
 import { useLanguage } from '../../context/LanguageContext';
 import { useThemeColors } from '../../context/ThemeContext';
 import { ThemeColors } from '../../theme/paperTheme';
-
-const PRIMARY_DARK = '#b36a1a';
+import { RADII, TYPE, SPACING, FONT } from '../../theme/tokens';
 
 interface BankScreenProps extends StackScreenProps<{}> {}
 
@@ -41,43 +40,25 @@ type Transaction = {
   dateGroup: string;
   amount: number;
   type: 'income' | 'expense';
-  icon: string;
-  iconBg: string;
-  iconColor: string;
 };
 
 const transactions: Transaction[] = [
-  { id: 1,  name: 'Transfer from Elly',  time: '02:45 CH', dateGroup: 'Hôm nay',      amount: 450000,   type: 'income',  icon: 'arrow-down-outline',    iconBg: '#e8f8f0', iconColor: '#1a7a40' },
-  { id: 2,  name: 'Spotify Premium',     time: '01:10 CH', dateGroup: 'Hôm nay',      amount: -8000,    type: 'expense', icon: 'musical-notes-outline', iconBg: '#f5f0ff', iconColor: '#6c3fc4' },
-  { id: 3,  name: 'Coffee at Highland',  time: '11:32 SA', dateGroup: 'Hôm nay',      amount: -35000,   type: 'expense', icon: 'cafe-outline',          iconBg: '#fff4e8', iconColor: PRIMARY_DARK },
-  { id: 4,  name: 'Lương tháng 11',      time: '09:00 SA', dateGroup: 'Hôm nay',      amount: 12000000, type: 'income',  icon: 'briefcase-outline',     iconBg: '#e8f8f0', iconColor: '#1a7a40' },
-  { id: 5,  name: 'Tiền điện',           time: '08:00 SA', dateGroup: 'Hôm qua',      amount: -350000,  type: 'expense', icon: 'flash-outline',         iconBg: '#fff8e8', iconColor: '#c07800' },
-  { id: 6,  name: 'Chuyển tiền cho mẹ', time: '07:30 SA', dateGroup: 'Hôm qua',      amount: -1000000, type: 'expense', icon: 'heart-outline',         iconBg: '#fff0f0', iconColor: '#c0392b' },
-  { id: 7,  name: 'Zalopay Cashback',    time: '06:00 SA', dateGroup: 'Hôm qua',      amount: 150000,   type: 'income',  icon: 'gift-outline',          iconBg: '#e8f8f0', iconColor: '#1a7a40' },
-  { id: 8,  name: 'Grab Ride',           time: '05:00 CH', dateGroup: '2 ngày trước', amount: -52000,   type: 'expense', icon: 'car-outline',           iconBg: '#e8f0f8', iconColor: '#1a4a7a' },
-  { id: 9,  name: 'YouTube Premium',     time: '04:00 CH', dateGroup: '2 ngày trước', amount: -30000,   type: 'expense', icon: 'play-circle-outline',   iconBg: '#fff0f0', iconColor: '#c0392b' },
-  { id: 10, name: 'Transfer from David', time: '10:00 SA', dateGroup: '2 ngày trước', amount: 2200000,  type: 'income',  icon: 'arrow-down-outline',    iconBg: '#e8f8f0', iconColor: '#1a7a40' },
+  { id: 1,  name: 'Transfer from Elly',  time: '02:45', dateGroup: 'Hôm nay',      amount: 450000,   type: 'income' },
+  { id: 2,  name: 'Spotify Premium',     time: '01:10', dateGroup: 'Hôm nay',      amount: -8000,    type: 'expense' },
+  { id: 3,  name: 'Coffee at Highland',  time: '11:32', dateGroup: 'Hôm nay',      amount: -35000,   type: 'expense' },
+  { id: 4,  name: 'Lương tháng 11',      time: '09:00', dateGroup: 'Hôm nay',      amount: 12000000, type: 'income' },
+  { id: 5,  name: 'Tiền điện',           time: '08:00', dateGroup: 'Hôm qua',      amount: -350000,  type: 'expense' },
+  { id: 6,  name: 'Chuyển tiền cho mẹ', time: '07:30', dateGroup: 'Hôm qua',      amount: -1000000, type: 'expense' },
+  { id: 7,  name: 'Zalopay Cashback',    time: '06:00', dateGroup: 'Hôm qua',      amount: 150000,   type: 'income' },
+  { id: 8,  name: 'Grab Ride',           time: '05:00', dateGroup: '2 ngày trước', amount: -52000,   type: 'expense' },
+  { id: 9,  name: 'YouTube Premium',     time: '04:00', dateGroup: '2 ngày trước', amount: -30000,   type: 'expense' },
+  { id: 10, name: 'Transfer from David', time: '10:00', dateGroup: '2 ngày trước', amount: 2200000,  type: 'income' },
 ];
-
-// FILTERS built inside component using t
-
-const SectionTitle = ({
-  title,
-  styles,
-}: {
-  title: string;
-  styles: ReturnType<typeof makeStyles>;
-}) => (
-  <View style={styles.sectionTitleRow}>
-    <View style={styles.accentBar} />
-    <Text style={styles.sectionTitleText}>{title}</Text>
-  </View>
-);
 
 const BankScreen = ({ navigation }: BankScreenProps) => {
   const { t } = useLanguage();
-  const colors = useThemeColors();
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const c = useThemeColors();
+  const styles = useMemo(() => makeStyles(c), [c]);
   const FILTERS = [t.bank.filterAll, t.bank.filterIn, t.bank.filterOut];
   const [balanceVisible, setBalanceVisible] = useState(true);
   const [activeFilter, setActiveFilter] = useState(0); // 0=all, 1=in, 2=out
@@ -100,365 +81,253 @@ const BankScreen = ({ navigation }: BankScreenProps) => {
     [],
   );
 
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        {/* Dải cam absolute phía sau — tạo hiệu ứng card nổi trên nền cam */}
-        <View style={styles.orangeBg} />
-
-        {/* Header row */}
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.goBack()}>
-            <Icon type="ionicon" name="arrow-back" size={20} color="#fff" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>{t.bank.title}</Text>
-          <TouchableOpacity
-            style={styles.headerBtn}
-            onPress={() => navigation.navigate('CardManagement' as never)}>
-            <Icon type="ionicon" name="ellipsis-horizontal" size={20} color="#fff" />
-          </TouchableOpacity>
-        </View>
-
-        {/* ── PHẦN CỐ ĐỊNH (không scroll) ── */}
-
-        {/* Balance card */}
-        <View style={styles.balanceCard}>
-          <View style={styles.balanceHeader}>
-            <Text style={styles.balanceLabel}>{t.bank.balance}</Text>
-            <TouchableOpacity onPress={() => setBalanceVisible(v => !v)}>
-              <Icon
-                type="ionicon"
-                name={balanceVisible ? 'eye-outline' : 'eye-off-outline'}
-                size={18}
-                color={colors.muted}
-              />
-            </TouchableOpacity>
-          </View>
+  const ListHeader = (
+    <View>
+      {/* Khối số dư nền tối */}
+      <View style={styles.balanceBlock}>
+        <Text style={styles.balanceLabel}>{t.bank.balance}</Text>
+        <View style={styles.balanceRow}>
           <Text style={styles.balanceAmount}>
             {balanceVisible ? money(balance) : '• • • • • •'}
           </Text>
-          <View style={styles.quickActionsRow}>
-            <QuickAction
-              icon="swap-horizontal"
-              label={t.bank.transfer}
-              // @ts-ignore
-              onPress={() => navigation.navigate('TransferMoney', { balance })}
-            />
-            <QuickAction icon="qr-code-outline" label={t.bank.qrPay}  onPress={() => navigation.navigate('QRPay' as never)} />
-            <QuickAction icon="wallet-outline"  label={t.bank.topUp}  onPress={() => navigation.navigate('TopUp' as never)} />
-            <QuickAction icon="card-outline"    label={t.bank.card}   onPress={() => navigation.navigate('CardManagement' as never)} />
-          </View>
+          <TouchableOpacity onPress={() => setBalanceVisible(v => !v)} hitSlop={8}>
+            <Text style={styles.balanceToggle}>
+              {balanceVisible ? t.bank.hide : t.bank.show}
+            </Text>
+          </TouchableOpacity>
         </View>
+        <View style={styles.actionsRow}>
+          <QuickAction
+            icon="data-transfer-both"
+            label={t.bank.transfer}
+            // @ts-ignore route params
+            onPress={() => navigation.navigate('TransferMoney', { balance })}
+          />
+          <QuickAction icon="qr-code"     label={t.bank.qrPay} onPress={() => navigation.navigate('QRPay' as never)} />
+          <QuickAction icon="wallet"      label={t.bank.topUp} onPress={() => navigation.navigate('TopUp' as never)} />
+          <QuickAction icon="credit-card" label={t.bank.card}  onPress={() => navigation.navigate('CardManagement' as never)} />
+        </View>
+      </View>
 
+      {/* Body */}
+      <View style={styles.body}>
         {/* Gửi nhanh */}
-        <View style={styles.sectionHeader}>
-          <SectionTitle title={t.bank.quickSend} styles={styles} />
+        <View style={styles.sectionHeaderRow}>
+          <Text style={styles.sectionTitle}>{t.bank.quickSend}</Text>
           <TouchableOpacity onPress={() => navigation.navigate('AllContacts' as never)}>
             <Text style={styles.seeAll}>{t.bank.viewAll}</Text>
           </TouchableOpacity>
         </View>
-        <FlatList
+        <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          data={quickSendList}
-          keyExtractor={item => String(item.id)}
-          style={styles.quickSendScroll}
-          contentContainerStyle={styles.quickSendList}
-          renderItem={({ item }) => (
+          contentContainerStyle={styles.quickSendRow}
+        >
+          {quickSendList.map(item => (
             <TouchableOpacity
+              key={item.id}
               style={styles.contactItem}
               onPress={() =>
-                // @ts-ignore
+                // @ts-ignore route params
                 navigation.navigate('TransferMoney', {
                   balance,
                   contact: { name: item.name, avatar: item.avatar },
                 })
-              }>
-              <Image style={styles.contactAvatar} source={{ uri: item.avatar }} />
+              }
+            >
+              <View style={styles.contactAvatar}>
+                <Text style={styles.contactInitial}>{item.name.charAt(0)}</Text>
+              </View>
               <Text style={styles.contactName}>{item.name}</Text>
             </TouchableOpacity>
-          )}
-        />
+          ))}
+        </ScrollView>
 
-        {/* ── PHẦN SCROLL — transaction list (header gắn trong FlatList) ── */}
-        <FlatList
-          style={styles.txList}
-          ListHeaderComponent={
-            <View>
-              <View style={styles.txListSectionHeader}>
-                <SectionTitle title={t.bank.history} styles={styles} />
-              </View>
-              <View style={styles.filterRow}>
-                {FILTERS.map((f, i) => (
-                  <TouchableOpacity
-                    key={i}
-                    style={[styles.filterTab, activeFilter === i && styles.filterTabActive]}
-                    onPress={() => setActiveFilter(i)}
-                  >
-                    <Text style={[styles.filterLabel, activeFilter === i && styles.filterLabelActive]}>
-                      {f}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-          }
-          showsVerticalScrollIndicator={false}
-          data={groupedTx}
-          keyExtractor={item => item.dateGroup}
-          contentContainerStyle={{ paddingBottom: 100 }}
-          renderItem={({ item: group, index: gi }) => (
-            <View>
-              <Text style={[styles.dateGroup, gi > 0 && { marginTop: 12 }]}>
-                {group.dateGroup}
-              </Text>
-              <View style={styles.txCard}>
-                {group.data.map((tx, i) => (
-                  <View
-                    key={tx.id}
-                    style={[styles.txRow, i < group.data.length - 1 && styles.txBorder]}
-                  >
-                    <View style={[styles.txIconWrap, { backgroundColor: tx.iconBg }]}>
-                      <Icon type="ionicon" name={tx.icon} size={18} color={tx.iconColor} />
-                    </View>
-                    <View style={styles.txInfo}>
-                      <Text style={styles.txName} numberOfLines={1}>{tx.name}</Text>
-                      <Text style={styles.txTime}>{tx.time}</Text>
-                    </View>
-                    <Text style={tx.type === 'income' ? styles.amountPos : styles.amountNeg}>
-                      {tx.type === 'income' ? '+' : '-'}{money(tx.amount)}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          )}
-        />
+        <View style={styles.divider} />
+
+        {/* Lịch sử giao dịch + filter */}
+        <View style={styles.sectionHeaderRow}>
+          <Text style={styles.sectionTitle}>{t.bank.history}</Text>
+          <View style={styles.filterRow}>
+            {FILTERS.map((f, i) => (
+              <TouchableOpacity
+                key={i}
+                style={[styles.filterChip, activeFilter === i && styles.filterChipActive]}
+                onPress={() => setActiveFilter(i)}
+              >
+                <Text style={[styles.filterLabel, activeFilter === i && styles.filterLabelActive]}>
+                  {f}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
       </View>
+    </View>
+  );
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <SubHeader title={t.bank.title} onBack={() => navigation.goBack()} />
+      <FlatList
+        data={groupedTx}
+        keyExtractor={item => item.dateGroup}
+        ListHeaderComponent={ListHeader}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContent}
+        renderItem={({ item: group, index: gi }) => (
+          <View style={[styles.txGroup, gi > 0 && { marginTop: SPACING.s4 }]}>
+            <Text style={styles.dateGroup}>{group.dateGroup}</Text>
+            {group.data.map(tx => {
+              const pos = tx.type === 'income';
+              const color = pos ? c.success : c.danger;
+              return (
+                <View key={tx.id} style={styles.txRow}>
+                  <View
+                    style={[
+                      styles.txSign,
+                      { backgroundColor: pos ? 'rgba(26,122,64,0.12)' : 'rgba(192,57,43,0.12)' },
+                    ]}
+                  >
+                    <Text style={[styles.txSignText, { color }]}>{pos ? '+' : '–'}</Text>
+                  </View>
+                  <View style={styles.txInfo}>
+                    <Text style={styles.txName} numberOfLines={1}>{tx.name}</Text>
+                    <Text style={styles.txTime}>{tx.time}</Text>
+                  </View>
+                  <Text style={[styles.txAmount, { color }]}>
+                    {pos ? '+' : '-'}{money(tx.amount)}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        )}
+      />
     </SafeAreaView>
   );
 };
 
 export default BankScreen;
 
-const makeStyles = (c: ThemeColors) => StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: c.bg,
-  },
-  container: {
-    flex: 1,
-  },
-  // Dải cam absolute — cao hơn header để card nổi lên trên nền cam
-  orangeBg: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 130,
-    backgroundColor: c.primary,
-  },
-  txList: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 14,
-    gap: 8,
-  },
-  headerBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  balanceCard: {
-    backgroundColor: c.white,
-    borderRadius: 20,
-    marginHorizontal: 16,
-    marginTop: 8,
-    padding: 16,
-    borderWidth: 0.5,
-    borderColor: c.border,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-  },
-  balanceHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  balanceLabel: {
-    fontSize: 12,
-    color: c.subtext,
-  },
-  balanceAmount: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: c.text,
-    marginVertical: 10,
-  },
-  quickActionsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 4,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginHorizontal: 16,
-    marginTop: 14,
-    marginBottom: 10,
-  },
-  txListSectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginHorizontal: 16,
-    marginTop: 10,
-    marginBottom: 8,
-  },
-  sectionTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  accentBar: {
-    width: 4,
-    height: 18,
-    backgroundColor: c.primary,
-    borderRadius: 2,
-  },
-  sectionTitleText: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: c.text,
-  },
-  seeAll: {
-    fontSize: 12,
-    color: c.primary,
-    fontWeight: '500',
-  },
-  quickSendScroll: {
-    height: 90,   // avatar 52 + gap 6 + text 14 + padding
-    flexGrow: 0,  // ngăn FlatList expand theo chiều dọc
-  },
-  quickSendList: {
-    paddingHorizontal: 16,
-    gap: 16,
-    alignItems: 'center',
-  },
-  contactItem: {
-    alignItems: 'center',
-    gap: 6,
-  },
-  contactAvatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    borderWidth: 2,
-    borderColor: c.primaryBorder,
-  },
-  contactName: {
-    fontSize: 11,
-    color: c.subtext,
-  },
-  filterRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginHorizontal: 16,
-    marginBottom: 10,
-  },
-  filterTab: {
-    paddingHorizontal: 14,
-    paddingVertical: 5,
-    borderRadius: 20,
-    borderWidth: 0.5,
-    borderColor: c.border,
-    backgroundColor: c.white,
-  },
-  filterTabActive: {
-    backgroundColor: c.primary,
-    borderColor: c.primary,
-  },
-  filterLabel: {
-    fontSize: 12,
-    color: c.subtext,
-  },
-  filterLabelActive: {
-    color: '#fff',
-    fontWeight: '500',
-  },
-  txCard: {
-    backgroundColor: c.white,
-    borderRadius: 16,
-    marginHorizontal: 16,
-    padding: 14,
-    borderWidth: 0.5,
-    borderColor: c.border,
-  },
-  dateGroup: {
-    fontSize: 11,
-    color: c.muted,
-    fontWeight: '500',
-    marginBottom: 6,
-  },
-  txRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 10,
-  },
-  txBorder: {
-    borderBottomWidth: 0.5,
-    borderBottomColor: c.divider,
-  },
-  txIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  txInfo: {
-    flex: 1,
-  },
-  txName: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: c.text,
-  },
-  txTime: {
-    fontSize: 11,
-    color: c.muted,
-    marginTop: 2,
-  },
-  amountPos: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#1a7a40',
-  },
-  amountNeg: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#c0392b',
-  },
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    safeArea: { flex: 1, backgroundColor: c.bg },
+    listContent: { paddingBottom: 100 },
 
-});
+    // Khối số dư nền tối
+    balanceBlock: {
+      backgroundColor: c.heroDark,
+      paddingHorizontal: SPACING.screenX,
+      paddingVertical: SPACING.s4,
+      gap: SPACING.s2,
+    },
+    balanceLabel: {
+      fontFamily: FONT.regular,
+      fontSize: TYPE.caption,
+      letterSpacing: 2,
+      textTransform: 'uppercase',
+      color: c.accent300,
+    },
+    balanceRow: {
+      flexDirection: 'row',
+      alignItems: 'baseline',
+      justifyContent: 'space-between',
+      gap: SPACING.s3,
+    },
+    balanceAmount: {
+      fontFamily: FONT.medium,
+      fontSize: 30,
+      lineHeight: 34,
+      color: c.offWhite,
+    },
+    balanceToggle: {
+      fontFamily: FONT.regular,
+      fontSize: TYPE.caption,
+      color: c.accent300,
+      textDecorationLine: 'underline',
+    },
+    actionsRow: {
+      flexDirection: 'row',
+      gap: SPACING.s2,
+      marginTop: SPACING.s2,
+    },
+
+    // Body
+    body: {
+      paddingHorizontal: SPACING.screenX,
+      paddingTop: SPACING.s4,
+    },
+    sectionHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: SPACING.s3,
+    },
+    sectionTitle: { fontFamily: FONT.semibold, fontSize: TYPE.title, color: c.text },
+    seeAll: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.accent700 },
+
+    quickSendRow: { gap: SPACING.s4, paddingRight: SPACING.screenX },
+    contactItem: { alignItems: 'center', gap: 6 },
+    contactAvatar: {
+      width: 44,
+      height: 44,
+      borderRadius: RADII.pill,
+      borderWidth: 1,
+      borderColor: c.accent,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    contactInitial: { fontFamily: FONT.semibold, fontSize: TYPE.itemTitle, color: c.accent700 },
+    contactName: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.subtext },
+
+    divider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: c.divider,
+      marginVertical: SPACING.s4,
+    },
+
+    filterRow: { flexDirection: 'row', gap: 6 },
+    filterChip: {
+      paddingHorizontal: 12,
+      paddingVertical: 4,
+      borderRadius: RADII.chip,
+      backgroundColor: c.white,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: c.border,
+    },
+    filterChipActive: { backgroundColor: c.accent100, borderColor: c.accent100 },
+    filterLabel: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.subtext },
+    filterLabelActive: { fontFamily: FONT.medium, color: c.accent700 },
+
+    // Transaction list
+    txGroup: { paddingHorizontal: SPACING.screenX, gap: SPACING.s2 },
+    dateGroup: {
+      fontFamily: FONT.regular,
+      fontSize: TYPE.caption,
+      letterSpacing: 1.8,
+      textTransform: 'uppercase',
+      color: c.muted,
+    },
+    txRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: SPACING.s3,
+      paddingBottom: SPACING.s2,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: c.divider,
+    },
+    txSign: {
+      width: 34,
+      height: 34,
+      borderRadius: RADII.item,
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0,
+    },
+    txSignText: { fontFamily: FONT.semibold, fontSize: TYPE.body },
+    txInfo: { flex: 1, minWidth: 0 },
+    txName: { fontFamily: FONT.medium, fontSize: TYPE.body, color: c.text },
+    txTime: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.muted, marginTop: 1 },
+    txAmount: { fontFamily: FONT.medium, fontSize: TYPE.body, flexShrink: 0 },
+  });

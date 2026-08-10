@@ -16,7 +16,9 @@ import { z } from 'zod';
 import { Icon } from '@rneui/themed';
 import { FormTextInput } from '../../components/Form';
 import { AppButton, AppSnackbar } from '../../components/UI';
+import SubHeader from '../../components/UI/SubHeader';
 import { ThemeColors } from '../../theme/paperTheme';
+import { RADII, SPACING } from '../../theme/tokens';
 import { useThemeColors } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import type { Translations } from '../../i18n/translations';
@@ -58,14 +60,7 @@ const SecurityScreen = ({ navigation }: Props) => {
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Header cam */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.goBack()}>
-          <Icon type="ionicon" name="arrow-back" size={18} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t.security.title}</Text>
-        <View style={styles.headerBtn} />
-      </View>
+      <SubHeader title={t.security.title} onBack={() => navigation.goBack()} />
 
       <KeyboardAvoidingView
         style={styles.flex}
@@ -75,7 +70,7 @@ const SecurityScreen = ({ navigation }: Props) => {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
           <View style={styles.iconWrap}>
-            <Icon type="ionicon" name="shield-checkmark-outline" size={30} color={colors.primaryDark} />
+            <Icon type="ionicon" name="shield-checkmark-outline" size={30} color={colors.accent700} />
           </View>
 
           <View style={styles.form}>
@@ -102,6 +97,7 @@ const SecurityScreen = ({ navigation }: Props) => {
             />
             <AppButton
               title={t.security.save}
+              variant="dark"
               onPress={handleSubmit(onSubmit)}
               style={styles.saveBtn}
             />
@@ -157,14 +153,14 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   scroll: { padding: 20, paddingBottom: 32 },
 
   iconWrap: {
-    width: 64,
-    height: 64,
-    borderRadius: 18,
-    backgroundColor: c.primaryLight,
+    width: 72,
+    height: 72,
+    borderRadius: RADII.card,
+    backgroundColor: c.accent100,
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'center',
-    marginBottom: 24,
+    marginBottom: SPACING.s6,
   },
 
   form: { gap: 16 },

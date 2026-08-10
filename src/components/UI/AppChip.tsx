@@ -34,21 +34,21 @@ export default AppChip;
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     chip: {
-      borderRadius: 20,
+      borderRadius: 100,
       backgroundColor: c.white,
-      borderWidth: 0.5,
+      borderWidth: StyleSheet.hairlineWidth,
       borderColor: c.border,
     },
     chipActive: {
-      backgroundColor: c.primary,
-      borderColor: c.primary,
+      backgroundColor: c.accent100,
+      borderColor: c.accent100,
     },
     text: {
-      fontSize: 12,
+      fontSize: 13,
       color: c.subtext,
     },
     textActive: {
-      color: '#fff', // text trên nền cam — luôn trắng
-      fontWeight: '500',
+      color: c.accent700,
+      fontWeight: '600',
     },
   });

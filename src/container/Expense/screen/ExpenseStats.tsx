@@ -14,13 +14,15 @@ import Svg, { Rect, Text as SvgText, G } from 'react-native-svg';
 import { useLanguage } from '../../../context/LanguageContext';
 import { useThemeColors } from '../../../context/ThemeContext';
 import { ThemeColors } from '../../../theme/paperTheme';
+import { RADII, TYPE, SPACING, FONT } from '../../../theme/tokens';
+import SubHeader from '../../../components/UI/SubHeader';
 
 // ─── Brand colors ─────────────────────────────────────────────────────────────
 // Giữ lại để dùng cho dữ liệu tĩnh (CAT_STATS/TOP_TX) — không đổi theo theme.
-const PRIMARY        = '#E89951';
-const PRIMARY_DARK   = '#b36a1a';
-const COLOR_DANGER   = '#c0392b';
-const COLOR_SUCCESS  = '#1a7a40';
+const PRIMARY = '#E89951';
+const PRIMARY_DARK = '#b36a1a';
+const COLOR_DANGER = '#c0392b';
+const COLOR_SUCCESS = '#1a7a40';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const money = (n: number) =>
@@ -38,12 +40,12 @@ const shortMoney = (n: number): string => {
 // i18n-safe: maps categoryId → translated name
 const getCatName = (id: string, t: any): string => {
   const map: Record<string, string> = {
-    food:      t.expense.catFood,
-    shopping:  t.expense.catShopping,
-    fun:       t.expense.catFun,
+    food: t.expense.catFood,
+    shopping: t.expense.catShopping,
+    fun: t.expense.catFun,
     transport: t.expense.catTransport,
-    utility:   t.expense.catUtility,
-    other:     t.expense.catOther,
+    utility: t.expense.catUtility,
+    other: t.expense.catOther,
   };
   return map[id] ?? id;
 };
@@ -61,7 +63,7 @@ const CHART_DATA = {
   year: {
     labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'],
     values: [7_200_000, 8_100_000, 6_500_000, 9_300_000, 7_800_000, 8_500_000,
-             10_200_000, 9_100_000, 8_325_110, 7_600_000, 8_900_000, 11_000_000],
+      10_200_000, 9_100_000, 8_325_110, 7_600_000, 8_900_000, 11_000_000],
   },
 };
 
@@ -81,24 +83,24 @@ type CategoryStat = {
 };
 
 const CAT_STATS: CategoryStat[] = [
-  { id: 'food',      name: 'Ăn uống',   icon: 'restaurant-outline',      iconBg: '#fff4e8', iconColor: PRIMARY_DARK,   barColor: PRIMARY,       total: 3_200_000, percent: 0.38 },
-  { id: 'shopping',  name: 'Mua sắm',   icon: 'bag-handle-outline',      iconBg: '#f5f0ff', iconColor: '#6c3fc4',      barColor: '#6c3fc4',     total: 2_100_000, percent: 0.25 },
-  { id: 'utility',   name: 'Tiện ích',  icon: 'flash-outline',           iconBg: '#ffeaea', iconColor: COLOR_DANGER,   barColor: COLOR_DANGER,  total: 1_485_110, percent: 0.18 },
-  { id: 'fun',       name: 'Giải trí',  icon: 'game-controller-outline', iconBg: '#e8f0f8', iconColor: '#1a4a7a',     barColor: '#1a4a7a',     total: 890_000,   percent: 0.11 },
-  { id: 'transport', name: 'Di chuyển', icon: 'car-outline',             iconBg: '#e8f8f0', iconColor: COLOR_SUCCESS,  barColor: COLOR_SUCCESS, total: 650_000,   percent: 0.08 },
+  { id: 'food', name: 'Ăn uống', icon: 'restaurant-outline', iconBg: '#fff4e8', iconColor: PRIMARY_DARK, barColor: PRIMARY, total: 3_200_000, percent: 0.38 },
+  { id: 'shopping', name: 'Mua sắm', icon: 'bag-handle-outline', iconBg: '#f5f0ff', iconColor: '#6c3fc4', barColor: '#6c3fc4', total: 2_100_000, percent: 0.25 },
+  { id: 'utility', name: 'Tiện ích', icon: 'flash-outline', iconBg: '#ffeaea', iconColor: COLOR_DANGER, barColor: COLOR_DANGER, total: 1_485_110, percent: 0.18 },
+  { id: 'fun', name: 'Giải trí', icon: 'game-controller-outline', iconBg: '#e8f0f8', iconColor: '#1a4a7a', barColor: '#1a4a7a', total: 890_000, percent: 0.11 },
+  { id: 'transport', name: 'Di chuyển', icon: 'car-outline', iconBg: '#e8f8f0', iconColor: COLOR_SUCCESS, barColor: COLOR_SUCCESS, total: 650_000, percent: 0.08 },
 ];
 
 // Top transactions
 const TOP_TX = [
-  { id: 1, name: 'Điện EVN',         categoryId: 'utility',  icon: 'flash-outline',       iconBg: '#ffeaea', iconColor: COLOR_DANGER,  amount: 320_000 },
-  { id: 2, name: 'Shopee',           categoryId: 'shopping', icon: 'bag-handle-outline',  iconBg: '#f5f0ff', iconColor: '#6c3fc4',     amount: 250_000 },
-  { id: 3, name: 'Starbucks Coffee', categoryId: 'food',     icon: 'cafe-outline',        iconBg: '#fff4e8', iconColor: PRIMARY_DARK,  amount: 163_980 },
+  { id: 1, name: 'Điện EVN', categoryId: 'utility', icon: 'flash-outline', iconBg: '#ffeaea', iconColor: COLOR_DANGER, amount: 320_000 },
+  { id: 2, name: 'Shopee', categoryId: 'shopping', icon: 'bag-handle-outline', iconBg: '#f5f0ff', iconColor: '#6c3fc4', amount: 250_000 },
+  { id: 3, name: 'Starbucks Coffee', categoryId: 'food', icon: 'cafe-outline', iconBg: '#fff4e8', iconColor: PRIMARY_DARK, amount: 163_980 },
 ];
 
 // ─── Bar chart component ───────────────────────────────────────────────────────
-const SCREEN_W   = Dimensions.get('window').width;
-const CHART_W    = SCREEN_W - 64;  // card: mh:16 + ph:16 each side
-const CHART_H    = 100;
+const SCREEN_W = Dimensions.get('window').width;
+const CHART_W = SCREEN_W - 64;  // card: mh:16 + ph:16 each side
+const CHART_H = 100;
 
 interface BarChartProps {
   data: number[];
@@ -106,22 +108,22 @@ interface BarChartProps {
 }
 
 const BarChart = ({ data, labels }: BarChartProps) => {
-  const colors     = useThemeColors();
-  const max        = Math.max(...data, 1);
-  const n          = data.length;
-  const slotW      = CHART_W / n;
-  const barW       = Math.max(slotW * 0.52, 8);
-  const hiIdx      = data.indexOf(max);
-  const tooltipW   = 44;
+  const colors = useThemeColors();
+  const max = Math.max(...data, 1);
+  const n = data.length;
+  const slotW = CHART_W / n;
+  const barW = Math.max(slotW * 0.52, 8);
+  const hiIdx = data.indexOf(max);
+  const tooltipW = 44;
 
   return (
     <Svg width={CHART_W} height={CHART_H + 22}>
       {data.map((v, i) => {
-        const barH   = Math.max((v / max) * CHART_H, 4);
-        const x      = i * slotW + (slotW - barW) / 2;
-        const y      = CHART_H - barH;
-        const isHi   = i === hiIdx;
-        const tipX   = Math.max(tooltipW / 2 + 2, Math.min(x + barW / 2, CHART_W - tooltipW / 2 - 2));
+        const barH = Math.max((v / max) * CHART_H, 4);
+        const x = i * slotW + (slotW - barW) / 2;
+        const y = CHART_H - barH;
+        const isHi = i === hiIdx;
+        const tipX = Math.max(tooltipW / 2 + 2, Math.min(x + barW / 2, CHART_W - tooltipW / 2 - 2));
 
         return (
           <G key={i}>
@@ -134,7 +136,7 @@ const BarChart = ({ data, labels }: BarChartProps) => {
                   width={tooltipW}
                   height={18}
                   rx={5} ry={5}
-                  fill={colors.primary}
+                  fill={colors.accent}
                 />
                 <SvgText
                   x={tipX}
@@ -152,7 +154,7 @@ const BarChart = ({ data, labels }: BarChartProps) => {
               x={x} y={y}
               width={barW} height={barH}
               rx={Math.min(barW / 2, 6)} ry={Math.min(barW / 2, 6)}
-              fill={isHi ? colors.primary : colors.border}
+              fill={isHi ? colors.accent : colors.border}
             />
 
             {/* Day label */}
@@ -161,7 +163,7 @@ const BarChart = ({ data, labels }: BarChartProps) => {
               y={CHART_H + 15}
               textAnchor="middle"
               fontSize={9}
-              fill={isHi ? colors.primaryDark : colors.muted}>
+              fill={isHi ? colors.accent700 : colors.muted}>
               {labels[i]}
             </SvgText>
           </G>
@@ -181,22 +183,13 @@ const ExpenseStats = ({ navigation }: Props) => {
   const [activePeriod, setActivePeriod] = useState(1); // 0=week 1=month 2=year
 
   const periodFilters = [t.expense.weekFilter, t.expense.monthFilter, t.expense.yearFilter];
-  const chartData     = CHART_DATA[PERIOD_KEYS[activePeriod]];
-  const total         = chartData.values.reduce((s, v) => s + v, 0);
+  const chartData = CHART_DATA[PERIOD_KEYS[activePeriod]];
+  const total = chartData.values.reduce((s, v) => s + v, 0);
 
   return (
     <SafeAreaView style={styles.safe}>
 
-      {/* ── Header cam ── */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.goBack()}>
-          <Icon type="ionicon" name="arrow-back" size={18} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t.expense.statsTitle}</Text>
-        <TouchableOpacity style={styles.headerBtn}>
-          <Icon type="ionicon" name="settings-outline" size={18} color="#fff" />
-        </TouchableOpacity>
-      </View>
+      <SubHeader title={t.expense.statsTitle} onBack={() => navigation.goBack()} />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
 
@@ -291,89 +284,71 @@ export default ExpenseStats;
 const makeStyles = (c: ThemeColors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: c.bg },
 
-  // Header
-  header: {
-    backgroundColor: c.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 8,
-  },
-  headerBtn: {
-    width: 34, height: 34, borderRadius: 17,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  headerTitle: {
-    flex: 1, textAlign: 'center',
-    fontSize: 16, fontWeight: '600', color: '#fff',
-  },
-
   scroll: { paddingBottom: 16 },
 
-  // Hero card
+  // Hero card — tối
   heroCard: {
-    backgroundColor: c.white,
-    borderRadius: 20,
-    marginHorizontal: 16,
-    marginTop: 16,
-    padding: 20,
-    borderWidth: 0.5,
-    borderColor: c.primaryBorder,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
+    backgroundColor: c.heroDark,
+    borderRadius: RADII.card,
+    marginHorizontal: SPACING.screenX,
+    marginTop: SPACING.s4,
+    padding: SPACING.s4,
   },
-  heroLabel: { fontSize: 10, color: c.hint, letterSpacing: 0.6, fontWeight: '500' },
+  heroLabel: {
+    fontFamily: FONT.regular,
+    fontSize: TYPE.caption,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: c.accent300,
+  },
   heroAmount: {
-    fontSize: 28, fontWeight: '700', color: COLOR_DANGER,
-    letterSpacing: -0.5, marginTop: 6,
+    fontFamily: FONT.semibold, fontSize: 28, color: c.offWhite, marginTop: 6,
   },
   trendBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: '#e8f8f0', borderRadius: 10,
+    backgroundColor: 'rgba(74,222,128,0.16)', borderRadius: RADII.chip,
     paddingHorizontal: 10, paddingVertical: 4,
     alignSelf: 'flex-start', marginTop: 8,
   },
-  trendText: { fontSize: 11, color: COLOR_SUCCESS, fontWeight: '500' },
+  trendText: { fontFamily: FONT.medium, fontSize: TYPE.caption, color: '#4ade80' },
 
   // Section label
   sectionLabel: {
-    fontSize: 11, color: c.hint,
-    letterSpacing: 0.6, fontWeight: '500',
-    marginHorizontal: 20, marginTop: 20, marginBottom: 8,
+    fontFamily: FONT.regular,
+    fontSize: TYPE.caption,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: c.muted,
+    marginHorizontal: SPACING.screenX,
+    marginTop: SPACING.s5,
+    marginBottom: SPACING.s2,
   },
 
   // Card
   card: {
     backgroundColor: c.white,
-    borderRadius: 14,
-    marginHorizontal: 16,
-    padding: 16,
-    borderWidth: 0.5,
-    borderColor: c.border,
+    borderRadius: RADII.card,
+    marginHorizontal: SPACING.screenX,
+    padding: SPACING.s4,
   },
 
   // Period tabs
   periodRow: {
     flexDirection: 'row',
-    backgroundColor: c.bg,
-    borderRadius: 10,
+    backgroundColor: c.divider,
+    borderRadius: RADII.item,
     padding: 3,
-    marginBottom: 16,
+    marginBottom: SPACING.s4,
   },
   periodTab: {
     flex: 1,
     paddingVertical: 7,
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: RADII.chip,
   },
-  periodTabActive: { backgroundColor: c.white, elevation: 1, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 3 },
-  periodText: { fontSize: 12, color: c.hint, fontWeight: '500' },
-  periodTextActive: { color: c.primaryDark, fontWeight: '600' },
+  periodTabActive: { backgroundColor: c.white },
+  periodText: { fontFamily: FONT.medium, fontSize: TYPE.body, color: c.subtext },
+  periodTextActive: { fontFamily: FONT.semibold, color: c.accent700 },
 
   // Chart
   chartWrap: { alignItems: 'flex-start' },
@@ -382,40 +357,40 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   catRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingTop: 16,
+    gap: SPACING.s3,
+    paddingTop: SPACING.s4,
   },
   catIconWrap: {
-    width: 34, height: 34, borderRadius: 10,
+    width: 34, height: 34, borderRadius: RADII.item,
     alignItems: 'center', justifyContent: 'center',
     flexShrink: 0,
   },
   catInfo: { flex: 1, gap: 6 },
   catLabelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  catName: { fontSize: 12, fontWeight: '500', color: c.text },
-  catAmount: { fontSize: 12, color: c.subtext },
+  catName: { fontFamily: FONT.medium, fontSize: TYPE.body, color: c.text },
+  catAmount: { fontFamily: FONT.regular, fontSize: TYPE.body, color: c.subtext },
   progressBg: {
-    height: 5,
+    height: 4,
     backgroundColor: c.divider,
-    borderRadius: 3,
+    borderRadius: 2,
     overflow: 'hidden',
   },
-  progressFill: { height: '100%', borderRadius: 3 },
-  catPercent: { fontSize: 12, color: c.hint, fontWeight: '500', width: 32, textAlign: 'right' },
+  progressFill: { height: '100%', borderRadius: 2 },
+  catPercent: { fontFamily: FONT.medium, fontSize: TYPE.caption, color: c.accent700, width: 32, textAlign: 'right' },
 
   // Top transactions
   txRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    paddingVertical: 12,
+    flexDirection: 'row', alignItems: 'center', gap: SPACING.s3,
+    paddingVertical: SPACING.s3,
   },
   txIcon: {
-    width: 40, height: 40, borderRadius: 10,
+    width: 40, height: 40, borderRadius: RADII.item,
     alignItems: 'center', justifyContent: 'center',
     flexShrink: 0,
   },
   txInfo: { flex: 1 },
-  txName: { fontSize: 13, fontWeight: '500', color: c.text },
-  txCat: { fontSize: 11, color: c.hint, marginTop: 2 },
-  txAmount: { fontSize: 13, fontWeight: '600', color: COLOR_DANGER },
-  txDivider: { height: 0.5, backgroundColor: c.divider, marginLeft: 52 },
+  txName: { fontFamily: FONT.medium, fontSize: TYPE.body, color: c.text },
+  txCat: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.muted, marginTop: 2 },
+  txAmount: { fontFamily: FONT.semibold, fontSize: TYPE.body, color: COLOR_DANGER },
+  txDivider: { height: StyleSheet.hairlineWidth, backgroundColor: c.divider, marginLeft: 52 },
 });

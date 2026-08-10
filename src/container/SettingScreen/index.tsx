@@ -16,6 +16,7 @@ import { AppSnackbar } from '../../components/UI';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAppTheme, ThemeMode } from '../../context/ThemeContext';
 import { ThemeColors } from '../../theme/paperTheme';
+import { RADII, TYPE, SPACING, FONT } from '../../theme/tokens';
 import { Lang } from '../../i18n/translations';
 
 const LANG_OPTIONS: { code: Lang; label: string; flag: string; sublabel: string }[] = [
@@ -69,7 +70,7 @@ const SettingScreen = () => {
       <TouchableOpacity style={styles.settingRow} onPress={onPress} activeOpacity={0.7}>
         <View style={styles.rowLeft}>
           <View style={styles.rowIconWrap}>
-            <Icon type="ionicon" name={icon} size={17} color={colors.primaryDark} />
+            <Icon type="ionicon" name={icon} size={17} color={colors.accent700} />
           </View>
           <Text style={styles.rowLabel}>{label}</Text>
         </View>
@@ -99,15 +100,15 @@ const SettingScreen = () => {
       <View style={styles.settingRow}>
         <View style={styles.rowLeft}>
           <View style={styles.rowIconWrap}>
-            <Icon type="ionicon" name={icon} size={17} color={colors.primaryDark} />
+            <Icon type="ionicon" name={icon} size={17} color={colors.accent700} />
           </View>
           <Text style={styles.rowLabel}>{label}</Text>
         </View>
         <Switch
           value={value}
           onValueChange={onToggle}
-          trackColor={{ false: colors.border, true: colors.primaryBorder }}
-          thumbColor={value ? colors.primary : '#fff'}
+          trackColor={{ false: colors.border, true: colors.accent }}
+          thumbColor={'#fff'}
           ios_backgroundColor={colors.border}
         />
       </View>
@@ -285,7 +286,7 @@ const SettingScreen = () => {
                         type="ionicon"
                         name={opt.icon}
                         size={18}
-                        color={selected ? colors.primaryDark : colors.subtext}
+                        color={selected ? colors.accent700 : colors.subtext}
                       />
                     </View>
                     <View style={styles.optionInfo}>
@@ -326,48 +327,47 @@ export default SettingScreen;
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: c.bg },
-    header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8 },
-    headerTitle: { fontSize: 26, fontWeight: '700', color: c.text },
+    header: { paddingHorizontal: SPACING.screenX, paddingTop: SPACING.s4, paddingBottom: SPACING.s2 },
+    headerTitle: { fontFamily: FONT.bold, fontSize: 26, color: c.text },
 
     sectionLabel: {
-      fontSize: 11,
-      color: c.hint,
-      letterSpacing: 0.6,
-      fontWeight: '500',
-      marginHorizontal: 20,
-      marginTop: 20,
-      marginBottom: 8,
+      fontFamily: FONT.regular,
+      fontSize: TYPE.caption,
+      letterSpacing: 1.2,
+      textTransform: 'uppercase',
+      color: c.muted,
+      marginHorizontal: SPACING.screenX,
+      marginTop: SPACING.s5,
+      marginBottom: SPACING.s2,
     },
     card: {
       backgroundColor: c.white,
-      borderRadius: 14,
-      marginHorizontal: 16,
+      borderRadius: RADII.card,
+      marginHorizontal: SPACING.screenX,
       overflow: 'hidden',
-      borderWidth: 0.5,
-      borderColor: c.border,
     },
     settingRow: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingHorizontal: 16,
-      paddingVertical: 14,
+      paddingHorizontal: SPACING.s4,
+      paddingVertical: SPACING.s3,
     },
-    rowLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    rowLeft: { flexDirection: 'row', alignItems: 'center', gap: SPACING.s3 },
     rowIconWrap: {
       width: 32,
       height: 32,
-      borderRadius: 8,
-      backgroundColor: c.primaryLight,
+      borderRadius: RADII.chip,
+      backgroundColor: c.accent100,
       alignItems: 'center',
       justifyContent: 'center',
     },
-    rowLabel: { fontSize: 14, color: c.text },
+    rowLabel: { fontFamily: FONT.regular, fontSize: TYPE.body, color: c.text },
     rowRight: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    rowValue: { fontSize: 13, color: c.hint },
-    rowDivider: { height: 0.5, backgroundColor: c.divider, marginLeft: 60 },
+    rowValue: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.muted },
+    rowDivider: { height: StyleSheet.hairlineWidth, backgroundColor: c.divider, marginLeft: 60 },
 
-    version: { textAlign: 'center', fontSize: 12, color: c.muted, marginTop: 32 },
+    version: { fontFamily: FONT.regular, textAlign: 'center', fontSize: TYPE.caption, color: c.muted, marginTop: 32 },
 
     // Modal
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
@@ -387,38 +387,38 @@ const makeStyles = (c: ThemeColors) =>
       alignSelf: 'center',
       marginBottom: 16,
     },
-    sheetTitle: { fontSize: 18, fontWeight: '600', color: c.text, textAlign: 'center' },
-    sheetSub: { fontSize: 12, color: c.hint, textAlign: 'center', marginTop: 4, marginBottom: 20 },
+    sheetTitle: { fontFamily: FONT.semibold, fontSize: TYPE.title, color: c.text, textAlign: 'center' },
+    sheetSub: { fontFamily: FONT.regular, fontSize: TYPE.body, color: c.muted, textAlign: 'center', marginTop: 4, marginBottom: 20 },
     optionList: { gap: 10, marginBottom: 16 },
     optionRow: {
       flexDirection: 'row',
       alignItems: 'center',
       padding: 14,
-      borderRadius: 12,
+      borderRadius: RADII.item,
       borderWidth: 1.5,
       borderColor: c.border,
       gap: 12,
       backgroundColor: c.bg,
     },
-    optionRowSelected: { borderColor: c.primary, backgroundColor: c.primaryLight },
+    optionRowSelected: { borderColor: c.accent, backgroundColor: c.accent100 },
     langFlag: { fontSize: 28 },
     themeIconWrap: {
       width: 34,
       height: 34,
-      borderRadius: 10,
-      backgroundColor: c.primaryLight,
+      borderRadius: RADII.chip,
+      backgroundColor: c.accent100,
       alignItems: 'center',
       justifyContent: 'center',
     },
     optionInfo: { flex: 1 },
-    optionLabel: { fontSize: 15, fontWeight: '500', color: c.text },
-    optionLabelSelected: { color: c.primaryDark },
-    optionSub: { fontSize: 12, color: c.hint, marginTop: 2 },
+    optionLabel: { fontFamily: FONT.medium, fontSize: TYPE.itemTitle, color: c.text },
+    optionLabelSelected: { color: c.accent700 },
+    optionSub: { fontFamily: FONT.regular, fontSize: TYPE.body, color: c.muted, marginTop: 2 },
     checkCircle: {
       width: 24,
       height: 24,
       borderRadius: 12,
-      backgroundColor: c.primary,
+      backgroundColor: c.accent,
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -431,10 +431,10 @@ const makeStyles = (c: ThemeColors) =>
     },
     cancelBtn: {
       backgroundColor: c.bg,
-      borderRadius: 12,
+      borderRadius: RADII.item,
       paddingVertical: 14,
       alignItems: 'center',
       marginTop: 4,
     },
-    cancelText: { fontSize: 15, fontWeight: '500', color: c.subtext },
+    cancelText: { fontFamily: FONT.medium, fontSize: TYPE.itemTitle, color: c.subtext },
   });

@@ -9,6 +9,7 @@ import React, {
 import { Appearance } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LIGHT, DARK, ThemeColors } from '../theme/paperTheme';
+import { logger } from '../utils/logger';
 
 // mode = lựa chọn của user; scheme = mode thực tế đang áp dụng (đã resolve 'system')
 export type ThemeMode = 'light' | 'dark' | 'system';
@@ -44,7 +45,10 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
           setModeState(saved);
         }
       })
-      .catch(() => {});
+      .catch(err =>
+        // Đọc lỗi thì giữ mode 'system' — không cần báo user, app vẫn dùng được
+        logger.warn('theme', 'không đọc được theme đã lưu, dùng theo hệ thống', err),
+      );
   }, []);
 
   // Lắng nghe thay đổi màu hệ thống (chỉ có tác dụng khi mode = 'system')
@@ -57,7 +61,10 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
 
   const setMode = (next: ThemeMode) => {
     setModeState(next);
-    AsyncStorage.setItem(STORAGE_KEY, next).catch(() => {});
+    // Lưu lỗi thì theme vẫn đổi trong phiên này, chỉ không nhớ cho lần mở sau
+    AsyncStorage.setItem(STORAGE_KEY, next).catch(err =>
+      logger.warn('theme', 'không lưu được theme, chỉ áp dụng cho phiên này', err),
+    );
   };
 
   const scheme: Scheme = mode === 'system' ? systemScheme : mode;

@@ -17,7 +17,9 @@ import { z } from 'zod';
 import { Icon } from '@rneui/themed';
 import { FormTextInput } from '../../components/Form';
 import { AppButton, AppSnackbar } from '../../components/UI';
+import SubHeader from '../../components/UI/SubHeader';
 import { ThemeColors } from '../../theme/paperTheme';
+import { SPACING } from '../../theme/tokens';
 import { useThemeColors } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import type { Translations } from '../../i18n/translations';
@@ -62,14 +64,7 @@ const EditProfileScreen = ({ navigation }: Props) => {
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Header cam */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.goBack()}>
-          <Icon type="ionicon" name="arrow-back" size={18} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t.editProfile.title}</Text>
-        <View style={styles.headerBtn} />
-      </View>
+      <SubHeader title={t.editProfile.title} onBack={() => navigation.goBack()} />
 
       <KeyboardAvoidingView
         style={styles.flex}
@@ -110,6 +105,7 @@ const EditProfileScreen = ({ navigation }: Props) => {
             />
             <AppButton
               title={t.editProfile.save}
+              variant="dark"
               onPress={handleSubmit(onSubmit)}
               style={styles.saveBtn}
             />
@@ -165,13 +161,13 @@ const makeStyles = (c: ThemeColors) =>
 
     scroll: { padding: 20, paddingBottom: 32 },
 
-    avatarWrap: { alignSelf: 'center', marginBottom: 24 },
+    avatarWrap: { alignSelf: 'center', marginBottom: SPACING.s6 },
     avatar: {
-      width: 84,
-      height: 84,
-      borderRadius: 42,
+      width: 88,
+      height: 88,
+      borderRadius: 44,
       borderWidth: 2,
-      borderColor: c.primaryBorder,
+      borderColor: c.accent,
     },
     avatarEditBadge: {
       position: 'absolute',
@@ -180,9 +176,9 @@ const makeStyles = (c: ThemeColors) =>
       width: 26,
       height: 26,
       borderRadius: 13,
-      backgroundColor: c.primary,
+      backgroundColor: c.accent700,
       borderWidth: 2,
-      borderColor: '#fff',
+      borderColor: c.bg,
       alignItems: 'center',
       justifyContent: 'center',
     },
