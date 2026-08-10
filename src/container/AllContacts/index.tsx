@@ -11,10 +11,14 @@ import {
   ScrollView,
 } from 'react-native';
 import { Icon } from '@rneui/themed';
+import AppIcon from '../../components/Icon';
+import { ICON_TYPE } from '../../components/Icon/style';
 import { AppSnackbar } from '../../components/UI';
+import SubHeader from '../../components/UI/SubHeader';
 import { useLanguage } from '../../context/LanguageContext';
 import { useThemeColors } from '../../context/ThemeContext';
 import { ThemeColors } from '../../theme/paperTheme';
+import { RADII, TYPE, SPACING, FONT } from '../../theme/tokens';
 
 const money = (n: number) =>
   new Intl.NumberFormat('vi-VN', {
@@ -64,18 +68,15 @@ const AllContactsScreen = ({ navigation }: Props) => {
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.goBack()}>
-          <Icon type="ionicon" name="arrow-back" size={18} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t.contacts.title}</Text>
-        <TouchableOpacity
-          style={styles.headerBtn}
-          onPress={() => setToast(t.common.demoFeature)}>
-          <Icon type="ionicon" name="person-add-outline" size={18} color="#fff" />
-        </TouchableOpacity>
-      </View>
+      <SubHeader
+        title={t.contacts.title}
+        onBack={() => navigation.goBack()}
+        right={
+          <TouchableOpacity onPress={() => setToast(t.common.demoFeature)} hitSlop={8}>
+            <AppIcon type={ICON_TYPE.Iconoir} name="user-plus" size={20} color={colors.accent700} />
+          </TouchableOpacity>
+        }
+      />
 
       {/* Search */}
       <View style={styles.searchWrap}>
@@ -129,9 +130,9 @@ const AllContactsScreen = ({ navigation }: Props) => {
                   style={styles.recentItem}
                   onPress={() => setToast(t.common.demoFeature)}>
                   <View style={styles.addAvatarBtn}>
-                    <Icon type="ionicon" name="add" size={18} color={colors.primary} />
+                    <Icon type="ionicon" name="add" size={18} color={colors.accent} />
                   </View>
-                  <Text style={[styles.recentName, { color: colors.primary }]}>{t.contacts.add}</Text>
+                  <Text style={[styles.recentName, { color: colors.accent }]}>{t.contacts.add}</Text>
                   <Text style={styles.recentAmount}> </Text>
                 </TouchableOpacity>
               </ScrollView>
@@ -191,75 +192,58 @@ export default AllContactsScreen;
 const makeStyles = (c: ThemeColors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: c.bg },
 
-  header: {
-    backgroundColor: c.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 8,
-  },
-  headerBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: { flex: 1, textAlign: 'center', fontSize: 16, fontWeight: '600', color: '#fff' },
-
   // Search
   searchWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    margin: 16,
-    marginBottom: 8,
+    marginHorizontal: SPACING.screenX,
+    marginTop: SPACING.s3,
+    marginBottom: SPACING.s2,
     backgroundColor: c.white,
-    borderRadius: 12,
+    borderRadius: RADII.item,
     paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderWidth: 0.5,
-    borderColor: c.border,
+    paddingVertical: 11,
   },
   searchInput: {
     flex: 1,
-    fontSize: 14,
+    fontFamily: FONT.regular,
+    fontSize: TYPE.body,
     color: c.text,
     paddingVertical: 0,
   },
 
-  listContent: { paddingHorizontal: 16, paddingBottom: 40 },
+  listContent: { paddingHorizontal: SPACING.screenX, paddingBottom: 120 },
   sectionTitle: {
-    fontSize: 10,
-    color: c.subtext,
-    letterSpacing: 0.6,
-    fontWeight: '500',
-    marginBottom: 10,
-    marginTop: 4,
+    fontFamily: FONT.regular,
+    fontSize: TYPE.caption,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: c.muted,
+    marginBottom: SPACING.s3,
+    marginTop: SPACING.s2,
   },
 
   // Recent
-  recentList: { gap: 16, marginBottom: 16 },
+  recentList: { gap: SPACING.s4, marginBottom: SPACING.s4 },
   recentItem: { alignItems: 'center', gap: 5 },
   recentAvatarWrap: { position: 'relative' },
   recentAvatar: {
     width: 52,
     height: 52,
-    borderRadius: 26,
+    borderRadius: RADII.pill,
     borderWidth: 1.5,
-    borderColor: c.primaryBorder,
+    borderColor: c.accent,
   },
-  recentName: { fontSize: 11, color: c.subtext, fontWeight: '500', maxWidth: 56, textAlign: 'center' },
-  recentAmount: { fontSize: 10, color: c.subtext, textAlign: 'center' },
+  recentName: { fontFamily: FONT.medium, fontSize: TYPE.caption, color: c.subtext, maxWidth: 56, textAlign: 'center' },
+  recentAmount: { fontFamily: FONT.regular, fontSize: 10, color: c.muted, textAlign: 'center' },
   addAvatarBtn: {
     width: 52,
     height: 52,
-    borderRadius: 26,
+    borderRadius: RADII.pill,
     borderWidth: 1.5,
     borderStyle: 'dashed',
-    borderColor: c.primary,
+    borderColor: c.accent,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -268,35 +252,33 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   contactRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: SPACING.s3,
     backgroundColor: c.white,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingHorizontal: SPACING.s4,
+    paddingVertical: SPACING.s3,
   },
-  contactRowFirst: { borderTopLeftRadius: 14, borderTopRightRadius: 14 },
-  contactRowLast: { borderBottomLeftRadius: 14, borderBottomRightRadius: 14 },
-  separator: { height: 0.5, backgroundColor: c.divider, marginLeft: 72 },
+  contactRowFirst: { borderTopLeftRadius: RADII.card, borderTopRightRadius: RADII.card },
+  contactRowLast: { borderBottomLeftRadius: RADII.card, borderBottomRightRadius: RADII.card },
+  separator: { height: StyleSheet.hairlineWidth, backgroundColor: c.divider, marginLeft: 72 },
   avatar: {
     width: 44,
     height: 44,
     borderRadius: 22,
     borderWidth: 1.5,
-    borderColor: c.primaryBorder,
+    borderColor: c.accent,
   },
   contactInfo: { flex: 1 },
-  contactName: { fontSize: 14, fontWeight: '500', color: c.text },
-  contactBank: { fontSize: 11, color: c.subtext, marginTop: 3 },
+  contactName: { fontFamily: FONT.medium, fontSize: TYPE.body, color: c.text },
+  contactBank: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.subtext, marginTop: 3 },
   contactRight: { alignItems: 'flex-end', gap: 5 },
-  contactAmount: { fontSize: 12, fontWeight: '600', color: '#ef4444' },
+  contactAmount: { fontFamily: FONT.semibold, fontSize: TYPE.caption, color: c.danger },
   sendAgainBtn: {
-    backgroundColor: c.primaryLight,
-    borderRadius: 6,
+    backgroundColor: c.accent100,
+    borderRadius: RADII.chip,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderWidth: 0.5,
-    borderColor: c.primaryBorder,
   },
-  sendAgainText: { fontSize: 11, color: c.primaryDark, fontWeight: '500' },
+  sendAgainText: { fontFamily: FONT.medium, fontSize: TYPE.caption, color: c.accent700 },
 
   // Empty
   emptyState: {
@@ -305,5 +287,5 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     gap: 10,
     paddingVertical: 40,
   },
-  emptyText: { fontSize: 14, color: c.muted },
+  emptyText: { fontFamily: FONT.regular, fontSize: TYPE.body, color: c.muted },
 });

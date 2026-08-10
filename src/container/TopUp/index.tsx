@@ -9,12 +9,15 @@ import {
   Dimensions,
 } from 'react-native';
 import { Icon } from '@rneui/themed';
+import SubHeader from '../../components/UI/SubHeader';
 import { AppDialog, AppSnackbar } from '../../components/UI';
 import { useLanguage } from '../../context/LanguageContext';
 import { useThemeColors } from '../../context/ThemeContext';
 import { ThemeColors } from '../../theme/paperTheme';
+import { RADII, TYPE, SPACING, FONT } from '../../theme/tokens';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const WALLET_BALANCE = 1000000000;
 
 const money = (n: number) =>
   new Intl.NumberFormat('vi-VN', {
@@ -57,14 +60,7 @@ const TopUpScreen = ({ navigation }: Props) => {
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.goBack()}>
-          <Icon type="ionicon" name="arrow-back" size={18} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Nạp tiền điện thoại</Text>
-        <View style={styles.headerBtn} />
-      </View>
+      <SubHeader title={t.topup.title} onBack={() => navigation.goBack()} />
 
       <ScrollView
         contentContainerStyle={styles.scroll}
@@ -72,14 +68,14 @@ const TopUpScreen = ({ navigation }: Props) => {
 
         {/* Số điện thoại */}
         <View style={styles.card}>
-          <Text style={styles.sectionLabel}>SỐ ĐIỆN THOẠI</Text>
+          <Text style={styles.sectionLabel}>{t.topup.phoneLabel}</Text>
           <Text style={styles.phoneNumber}>0901 234 567</Text>
           <View style={styles.autoDetectRow}>
             <View style={[styles.carrierLogoSm, { backgroundColor: currentCarrier.color }]}>
               <Text style={styles.carrierLogoSmText}>{currentCarrier.short}</Text>
             </View>
             <Text style={styles.autoDetectText}>
-              {currentCarrier.name} • Tự động nhận diện
+              {currentCarrier.name} • {t.topup.autoDetect}
             </Text>
             <Icon type="ionicon" name="checkmark-circle" size={14} color="#22c55e" />
           </View>
@@ -87,7 +83,7 @@ const TopUpScreen = ({ navigation }: Props) => {
 
         {/* Nhà mạng */}
         <View>
-          <Text style={styles.sectionTitle}>CHỌN NHÀ MẠNG</Text>
+          <Text style={styles.sectionTitle}>{t.topup.chooseCarrier}</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -117,7 +113,7 @@ const TopUpScreen = ({ navigation }: Props) => {
 
         {/* Mệnh giá */}
         <View>
-          <Text style={styles.sectionTitle}>CHỌN MỆNH GIÁ</Text>
+          <Text style={styles.sectionTitle}>{t.topup.chooseDenom}</Text>
           <View style={styles.denomGrid}>
             {DENOMS.map(denom => (
               <TouchableOpacity
@@ -136,9 +132,9 @@ const TopUpScreen = ({ navigation }: Props) => {
                   {formatDenom(denom)}
                 </Text>
                 {denom === POPULAR ? (
-                  <Text style={styles.popularLabel}>Phổ biến</Text>
+                  <Text style={styles.popularLabel}>{t.topup.popular}</Text>
                 ) : (
-                  <Text style={styles.denomUnit}>đồng</Text>
+                  <Text style={styles.denomUnit}>{t.topup.unit}</Text>
                 )}
               </TouchableOpacity>
             ))}
@@ -148,12 +144,12 @@ const TopUpScreen = ({ navigation }: Props) => {
         {/* Summary */}
         <View style={styles.summaryCard}>
           <View style={styles.summaryLeft}>
-            <Text style={styles.summaryLabel}>TỔNG THANH TOÁN</Text>
+            <Text style={styles.summaryLabel}>{t.topup.totalPay}</Text>
             <Text style={styles.summaryAmount}>{money(selectedAmount)}</Text>
           </View>
           <View style={styles.summaryRight}>
-            <Text style={styles.summaryBalanceLabel}>Số dư ví</Text>
-            <Text style={styles.summaryBalance}>1.000.000.000 đ</Text>
+            <Text style={styles.summaryBalanceLabel}>{t.topup.walletBalance}</Text>
+            <Text style={styles.summaryBalance}>{money(WALLET_BALANCE)}</Text>
           </View>
         </View>
 
@@ -166,7 +162,7 @@ const TopUpScreen = ({ navigation }: Props) => {
           activeOpacity={0.85}
           onPress={() => setConfirmVisible(true)}>
           <Icon type="ionicon" name="phone-portrait-outline" size={18} color="#fff" />
-          <Text style={styles.ctaText}>Nạp ngay {money(selectedAmount)}</Text>
+          <Text style={styles.ctaText}>{t.topup.topUpNow} {money(selectedAmount)}</Text>
         </TouchableOpacity>
       </View>
 
@@ -204,36 +200,19 @@ export default TopUpScreen;
 const makeStyles = (c: ThemeColors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: c.bg },
 
-  header: {
-    backgroundColor: c.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 8,
-  },
-  headerBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: { flex: 1, textAlign: 'center', fontSize: 16, fontWeight: '600', color: '#fff' },
-
-  scroll: { padding: 16, gap: 14, paddingBottom: 20 },
+  scroll: { padding: SPACING.screenX, gap: SPACING.s4, paddingBottom: 20 },
 
   // Phone card
-  card: { backgroundColor: c.white, borderRadius: 16, padding: 16 },
+  card: { backgroundColor: c.white, borderRadius: RADII.card, padding: SPACING.s4 },
   sectionLabel: {
-    fontSize: 10,
-    color: c.hint,
-    letterSpacing: 0.6,
-    fontWeight: '500',
+    fontFamily: FONT.regular,
+    fontSize: TYPE.caption,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: c.muted,
     marginBottom: 8,
   },
-  phoneNumber: { fontSize: 26, fontWeight: '700', color: c.text, letterSpacing: 0.5 },
+  phoneNumber: { fontFamily: FONT.semibold, fontSize: 26, color: c.text },
   autoDetectRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -247,15 +226,16 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  carrierLogoSmText: { fontSize: 7, fontWeight: '700', color: '#fff' },
-  autoDetectText: { fontSize: 12, color: c.subtext, flex: 1 },
+  carrierLogoSmText: { fontFamily: FONT.bold, fontSize: 7, color: '#fff' },
+  autoDetectText: { fontFamily: FONT.regular, fontSize: TYPE.body, color: c.subtext, flex: 1 },
 
   // Section title
   sectionTitle: {
-    fontSize: 10,
-    color: c.hint,
-    letterSpacing: 0.6,
-    fontWeight: '500',
+    fontFamily: FONT.regular,
+    fontSize: TYPE.caption,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: c.muted,
     marginBottom: 8,
   },
 
@@ -266,16 +246,16 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     gap: 7,
     backgroundColor: c.white,
-    borderRadius: 10,
+    borderRadius: RADII.item,
     paddingVertical: 9,
     paddingHorizontal: 12,
-    borderWidth: 0.5,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: c.border,
   },
   carrierItemActive: {
-    backgroundColor: c.primaryLight,
+    backgroundColor: c.accent100,
     borderWidth: 1.5,
-    borderColor: c.primary,
+    borderColor: c.accent,
   },
   carrierLogo: {
     width: 20,
@@ -284,59 +264,57 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  carrierLogoText: { fontSize: 8, fontWeight: '700', color: '#fff' },
-  carrierName: { fontSize: 12, color: c.subtext, fontWeight: '500' },
-  carrierNameActive: { color: c.primaryDark },
+  carrierLogoText: { fontFamily: FONT.bold, fontSize: 8, color: '#fff' },
+  carrierName: { fontFamily: FONT.medium, fontSize: TYPE.body, color: c.subtext },
+  carrierNameActive: { color: c.accent700 },
 
   // Denomination
   denomGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   denomItem: {
     backgroundColor: c.white,
-    borderRadius: 12,
+    borderRadius: RADII.item,
     paddingVertical: 12,
     paddingHorizontal: 8,
     alignItems: 'center',
-    borderWidth: 0.5,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: c.border,
   },
   denomItemActive: {
-    backgroundColor: c.primaryLight,
+    backgroundColor: c.accent100,
     borderWidth: 1.5,
-    borderColor: c.primary,
+    borderColor: c.accent,
   },
-  denomValue: { fontSize: 16, fontWeight: '700', color: c.text },
-  denomValueActive: { color: c.primaryDark },
-  denomUnit: { fontSize: 10, color: c.hint, marginTop: 2 },
-  popularLabel: { fontSize: 10, color: c.primary, marginTop: 2, fontWeight: '500' },
+  denomValue: { fontFamily: FONT.semibold, fontSize: TYPE.title, color: c.text },
+  denomValueActive: { color: c.accent700 },
+  denomUnit: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.muted, marginTop: 2 },
+  popularLabel: { fontFamily: FONT.medium, fontSize: TYPE.caption, color: c.accent700, marginTop: 2 },
 
   // Summary
   summaryCard: {
-    backgroundColor: c.primaryLight,
-    borderRadius: 14,
-    borderWidth: 0.5,
-    borderColor: c.primaryBorder,
-    padding: 14,
+    backgroundColor: c.accent100,
+    borderRadius: RADII.card,
+    padding: SPACING.s4,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   summaryLeft: {},
-  summaryLabel: { fontSize: 10, color: c.hint, letterSpacing: 0.5, fontWeight: '500' },
-  summaryAmount: { fontSize: 20, fontWeight: '700', color: c.primaryDark, marginTop: 4 },
+  summaryLabel: { fontFamily: FONT.regular, fontSize: TYPE.caption, letterSpacing: 0.5, color: c.accent700 },
+  summaryAmount: { fontFamily: FONT.semibold, fontSize: TYPE.title, color: c.accent700, marginTop: 4 },
   summaryRight: { alignItems: 'flex-end' },
-  summaryBalanceLabel: { fontSize: 10, color: c.hint },
-  summaryBalance: { fontSize: 13, fontWeight: '600', color: c.text, marginTop: 3 },
+  summaryBalanceLabel: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.muted },
+  summaryBalance: { fontFamily: FONT.semibold, fontSize: TYPE.body, color: c.text, marginTop: 3 },
 
   // Bottom
-  bottom: { padding: 16, paddingBottom: 24, backgroundColor: c.bg },
+  bottom: { padding: SPACING.screenX, paddingBottom: 24, backgroundColor: c.bg },
   ctaBtn: {
-    backgroundColor: c.primary,
-    borderRadius: 14,
+    backgroundColor: c.heroDark,
+    borderRadius: RADII.item,
     height: 52,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
   },
-  ctaText: { fontSize: 15, fontWeight: '600', color: '#fff' },
+  ctaText: { fontFamily: FONT.semibold, fontSize: TYPE.itemTitle, color: c.offWhite },
 });

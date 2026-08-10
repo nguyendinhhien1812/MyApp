@@ -16,8 +16,9 @@
 7. [i18n — Hệ thống đa ngôn ngữ](#7-i18n)
 8. [StyleSheet Convention](#8-stylesheet-convention)
 9. [Data & TypeScript Patterns](#9-data--typescript-patterns)
-10. [Checklist tạo Screen mới](#10-checklist-tạo-screen-mới)
-11. [Checklist tạo Mini-App mới](#11-checklist-tạo-mini-app-mới)
+10. [Xử lý lỗi & Logging](#10-xử-lý-lỗi--logging)
+11. [Checklist tạo Screen mới](#11-checklist-tạo-screen-mới)
+12. [Checklist tạo Mini-App mới](#12-checklist-tạo-mini-app-mới)
 
 ---
 
@@ -66,14 +67,32 @@ src/
 
 ## 2. Design System
 
-### 2.1 Brand Colors
+### 2.1 Brand Colors — design "Classical" (vàng đồng)
+
+> ⚠️ **KHÔNG hardcode màu.** Lấy màu qua `useThemeColors()` để tự đảo theo Sáng/Tối.
+> Bảng màu cam `primary*` chỉ còn cho tương thích ngược — màn mới dùng `accent*`.
 
 ```typescript
-// LUÔN dùng các biến này — không hardcode màu khác
-const PRIMARY        = '#E89951';  // Cam chủ đạo
-const PRIMARY_DARK   = '#b36a1a';  // Cam đậm (text trên nền sáng)
-const PRIMARY_LIGHT  = '#fdf3e7';  // Cam nhạt (nền badge, icon bg)
-const PRIMARY_BORDER = '#f0c48a';  // Cam viền
+const c = useThemeColors();
+
+c.accent      // #b68235 — vàng đồng chính (progress, dot, viền avatar)
+c.accent100   // nền đồng nhạt (ô icon, chip active, badge)
+c.accent300   // đồng SÁNG — chữ/icon trên nền tối (cố định 2 mode)
+c.accent700   // đồng ĐẬM — chữ/icon trên nền sáng (đảo theo mode)
+c.heroCopper  // nền hero đồng ấm (Home) — cố định đậm ở cả 2 mode
+c.heroDark    // #1a1815 — nền hero/header mini-app, nút chính, tab bar
+c.offWhite    // #fdfcfb — chữ/nút trên nền tối
+```
+
+Thang bo góc / chữ / spacing: import từ `src/theme/tokens.ts`
+
+```typescript
+import { RADII, TYPE, SPACING, FONT } from '../../theme/tokens';
+
+RADII.card / item / chip / pill      // 22 / 16 / 10 / 100
+TYPE.display / title / itemTitle / body / caption   // 24 / 18 / 15 / 13 / 11
+SPACING.screenX                       // padding ngang chuẩn mỗi màn
+FONT.regular / medium / semibold / bold  // Be Vietnam Pro
 ```
 
 ### 2.2 Semantic Colors
@@ -173,8 +192,8 @@ AppNavigator
 
 ### 3.2 Rule quan trọng
 
-- **Tab screens** không có back button → không cần header cam
-- **Stack screens trong mini-app** có header cam riêng với back button
+- **Tab screens** không có back button → tiêu đề lớn 26px, không dùng SubHeader
+- **Stack screens trong mini-app** dùng `<SubHeader>` (back + tiêu đề + action tuỳ chọn)
 - **Tất cả Navigator** dùng `screenOptions={{ headerShown: false }}`
 - **Navigate sang mini-app** từ Home: `navigation.navigate('BankScreen')` hoặc `'InvestmentScreen'`
 - **Navigate trong mini-app**: `navigation.navigate('TransferMoney', { balance })`
@@ -203,10 +222,9 @@ import { Icon } from '@rneui/themed';
 import { useLanguage } from '../../context/LanguageContext';
 
 // ─── 2. Constants ──────────────────────────────────────────────────────────
-const PRIMARY        = '#E89951';
-const PRIMARY_DARK   = '#b36a1a';
-const PRIMARY_LIGHT  = '#fdf3e7';
-const PRIMARY_BORDER = '#f0c48a';
+// KHÔNG khai báo màu brand ở đây — lấy từ useThemeColors() để hỗ trợ Sáng/Tối.
+// Chỉ đặt hằng số không phụ thuộc theme (URL, tên riêng, mệnh giá...).
+const USER_NAME = 'Nguyễn Đình Hiến'; // tên riêng — không dịch
 
 // ─── 3. Types ──────────────────────────────────────────────────────────────
 type ItemType = { id: number; name: string; /* ... */ };
@@ -230,7 +248,7 @@ const MyScreen = ({ navigation }: Props) => {
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Header cam */}
+      {/* SubHeader */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.goBack()}>
           <Icon type="ionicon" name="arrow-back" size={18} color="#fff" />
@@ -260,41 +278,32 @@ export default MyScreen;
 const styles = StyleSheet.create({ /* ... */ });
 ```
 
-### 4.2 Header cam chuẩn
+### 4.2 SubHeader chuẩn (màn con)
+
+Mọi màn "con" (không phải tab gốc) dùng component dùng chung — **không tự dựng header**:
 
 ```typescript
-// Header với back button (Stack screen)
-<View style={styles.header}>
-  <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.goBack()}>
-    <Icon type="ionicon" name="arrow-back" size={18} color="#fff" />
-  </TouchableOpacity>
-  <Text style={styles.headerTitle}>{t.xxx.title}</Text>
-  <TouchableOpacity style={styles.headerBtn}>
-    <Icon type="ionicon" name="ellipsis-horizontal" size={18} color="#fff" />
-  </TouchableOpacity>
-</View>
+import SubHeader from '../../components/UI/SubHeader';
 
-// Style
-header: {
-  backgroundColor: PRIMARY,        // LUÔN dùng PRIMARY
-  flexDirection: 'row',
-  alignItems: 'center',
-  paddingHorizontal: 16,
-  paddingVertical: 12,
-  gap: 8,
-},
-headerBtn: {
-  width: 34, height: 34, borderRadius: 17,
-  backgroundColor: 'rgba(255,255,255,0.2)',   // KHÔNG dùng rgba(0,0,0,...)
-  alignItems: 'center', justifyContent: 'center',
-},
-headerTitle: {
-  flex: 1, textAlign: 'center',
-  fontSize: 16, fontWeight: '600', color: '#fff',  // LUÔN trắng
-},
+// Chỉ back + tiêu đề
+<SubHeader title={t.xxx.title} onBack={() => navigation.goBack()} />
+
+// Có thêm 1 action bên phải
+<SubHeader
+  title={t.xxx.title}
+  onBack={() => navigation.goBack()}
+  right={
+    <TouchableOpacity onPress={...} hitSlop={8}>
+      <AppIcon type={ICON_TYPE.Iconoir} name="more-horiz" size={20} color={c.accent700} />
+    </TouchableOpacity>
+  }
+/>
 ```
 
-### 4.3 Tab screen (không có header cam)
+SubHeader: nền trong suốt theo `c.bg`, nút back Iconoir `nav-arrow-left`, tiêu đề 18px/600,
+gạch chân `c.divider`. Icon action dùng `c.accent700` (KHÔNG dùng `#fff`).
+
+### 4.3 Tab screen (không có SubHeader)
 
 ```typescript
 // Tab screens dùng heading lớn bên trái
@@ -310,13 +319,39 @@ headerTitle: { fontSize: 26, fontWeight: '700', color: '#1a1a1a' }
 ```typescript
 const SectionTitle = ({ title }: { title: string }) => (
   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-    <View style={{ width: 4, height: 18, backgroundColor: PRIMARY, borderRadius: 2 }} />
+    <View style={{ width: 3, height: 16, backgroundColor: c.accent, borderRadius: 2 }} />
     <Text style={{ fontSize: 15, fontWeight: '500', color: '#1a1a1a' }}>{title}</Text>
   </View>
 );
 ```
 
 ---
+
+### 4.5 Tab bar pill nổi
+
+Bottom tab dùng custom bar `src/navigation/PillTabBar.tsx` — **không dùng style mặc định**:
+nền tối `#1a1815`, bo tròn 100, viền đồng mờ (để tách nền ở chế độ Tối),
+tab đang chọn = pill trắng ngà + icon/nhãn tối, tab còn lại chỉ icon mờ.
+
+```typescript
+<Tabs.Navigator
+  screenOptions={{ headerShown: false }}
+  tabBar={props => <PillTabBar {...props} />}
+  initialRouteName="Home"
+>
+```
+
+Thêm tab mới → khai báo icon Iconoir trong `TAB_ICON` của PillTabBar.
+
+### 4.6 Dark mode — bắt buộc kiểm tra
+
+Mọi màu **phải** lấy từ `useThemeColors()`. Màu hardcode chỉ dùng cho:
+- màu semantic cố định (xanh lãi `#1a7a40`, đỏ lỗ `#c0392b`)
+- màu pastel của **data tĩnh** (icon danh mục / mã cổ phiếu)
+- lớp phủ trên nền tối: `rgba(253,252,251,0.12)` thay vì `#fff`
+
+Khi làm màn mới: đổi Cài đặt → Giao diện → **Tối**, kiểm tra không có khối nào
+bị "tàng hình" (nền tối trên nền tối) hoặc chữ tối trên nền tối.
 
 ## 5. Anatomy của một Mini-App
 
@@ -408,7 +443,7 @@ const SettingRow = ({ icon, label, value, onPress, isLast = false }) => (
     <TouchableOpacity style={styles.settingRow} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.rowLeft}>
         <View style={styles.rowIconWrap}>
-          <Icon type="ionicon" name={icon} size={17} color={PRIMARY_DARK} />
+          <Icon type="ionicon" name={icon} size={17} color={c.accent700} />
         </View>
         <Text style={styles.rowLabel}>{label}</Text>
       </View>
@@ -422,9 +457,9 @@ const SettingRow = ({ icon, label, value, onPress, isLast = false }) => (
 );
 
 // Styles
-rowIconWrap: { width: 32, height: 32, borderRadius: 8, backgroundColor: PRIMARY_LIGHT,
+rowIconWrap: { width: 32, height: 32, borderRadius: RADII.chip, backgroundColor: c.accent100,
                alignItems: 'center', justifyContent: 'center' }
-rowDivider:  { height: 0.5, backgroundColor: '#F0F0F0', marginLeft: 60 }
+rowDivider:  { height: StyleSheet.hairlineWidth, backgroundColor: c.divider, marginLeft: 60 }
 ```
 
 ### 6.3 Toggle Switch
@@ -433,9 +468,9 @@ rowDivider:  { height: 0.5, backgroundColor: '#F0F0F0', marginLeft: 60 }
 <Switch
   value={value}
   onValueChange={onToggle}
-  trackColor={{ false: '#e0e0e0', true: PRIMARY_BORDER }}
-  thumbColor={value ? PRIMARY : '#fff'}
-  ios_backgroundColor="#e0e0e0"
+  trackColor={{ false: c.border, true: c.accent }}
+  thumbColor="#fff"
+  ios_backgroundColor={c.border}
 />
 ```
 
@@ -451,11 +486,11 @@ rowDivider:  { height: 0.5, backgroundColor: '#F0F0F0', marginLeft: 60 }
   </TouchableOpacity>
 ))}
 
-filterChip:       { paddingHorizontal: 18, paddingVertical: 7, borderRadius: 20,
-                    borderWidth: 0.5, borderColor: '#e0e0e0', backgroundColor: '#fff' }
-filterChipActive: { backgroundColor: PRIMARY, borderColor: PRIMARY }
-filterText:       { fontSize: 12, color: '#888' }
-filterTextActive: { color: '#fff', fontWeight: '500' }
+filterChip:       { paddingHorizontal: 14, paddingVertical: 7, borderRadius: RADII.pill,
+                    borderWidth: StyleSheet.hairlineWidth, borderColor: c.border, backgroundColor: c.white }
+filterChipActive: { backgroundColor: c.accent100, borderColor: c.accent100 }
+filterText:       { fontFamily: FONT.regular, fontSize: TYPE.body, color: c.subtext }
+filterTextActive: { fontFamily: FONT.medium, color: c.accent700 }
 ```
 
 ### 6.5 Bottom CTA Bar (1 nút)
@@ -474,7 +509,7 @@ filterTextActive: { color: '#fff', fontWeight: '500' }
 bottomBar:    { backgroundColor: '#fff', paddingHorizontal: 16,
                 paddingTop: 10, paddingBottom: 28, gap: 8,
                 borderTopWidth: 0.5, borderTopColor: '#F0F0F0' }
-primaryBtn:   { backgroundColor: PRIMARY, borderRadius: 12, height: 50,
+primaryBtn:   { backgroundColor: c.heroDark, borderRadius: RADII.item, height: 50,   // nút chính = khối tối
                 flexDirection: 'row', alignItems: 'center',
                 justifyContent: 'center', gap: 8 }
 primaryBtnText: { fontSize: 14, fontWeight: '600', color: '#fff' }
@@ -492,7 +527,7 @@ primaryBtnText: { fontSize: 14, fontWeight: '600', color: '#fff' }
   </TouchableOpacity>
 </View>
 
-btnBuy:     { flex: 2, backgroundColor: PRIMARY, borderRadius: 12, height: 50,
+btnBuy:     { flex: 2, backgroundColor: c.heroDark, borderRadius: RADII.item, height: 50,
               flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }
 btnSell:    { flex: 1, backgroundColor: '#fff', borderRadius: 12, height: 50,
               flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
@@ -511,8 +546,8 @@ btnSell:    { flex: 1, backgroundColor: '#fff', borderRadius: 12, height: 50,
 </View>
 
 // Cam (brand)
-backgroundColor: PRIMARY_LIGHT, borderRadius: 10,
-// → text color: PRIMARY_DARK
+backgroundColor: c.accent100, borderRadius: RADII.chip,
+// → text color: c.accent700
 ```
 
 ### 6.8 Bottom Sheet Modal
@@ -857,26 +892,128 @@ const MyScreen = ({ navigation, route }: Props) => {
 
 ---
 
-## 10. Checklist tạo Screen mới
+## 10. Xử lý lỗi & Logging
+
+### 10.1 Ba nguyên tắc
+
+1. **Bắt tại chỗ.** try/catch ngay nơi có thể xử lý lỗi một cách có nghĩa. Không để lỗi
+   bubble lên rồi bắt tập trung — dự án **không dùng** ErrorBoundary.
+2. **Không nuốt lỗi im lặng.** `catch {}` rỗng là không chấp nhận được.
+3. **Không trả về `{ data, error }`.** Hàm xử lý xong thì trả kết quả, lỗi thì log + xử lý
+   tại chỗ.
+
+### 10.2 Phân loại lỗi → cách xử lý
+
+Quyết định theo một câu hỏi: **user có cần biết không?**
+
+| Loại | Xử lý | Ví dụ trong dự án |
+|---|---|---|
+| User **không** cần biết (app vẫn dùng được) | `logger.warn` + fallback im lặng | `ThemeContext` — AsyncStorage lỗi thì dùng theme hệ thống |
+| User **phải** biết (bấm mà không có gì xảy ra) | `logger.warn` + **snackbar tiếng Việt** | `About` / `WebView` — `Linking.openURL` thất bại |
+| Lỗi mạng có UI riêng | `logger.error` + set state lỗi → banner + nút "Thử lại" | `Investment` — `fetchRates` / `fetchStocks` |
+
+```typescript
+// ── Loại 1: chỉ log, fallback im lặng ──
+AsyncStorage.setItem(STORAGE_KEY, next).catch(err =>
+  logger.warn('theme', 'không lưu được theme, chỉ áp dụng cho phiên này', err),
+);
+
+// ── Loại 2: log + báo user ──
+const openLink = (url: string) =>
+  Linking.openURL(url).catch(err => {
+    logger.warn('about', `không mở được link: ${url}`, err);
+    setToast(t.common.linkOpenFailed);   // thông báo qua i18n
+  });
+
+// ── Loại 3: log + state lỗi cho UI retry ──
+} catch (err) {
+  logger.error('invest', 'không tải được tỷ giá', err);
+  setRatesError(true);
+}
+```
+
+### 10.3 Khi nào `catch` rỗng là hợp lệ
+
+Chỉ khi lỗi **là hành vi bình thường**, và **phải ghi comment nói rõ lý do**:
+
+```typescript
+try {
+  await Share.share({ message: '...' });
+} catch {
+  // Share bị user huỷ — hành vi bình thường, không phải lỗi cần báo
+}
+```
+
+Hai chỗ duy nhất đang được miễn trừ: `QRPay` (user huỷ share) và `WebView`
+(lazy require native module chưa link).
+
+### 10.4 Logger
+
+Dùng `src/utils/logger.ts` — **không `console.log` trực tiếp** trong code chính thức.
+Logger chỉ in khi `__DEV__`, nên bản release không cần `transform-remove-console`.
+
+```typescript
+import { logger } from '../../utils/logger';
+
+logger.warn(scope, message, detail?)   // lỗi có fallback, app vẫn chạy
+logger.error(scope, message, detail?)  // lỗi làm mất chức năng
+```
+
+`scope` là prefix module để dễ lọc log. Các scope đang dùng:
+`theme` · `about` · `webview` · `chatbot` · `invest`
+
+### 10.5 Hai điều tuyệt đối không làm
+
+**Không log dữ liệu nhạy cảm.** Object form đăng nhập chứa `password`:
+
+```typescript
+// ✗ SAI — in cả password ra log
+console.log('Login payload:', data);
+
+// ✓ ĐÚNG — không log payload; nếu cần thì chỉ log field an toàn
+```
+
+**Không đưa chi tiết kỹ thuật ra UI.** User cuối không đọc HTTP code hay message của API:
+
+```typescript
+// ✗ SAI — nối message thô của Gemini vào bong bóng chat
+return { text: `${t.chatbot.errNetwork} (${data.error?.message})`, isError: true };
+
+// ✓ ĐÚNG — chi tiết vào log, user thấy thông báo thân thiện
+logger.error('chatbot', `Gemini trả lỗi ${code}`, data.error?.message);
+return { text: t.chatbot.errNetwork, isError: true };
+```
+
+Mọi thông báo lỗi hiển thị đều lấy từ `translations.ts` (có cả bản EN), viết bằng
+tiếng Việt thân thiện — xem `t.chatbot.errNetwork`, `t.common.linkOpenFailed`.
+
+---
+
+## 11. Checklist tạo Screen mới
 
 Khi tạo một screen con trong mini-app hiện có:
 
 ```
 □ 1. Tạo file: /src/container/FeatureName/index.tsx
-□ 2. Import PRIMARY, PRIMARY_DARK, PRIMARY_LIGHT, PRIMARY_BORDER
+□ 2. Lấy màu bằng useThemeColors() + import { RADII, TYPE, SPACING, FONT } từ theme/tokens
 □ 3. Import useLanguage và dùng const { t } = useLanguage()
-□ 4. Header cam với back button + màu trắng
-□ 5. SafeAreaView với backgroundColor: '#F2F2F7'
+□ 4. Dùng <SubHeader title={t.xxx.title} onBack={...} /> — KHÔNG tự dựng header
+□ 5. SafeAreaView với backgroundColor: c.bg
 □ 6. Tất cả text dùng t.xxx.key (KHÔNG hardcode string tiếng Việt)
+        → tên riêng (vd 'Nguyễn Đình Hiến') tách thành const USER_NAME, không dịch
+        → mảng data cần dịch: build TRONG component để lấy được `t`
 □ 7. Thêm translation keys vào translations.ts (cả vi và en)
-□ 8. Đăng ký trong Navigator tương ứng (BankNavigator / InvestmentNavigator)
+□ 8. Đăng ký trong Navigator tương ứng (BankNavigator / ExpenseNavigator / ...)
 □ 9. Thêm navigation.navigate('ScreenName') ở màn gọi
-□ 10. Kiểm tra header icon dùng color="#fff"
+□ 10. Test đổi EN → toàn bộ text đổi; test chế độ Tối → không có màu cứng lọt
+□ 11. Mọi thao tác có thể lỗi (fetch, AsyncStorage, Linking, Share) đều có xử lý:
+        log qua logger + fallback/snackbar — KHÔNG catch rỗng (xem chương 10)
+□ 12. Không log dữ liệu nhạy cảm, không đưa chi tiết kỹ thuật ra UI
 ```
 
 ---
 
-## 11. Checklist tạo Mini-App mới
+## 12. Checklist tạo Mini-App mới
 
 Khi tạo một tính năng lớn độc lập (ví dụ: Chi phí, Vay vốn, Bảo hiểm):
 
@@ -892,11 +1029,13 @@ Khi tạo một tính năng lớn độc lập (ví dụ: Chi phí, Vay vốn, B
 □ 7. Thêm toàn bộ t.featureName.xxx vào translations.ts (vi + en)
 □ 8. Test navigation: Home → FeatureScreen → back về Home ✓
 □ 9. Test i18n: đổi EN → tất cả text đổi ✓
+□ 10. Test Sáng/Tối: không còn màu hardcode làm lệch giao diện ✓
+□ 11. Test đường lỗi: tắt mạng → mini-app hiện thông báo/retry, không crash, không im lặng ✓
 ```
 
 ---
 
-## 12. Packages đang dùng
+## 13. Packages đang dùng
 
 | Package | Mục đích |
 |---------|----------|

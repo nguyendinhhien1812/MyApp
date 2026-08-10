@@ -12,8 +12,12 @@ import {
 import { Icon } from '@rneui/themed';
 import { useFocusEffect } from '@react-navigation/native';
 import type { WebViewNavigation } from 'react-native-webview';
+import { AppSnackbar } from '../../components/UI';
+import { logger } from '../../utils/logger';
+import { useLanguage } from '../../context/LanguageContext';
 import { useThemeColors } from '../../context/ThemeContext';
 import { ThemeColors } from '../../theme/paperTheme';
+import { RADII, TYPE, SPACING, FONT } from '../../theme/tokens';
 
 // Safe lazy require — tránh crash khi native module chưa được link (pod install chưa chạy)
 let WebView: any = null;
@@ -42,6 +46,7 @@ interface Props {
 const WebViewScreen = ({ navigation, route }: Props) => {
   const { url, title } = route.params;
 
+  const { t } = useLanguage();
   const colors = useThemeColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
@@ -51,6 +56,7 @@ const WebViewScreen = ({ navigation, route }: Props) => {
   const [loadingPct,  setLoadingPct]  = useState(0);   // 0–100
   const [isLoading,   setIsLoading]   = useState(true);
   const [hasError,    setHasError]    = useState(false);
+  const [toast,       setToast]       = useState('');
 
   // ── Android hardware back → go back inside WebView first ──
   useFocusEffect(
@@ -84,26 +90,38 @@ const WebViewScreen = ({ navigation, route }: Props) => {
       <SafeAreaView style={styles.safe}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.goBack()}>
-            <Icon type="ionicon" name="close" size={18} color="#fff" />
+            <Icon type="ionicon" name="close" size={18} color={colors.accent700} />
           </TouchableOpacity>
           <Text style={styles.headerTitle} numberOfLines={1}>{title}</Text>
           <View style={styles.headerBtn} />
         </View>
         <View style={styles.errorBox}>
           <Icon type="ionicon" name="construct-outline" size={44} color={colors.muted} />
-          <Text style={styles.errorTitle}>Cần rebuild ứng dụng</Text>
+          <Text style={styles.errorTitle}>{t.webview.needRebuild}</Text>
           <Text style={styles.errorSub}>
-            Chạy{' '}
             <Text style={{ fontWeight: '700', color: colors.text }}>pod install</Text>
-            {' '}và rebuild từ Xcode để kích hoạt WebView
+            {' '}{t.webview.needRebuildDesc}
           </Text>
           <TouchableOpacity
             style={styles.retryBtn}
-            onPress={() => Linking.openURL(url).catch(() => {})}>
-            <Icon type="ionicon" name="open-outline" size={14} color="#fff" />
-            <Text style={styles.retryText}>Mở trong Safari</Text>
+            onPress={() =>
+              Linking.openURL(url).catch(err => {
+                logger.warn('webview', `không mở được link ngoài: ${url}`, err);
+                setToast(t.common.linkOpenFailed);
+              })
+            }>
+            <Icon type="ionicon" name="open-outline" size={14} color={colors.offWhite} />
+            <Text style={styles.retryText}>{t.webview.openSafari}</Text>
           </TouchableOpacity>
         </View>
+
+        <AppSnackbar
+          visible={!!toast}
+          onDismiss={() => setToast('')}
+          message={toast}
+          tone="default"
+          duration={2200}
+        />
       </SafeAreaView>
     );
   }
@@ -117,7 +135,7 @@ const WebViewScreen = ({ navigation, route }: Props) => {
             type="ionicon"
             name={canGoBack ? 'arrow-back' : 'close'}
             size={18}
-            color="#fff"
+            color={colors.accent700}
           />
         </TouchableOpacity>
 
@@ -132,7 +150,7 @@ const WebViewScreen = ({ navigation, route }: Props) => {
             setHasError(false);
             webviewRef.current?.reload();
           }}>
-          <Icon type="ionicon" name="refresh-outline" size={18} color="#fff" />
+          <Icon type="ionicon" name="refresh-outline" size={18} color={colors.accent700} />
         </TouchableOpacity>
       </View>
 
@@ -147,7 +165,7 @@ const WebViewScreen = ({ navigation, route }: Props) => {
       {hasError && (
         <View style={styles.errorBox}>
           <Icon type="ionicon" name="wifi-outline" size={40} color={colors.muted} />
-          <Text style={styles.errorTitle}>Không thể tải trang</Text>
+          <Text style={styles.errorTitle}>{t.webview.loadFailed}</Text>
           <Text style={styles.errorSub}>{url}</Text>
           <TouchableOpacity
             style={styles.retryBtn}
@@ -156,8 +174,8 @@ const WebViewScreen = ({ navigation, route }: Props) => {
               setIsLoading(true);
               webviewRef.current?.reload();
             }}>
-            <Icon type="ionicon" name="refresh-outline" size={14} color="#fff" />
-            <Text style={styles.retryText}>Thử lại</Text>
+            <Icon type="ionicon" name="refresh-outline" size={14} color={colors.offWhite} />
+            <Text style={styles.retryText}>{t.webview.retry}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -201,7 +219,7 @@ const WebViewScreen = ({ navigation, route }: Props) => {
           applicationNameForUserAgent="MyAppPortfolio/1.0"
           renderLoading={() => (
             <View style={styles.loadingOverlay}>
-              <ActivityIndicator size="large" color={colors.primary} />
+              <ActivityIndicator size="large" color={colors.accent} />
             </View>
           )}
           startInLoadingState
@@ -220,37 +238,39 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
 
   // Header
   header: {
-    backgroundColor: c.primary,
+    backgroundColor: c.bg,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 8,
+    paddingHorizontal: SPACING.s4,
+    paddingVertical: SPACING.s3,
+    gap: SPACING.s2,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: c.divider,
   },
   headerBtn: {
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: c.accent100,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: FONT.semibold,
+    fontSize: TYPE.itemTitle,
+    color: c.text,
   },
 
   // Progress bar
   progressWrap: {
     height: 3,
-    backgroundColor: 'rgba(232,153,81,0.2)',
+    backgroundColor: c.divider,
   },
   progressBar: {
     height: 3,
-    backgroundColor: c.primary,
+    backgroundColor: c.accent,
   },
 
   // WebView
@@ -274,17 +294,17 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     padding: 32,
     backgroundColor: c.bg,
   },
-  errorTitle: { fontSize: 16, fontWeight: '600', color: c.text },
-  errorSub:   { fontSize: 11, color: c.muted, textAlign: 'center' },
+  errorTitle: { fontFamily: FONT.semibold, fontSize: TYPE.title, color: c.text },
+  errorSub:   { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.muted, textAlign: 'center' },
   retryBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: c.primary,
-    borderRadius: 12,
+    backgroundColor: c.heroDark,
+    borderRadius: RADII.item,
     paddingHorizontal: 20,
     paddingVertical: 12,
     marginTop: 8,
   },
-  retryText: { fontSize: 14, fontWeight: '600', color: '#fff' },
+  retryText: { fontFamily: FONT.semibold, fontSize: TYPE.itemTitle, color: c.offWhite },
 });

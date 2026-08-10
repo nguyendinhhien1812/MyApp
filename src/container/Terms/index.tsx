@@ -8,8 +8,9 @@ import {
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
-import { Icon } from '@rneui/themed';
+import SubHeader from '../../components/UI/SubHeader';
 import { ThemeColors } from '../../theme/paperTheme';
+import { RADII, TYPE, SPACING, FONT } from '../../theme/tokens';
 import { useThemeColors } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -31,14 +32,7 @@ const TermsScreen = ({ navigation }: Props) => {
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Header cam */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.goBack()}>
-          <Icon type="ionicon" name="arrow-back" size={18} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t.terms.title}</Text>
-        <View style={styles.headerBtn} />
-      </View>
+      <SubHeader title={t.terms.title} onBack={() => navigation.goBack()} />
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.card}>
@@ -61,48 +55,23 @@ export default TermsScreen;
 const makeStyles = (c: ThemeColors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: c.bg },
 
-  header: {
-    backgroundColor: c.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 8,
-  },
-  headerBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-  },
-
-  scroll: { padding: 16, paddingBottom: 32 },
+  scroll: { padding: SPACING.screenX, paddingBottom: 32 },
 
   card: {
     backgroundColor: c.white,
-    borderRadius: 14,
-    borderWidth: 0.5,
-    borderColor: c.border,
+    borderRadius: RADII.card,
     overflow: 'hidden',
   },
-  section: { padding: 16 },
-  sectionBorder: { borderTopWidth: 0.5, borderTopColor: c.divider },
-  sectionTitle: { fontSize: 14, fontWeight: '600', color: c.text, marginBottom: 6 },
-  sectionBody: { fontSize: 13, color: c.subtext, lineHeight: 20 },
+  section: { padding: SPACING.s4 },
+  sectionBorder: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.divider },
+  sectionTitle: { fontFamily: FONT.semibold, fontSize: TYPE.itemTitle, color: c.text, marginBottom: 6 },
+  sectionBody: { fontFamily: FONT.regular, fontSize: TYPE.body, color: c.subtext, lineHeight: 20 },
 
   updated: {
-    fontSize: 11,
-    color: c.hint,
+    fontFamily: FONT.regular,
+    fontSize: TYPE.caption,
+    color: c.muted,
     textAlign: 'center',
-    marginTop: 14,
+    marginTop: SPACING.s4,
   },
 });

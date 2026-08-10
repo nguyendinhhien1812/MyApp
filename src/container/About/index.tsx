@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,10 @@ import { Icon } from '@rneui/themed';
 import { useLanguage } from '../../context/LanguageContext';
 import { useThemeColors } from '../../context/ThemeContext';
 import { ThemeColors } from '../../theme/paperTheme';
+import { RADII, TYPE, SPACING, FONT } from '../../theme/tokens';
+import SubHeader from '../../components/UI/SubHeader';
+import { AppSnackbar } from '../../components/UI';
+import { logger } from '../../utils/logger';
 
 const AVATAR_URL =
   'https://i.pinimg.com/736x/d3/9d/85/d39d854ad761552a841304300c779f53.jpg';
@@ -27,18 +31,26 @@ const AboutScreen = ({ navigation }: Props) => {
   const { t } = useLanguage();
   const colors = useThemeColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const [toast, setToast] = useState('');
 
   // ─── Tech chip data ─────────────────────────────────────────────────────────
   const TECH_CHIPS = [
     { label: 'React Native', bg: '#e3f2fd', fg: '#1565c0' },
     { label: 'TypeScript',   bg: '#e8eaf6', fg: '#283593' },
     { label: 'React Nav',    bg: '#f3e5f5', fg: '#6a1b9a' },
-    { label: 'i18n Context', bg: colors.primaryLight, fg: colors.primaryDark },
+    { label: 'i18n Context', bg: colors.accent100, fg: colors.accent700 },
     { label: 'SVG Charts',   bg: '#e8f5e9', fg: '#1b5e20' },
     { label: 'Real API',     bg: '#e0f2f1', fg: '#00695c' },
     { label: 'Animated',     bg: '#fff3e0', fg: '#e65100' },
     { label: 'Context API',  bg: '#fce4ec', fg: '#880e4f' },
   ];
+
+  // Mở link ngoài: lỗi thì log cho dev và báo user, không im lặng
+  const openLink = (url: string) =>
+    Linking.openURL(url).catch(err => {
+      logger.warn('about', `không mở được link: ${url}`, err);
+      setToast(t.common.linkOpenFailed);
+    });
 
   // ─── Contact button ─────────────────────────────────────────────────────────
   const ContactBtn = ({
@@ -48,7 +60,7 @@ const AboutScreen = ({ navigation }: Props) => {
   }) => (
     <TouchableOpacity
       style={[styles.contactBtn, { backgroundColor: bg }]}
-      onPress={() => Linking.openURL(url).catch(() => {})}
+      onPress={() => openLink(url)}
       activeOpacity={0.8}>
       <Icon type="ionicon" name={icon} size={18} color={color} />
       <Text style={[styles.contactBtnText, { color }]}>{label}</Text>
@@ -67,14 +79,7 @@ const AboutScreen = ({ navigation }: Props) => {
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.goBack()}>
-          <Icon type="ionicon" name="arrow-back" size={18} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t.about.title}</Text>
-        <View style={styles.headerBtn} />
-      </View>
+      <SubHeader title={t.about.title} onBack={() => navigation.goBack()} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -84,7 +89,7 @@ const AboutScreen = ({ navigation }: Props) => {
         <View style={styles.heroCard}>
           {/* App icon */}
           <View style={styles.appIconWrap}>
-            <Icon type="ionicon" name="layers" size={32} color={colors.primaryDark} />
+            <Icon type="ionicon" name="layers" size={32} color={colors.accent700} />
           </View>
           <Text style={styles.appName}>{t.about.appName}</Text>
           <Text style={styles.appSub}>{t.about.appSub}</Text>
@@ -108,7 +113,7 @@ const AboutScreen = ({ navigation }: Props) => {
               <Text style={styles.devRole}>{t.about.devRole}</Text>
               <View style={styles.devTagRow}>
                 <View style={styles.devTag}>
-                  <Icon type="ionicon" name="phone-portrait-outline" size={10} color={colors.primaryDark} />
+                  <Icon type="ionicon" name="phone-portrait-outline" size={10} color={colors.accent700} />
                   <Text style={styles.devTagText}>React Native</Text>
                 </View>
                 <View style={[styles.devTag, { backgroundColor: '#e8f0f8' }]}>
@@ -180,7 +185,7 @@ const AboutScreen = ({ navigation }: Props) => {
         {/* ── Source code CTA ── */}
         <TouchableOpacity
           style={styles.sourceCta}
-          onPress={() => Linking.openURL('https://github.com/nguyendinhhien1812').catch(() => {})}
+          onPress={() => openLink('https://github.com/nguyendinhhien1812')}
           activeOpacity={0.85}>
           <Icon type="ionicon" name="logo-github" size={18} color="#fff" />
           <Text style={styles.sourceCtaText}>{t.about.viewSource}</Text>
@@ -195,6 +200,14 @@ const AboutScreen = ({ navigation }: Props) => {
           <Text style={styles.footerMade}>{t.about.madeWith}</Text>
         </View>
       </ScrollView>
+
+      <AppSnackbar
+        visible={!!toast}
+        onDismiss={() => setToast('')}
+        message={toast}
+        tone="default"
+        duration={2200}
+      />
     </SafeAreaView>
   );
 };
@@ -206,67 +219,33 @@ export default AboutScreen;
 const makeStyles = (c: ThemeColors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: c.bg },
 
-  // Header
-  header: {
-    backgroundColor: c.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 8,
-  },
-  headerBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-  },
-
   scroll: { paddingBottom: 40 },
 
   // Hero card
   heroCard: {
     backgroundColor: c.white,
-    borderRadius: 20,
-    margin: 16,
-    padding: 24,
+    borderRadius: RADII.card,
+    margin: SPACING.screenX,
+    padding: SPACING.s6,
     alignItems: 'center',
-    borderWidth: 0.5,
-    borderColor: c.primaryBorder,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
   },
   appIconWrap: {
     width: 72,
     height: 72,
-    borderRadius: 20,
-    backgroundColor: c.primaryLight,
+    borderRadius: RADII.card,
+    backgroundColor: c.accent100,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: c.primaryBorder,
-    marginBottom: 14,
+    marginBottom: SPACING.s4,
   },
   appName: {
+    fontFamily: FONT.bold,
     fontSize: 22,
-    fontWeight: '700',
     color: c.text,
-    letterSpacing: -0.3,
   },
   appSub: {
-    fontSize: 13,
+    fontFamily: FONT.regular,
+    fontSize: TYPE.body,
     color: c.subtext,
     marginTop: 4,
     textAlign: 'center',
@@ -276,10 +255,10 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     backgroundColor: '#e8f8f0',
-    borderRadius: 20,
+    borderRadius: RADII.pill,
     paddingHorizontal: 14,
     paddingVertical: 5,
-    marginTop: 12,
+    marginTop: SPACING.s3,
   },
   tagDot: {
     width: 7,
@@ -287,65 +266,58 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     borderRadius: 3.5,
     backgroundColor: '#1a7a40',
   },
-  tagText: { fontSize: 12, fontWeight: '600', color: '#1a7a40' },
+  tagText: { fontFamily: FONT.semibold, fontSize: TYPE.body, color: '#1a7a40' },
 
   // Section header
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginHorizontal: 20,
-    marginTop: 4,
-    marginBottom: 10,
+    marginHorizontal: SPACING.screenX,
+    marginTop: SPACING.s2,
+    marginBottom: SPACING.s3,
   },
-  accentBar: { width: 4, height: 18, backgroundColor: c.primary, borderRadius: 2 },
-  sectionTitle: { fontSize: 15, fontWeight: '500', color: c.text },
+  accentBar: { width: 3, height: 16, backgroundColor: c.accent, borderRadius: 2 },
+  sectionTitle: { fontFamily: FONT.semibold, fontSize: TYPE.title, color: c.text },
 
   // Dev card
   devCard: {
     backgroundColor: c.white,
-    borderRadius: 16,
-    marginHorizontal: 16,
-    marginBottom: 16,
-    padding: 16,
-    borderWidth: 0.5,
-    borderColor: c.border,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 1 },
+    borderRadius: RADII.card,
+    marginHorizontal: SPACING.screenX,
+    marginBottom: SPACING.s4,
+    padding: SPACING.s4,
   },
-  devTop: { flexDirection: 'row', gap: 14, marginBottom: 16 },
+  devTop: { flexDirection: 'row', gap: 14, marginBottom: SPACING.s4 },
   devAvatar: {
     width: 56,
     height: 56,
     borderRadius: 28,
     borderWidth: 2,
-    borderColor: c.primaryBorder,
+    borderColor: c.accent,
   },
   devInfo: { flex: 1, justifyContent: 'center' },
-  devName: { fontSize: 16, fontWeight: '600', color: c.text },
-  devRole: { fontSize: 12, color: c.subtext, marginTop: 2 },
+  devName: { fontFamily: FONT.semibold, fontSize: TYPE.title, color: c.text },
+  devRole: { fontFamily: FONT.regular, fontSize: TYPE.body, color: c.subtext, marginTop: 2 },
   devTagRow: { flexDirection: 'row', gap: 6, marginTop: 8 },
   devTag: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: c.primaryLight,
-    borderRadius: 8,
+    backgroundColor: c.accent100,
+    borderRadius: RADII.chip,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
-  devTagText: { fontSize: 10, fontWeight: '500', color: c.primaryDark },
+  devTagText: { fontFamily: FONT.medium, fontSize: 10, color: c.accent700 },
 
   // Contact buttons
   contactRow: {
     flexDirection: 'row',
     gap: 8,
-    borderTopWidth: 0.5,
+    borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: c.divider,
-    paddingTop: 14,
+    paddingTop: SPACING.s4,
   },
   contactBtn: {
     flex: 1,
@@ -353,39 +325,35 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 5,
-    borderRadius: 10,
+    borderRadius: RADII.item,
     paddingVertical: 10,
   },
-  contactBtnText: { fontSize: 11, fontWeight: '500' },
+  contactBtnText: { fontFamily: FONT.medium, fontSize: TYPE.caption },
 
   // Tech chips
   techCard: {
     backgroundColor: c.white,
-    borderRadius: 16,
-    marginHorizontal: 16,
-    marginBottom: 16,
-    padding: 16,
-    borderWidth: 0.5,
-    borderColor: c.border,
+    borderRadius: RADII.card,
+    marginHorizontal: SPACING.screenX,
+    marginBottom: SPACING.s4,
+    padding: SPACING.s4,
   },
   chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
-    borderRadius: 20,
+    borderRadius: RADII.pill,
     paddingHorizontal: 14,
     paddingVertical: 7,
   },
-  chipText: { fontSize: 12, fontWeight: '500' },
+  chipText: { fontFamily: FONT.medium, fontSize: TYPE.body },
 
   // Features
   featureCard: {
     backgroundColor: c.white,
-    borderRadius: 16,
-    marginHorizontal: 16,
-    marginBottom: 16,
-    padding: 16,
-    borderWidth: 0.5,
-    borderColor: c.border,
-    gap: 12,
+    borderRadius: RADII.card,
+    marginHorizontal: SPACING.screenX,
+    marginBottom: SPACING.s4,
+    padding: SPACING.s4,
+    gap: SPACING.s3,
   },
   featureRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
   featureCheck: {
@@ -398,27 +366,35 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     marginTop: 1,
     flexShrink: 0,
   },
-  featureText: { flex: 1, fontSize: 13, color: c.text, lineHeight: 20 },
+  featureText: { flex: 1, fontFamily: FONT.regular, fontSize: TYPE.body, color: c.text, lineHeight: 20 },
 
   // Source CTA
   sourceCta: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 14,
-    marginHorizontal: 16,
+    backgroundColor: c.heroDark,
+    borderRadius: RADII.item,
+    marginHorizontal: SPACING.screenX,
     height: 52,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    marginBottom: 24,
+    marginBottom: SPACING.s6,
   },
-  sourceCtaText: { fontSize: 14, fontWeight: '600', color: '#fff', flex: 1, textAlign: 'center', marginLeft: -28 },
+  sourceCtaText: {
+    fontFamily: FONT.semibold,
+    fontSize: TYPE.itemTitle,
+    color: c.offWhite,
+    flex: 1,
+    textAlign: 'center',
+    marginLeft: -28,
+  },
 
   // Footer
   footer: { alignItems: 'center', gap: 6 },
-  footerVersion: { fontSize: 12, color: c.hint, fontWeight: '500' },
+  footerVersion: { fontFamily: FONT.medium, fontSize: TYPE.body, color: c.muted },
   footerMade: {
-    fontSize: 11,
+    fontFamily: FONT.regular,
+    fontSize: TYPE.caption,
     color: c.muted,
     textAlign: 'center',
     paddingHorizontal: 32,

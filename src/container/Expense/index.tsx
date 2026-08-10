@@ -12,9 +12,13 @@ import {
   TextInput,
 } from 'react-native';
 import { Icon } from '@rneui/themed';
+import AppIcon from '../../components/Icon';
+import { ICON_TYPE } from '../../components/Icon/style';
+import SubHeader from '../../components/UI/SubHeader';
 import { useLanguage } from '../../context/LanguageContext';
 import { useThemeColors } from '../../context/ThemeContext';
 import { ThemeColors } from '../../theme/paperTheme';
+import { RADII, TYPE, SPACING, FONT } from '../../theme/tokens';
 
 // ─── Brand colors ─────────────────────────────────────────────────────────────
 // Giữ lại để dùng cho dữ liệu tĩnh (CATEGORIES/TRANSACTIONS) — không đổi theo theme.
@@ -22,6 +26,7 @@ const PRIMARY        = '#E89951';
 const PRIMARY_DARK   = '#b36a1a';
 const COLOR_DANGER   = '#c0392b';
 const COLOR_SUCCESS  = '#1a7a40';
+const UP_ON_DARK     = '#4ade80'; // xanh sáng trên nền tối (hero)
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type CategoryItem = {
@@ -141,18 +146,16 @@ const ExpenseScreen = ({ navigation }: Props) => {
   return (
     <SafeAreaView style={styles.safe}>
 
-      {/* ── Header cam ── */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.goBack()}>
-          <Icon type="ionicon" name="arrow-back" size={18} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t.expense.title}</Text>
-        <TouchableOpacity
-          style={styles.headerBtn}
-          onPress={() => navigation.navigate('ExpenseStats' as never)}>
-          <Icon type="ionicon" name="options-outline" size={18} color="#fff" />
-        </TouchableOpacity>
-      </View>
+      {/* ── Sub-header ── */}
+      <SubHeader
+        title={t.expense.title}
+        onBack={() => navigation.goBack()}
+        right={
+          <TouchableOpacity onPress={() => navigation.navigate('ExpenseStats' as never)} hitSlop={8}>
+            <AppIcon type={ICON_TYPE.Iconoir} name="graph-up" size={20} color={colors.accent700} />
+          </TouchableOpacity>
+        }
+      />
 
       <ScrollView
         ref={scrollRef}
@@ -166,25 +169,21 @@ const ExpenseScreen = ({ navigation }: Props) => {
 
           {/* Trend badge */}
           <View style={styles.trendBadge}>
-            <Icon type="ionicon" name="trending-down" size={13} color={COLOR_SUCCESS} />
+            <Icon type="ionicon" name="trending-down" size={13} color={UP_ON_DARK} />
             <Text style={styles.trendText}>12% {t.expense.vsLastMonth}</Text>
           </View>
 
           {/* Quick actions */}
           <View style={styles.quickRow}>
             <TouchableOpacity style={styles.quickBtn} onPress={() => setAddModal(true)}>
-              <View style={styles.quickIconWrap}>
-                <Icon type="ionicon" name="add" size={20} color={colors.primaryDark} />
-              </View>
+              <AppIcon type={ICON_TYPE.Iconoir} name="plus" size={20} color={colors.accent300} />
               <Text style={styles.quickLabel}>{t.expense.addExpense}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.quickBtn}
               onPress={() => navigation.navigate('ExpenseStats' as never)}>
-              <View style={styles.quickIconWrap}>
-                <Icon type="ionicon" name="bar-chart-outline" size={20} color={colors.primaryDark} />
-              </View>
+              <AppIcon type={ICON_TYPE.Iconoir} name="stats-report" size={20} color={colors.accent300} />
               <Text style={styles.quickLabel}>{t.expense.stats}</Text>
             </TouchableOpacity>
 
@@ -194,22 +193,21 @@ const ExpenseScreen = ({ navigation }: Props) => {
                 setActiveFilter(0);
                 scrollRef.current?.scrollToEnd({ animated: true });
               }}>
-              <View style={styles.quickIconWrap}>
-                <Icon type="ionicon" name="time-outline" size={20} color={colors.primaryDark} />
-              </View>
+              <AppIcon type={ICON_TYPE.Iconoir} name="clock" size={20} color={colors.accent300} />
               <Text style={styles.quickLabel}>{t.expense.history}</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* ── Category section ── */}
+        {/* ── Breakdown theo danh mục ── */}
         <Text style={styles.sectionLabel}>{t.expense.categoryTitle}</Text>
-        <View style={styles.card}>
-          <View style={styles.catGrid}>
-            {CATEGORIES.map(cat => (
+        <View style={styles.breakdownList}>
+          {CATEGORIES.filter(cat => cat.total > 0).map(cat => {
+            const pct = Math.round(cat.percent * 100);
+            return (
               <TouchableOpacity
                 key={cat.id}
-                style={styles.catItem}
+                style={styles.bdRow}
                 activeOpacity={0.7}
                 onPress={() => {
                   // Lọc giao dịch theo danh mục — danh mục chưa có filter riêng thì về Tất cả
@@ -217,13 +215,22 @@ const ExpenseScreen = ({ navigation }: Props) => {
                   setActiveFilter(idx > 0 ? idx : 0);
                   scrollRef.current?.scrollToEnd({ animated: true });
                 }}>
-                <View style={[styles.catIconWrap, { backgroundColor: cat.iconBg }]}>
-                  <Icon type="ionicon" name={cat.icon} size={22} color={cat.iconColor} />
+                <View style={[styles.bdIcon, { backgroundColor: cat.iconBg }]}>
+                  <Icon type="ionicon" name={cat.icon} size={18} color={cat.iconColor} />
                 </View>
-                <Text style={styles.catName} numberOfLines={1}>{getCatName(cat.id, t)}</Text>
+                <View style={styles.bdInfo}>
+                  <View style={styles.bdTopRow}>
+                    <Text style={styles.bdName}>{getCatName(cat.id, t)}</Text>
+                    <Text style={styles.bdAmount}>{money(cat.total)}</Text>
+                  </View>
+                  <View style={styles.bdBarBg}>
+                    <View style={[styles.bdBarFill, { width: `${pct}%` }]} />
+                  </View>
+                </View>
+                <Text style={styles.bdPercent}>{pct}%</Text>
               </TouchableOpacity>
-            ))}
-          </View>
+            );
+          })}
         </View>
 
         {/* ── Recent transactions ── */}
@@ -318,10 +325,10 @@ const ExpenseScreen = ({ navigation }: Props) => {
                   key={cat.id}
                   style={[styles.catPickerItem, addCatIdx === i && styles.catPickerItemActive]}
                   onPress={() => setAddCatIdx(i)}>
-                  <View style={[styles.catPickerIcon, { backgroundColor: addCatIdx === i ? colors.primary : cat.iconBg }]}>
-                    <Icon type="ionicon" name={cat.icon} size={18} color={addCatIdx === i ? '#fff' : cat.iconColor} />
+                  <View style={[styles.catPickerIcon, { backgroundColor: addCatIdx === i ? colors.accent : cat.iconBg }]}>
+                    <Icon type="ionicon" name={cat.icon} size={18} color={addCatIdx === i ? colors.offWhite : cat.iconColor} />
                   </View>
-                  <Text style={[styles.catPickerLabel, addCatIdx === i && { color: colors.primaryDark, fontWeight: '600' }]}>
+                  <Text style={[styles.catPickerLabel, addCatIdx === i && { color: colors.accent700, fontFamily: FONT.semibold }]}>
                     {getCatName(cat.id, t)}
                   </Text>
                 </TouchableOpacity>
@@ -361,191 +368,165 @@ export default ExpenseScreen;
 const makeStyles = (c: ThemeColors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: c.bg },
 
-  // Header
-  header: {
-    backgroundColor: c.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 8,
-  },
-  headerBtn: {
-    width: 34, height: 34, borderRadius: 17,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  headerTitle: {
-    flex: 1, textAlign: 'center',
-    fontSize: 16, fontWeight: '600', color: '#fff',
-  },
-
   // Scroll
   scroll: { paddingBottom: 16 },
 
-  // Hero card
+  // Hero card — tối
   heroCard: {
-    backgroundColor: c.white,
-    borderRadius: 20,
-    marginHorizontal: 16,
-    marginTop: 16,
-    padding: 20,
-    borderWidth: 0.5,
-    borderColor: c.primaryBorder,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
+    backgroundColor: c.heroDark,
+    borderRadius: RADII.card,
+    marginHorizontal: SPACING.screenX,
+    marginTop: SPACING.s4,
+    padding: SPACING.s4,
   },
   heroLabel: {
-    fontSize: 10,
-    color: c.hint,
-    letterSpacing: 0.6,
-    fontWeight: '500',
+    fontFamily: FONT.regular,
+    fontSize: TYPE.caption,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: c.accent300,
   },
   heroAmount: {
+    fontFamily: FONT.semibold,
     fontSize: 28,
-    fontWeight: '700',
-    color: COLOR_DANGER,
-    letterSpacing: -0.5,
+    color: c.offWhite,
     marginTop: 6,
   },
   trendBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#e8f8f0',
-    borderRadius: 10,
+    backgroundColor: 'rgba(74,222,128,0.16)',
+    borderRadius: RADII.chip,
     paddingHorizontal: 10,
     paddingVertical: 4,
     alignSelf: 'flex-start',
     marginTop: 8,
   },
-  trendText: { fontSize: 11, color: COLOR_SUCCESS, fontWeight: '500' },
+  trendText: { fontFamily: FONT.medium, fontSize: TYPE.caption, color: UP_ON_DARK },
 
-  // Quick actions
+  // Quick actions — ô mờ trên nền tối
   quickRow: {
     flexDirection: 'row',
-    gap: 10,
-    marginTop: 16,
+    gap: SPACING.s2,
+    marginTop: SPACING.s4,
   },
   quickBtn: {
     flex: 1,
     alignItems: 'center',
-    gap: 6,
-    backgroundColor: c.primaryLight,
-    borderRadius: 12,
+    gap: 7,
+    backgroundColor: 'rgba(253,252,251,0.12)',
+    borderRadius: RADII.item,
     paddingVertical: 12,
-    borderWidth: 0.5,
-    borderColor: c.primaryBorder,
   },
-  quickIconWrap: {
-    width: 36, height: 36, borderRadius: 18,
-    backgroundColor: c.white,
-    alignItems: 'center', justifyContent: 'center',
-    borderWidth: 0.5, borderColor: c.primaryBorder,
+  quickLabel: {
+    fontFamily: FONT.regular,
+    fontSize: TYPE.caption,
+    color: 'rgba(253,252,251,0.85)',
   },
-  quickLabel: { fontSize: 10, color: c.primaryDark, fontWeight: '500' },
 
   // Section labels
   sectionLabel: {
-    fontSize: 11,
-    color: c.hint,
-    letterSpacing: 0.6,
-    fontWeight: '500',
-    marginHorizontal: 20,
-    marginTop: 20,
-    marginBottom: 8,
+    fontFamily: FONT.regular,
+    fontSize: TYPE.caption,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: c.muted,
+    marginHorizontal: SPACING.screenX,
+    marginTop: SPACING.s5,
+    marginBottom: SPACING.s3,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginHorizontal: 16,
-    marginTop: 20,
-    marginBottom: 10,
+    marginHorizontal: SPACING.screenX,
+    marginTop: SPACING.s5,
+    marginBottom: SPACING.s3,
   },
   sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  accentBar: { width: 4, height: 18, backgroundColor: c.primary, borderRadius: 2 },
-  sectionTitleText: { fontSize: 15, fontWeight: '500', color: c.text },
-  viewAll: { fontSize: 12, color: c.primary, fontWeight: '500' },
+  accentBar: { width: 0, height: 0 },
+  sectionTitleText: { fontFamily: FONT.semibold, fontSize: TYPE.title, color: c.text },
+  viewAll: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.accent700 },
 
-  // Card
-  card: {
+  // Breakdown theo danh mục
+  breakdownList: {
+    marginHorizontal: SPACING.screenX,
     backgroundColor: c.white,
-    borderRadius: 14,
-    marginHorizontal: 16,
-    borderWidth: 0.5,
-    borderColor: c.border,
-    overflow: 'hidden',
+    borderRadius: RADII.card,
+    paddingHorizontal: SPACING.s4,
+    paddingVertical: SPACING.s2,
   },
-
-  // Category grid (3 columns × 2 rows)
-  catGrid: {
+  bdRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingVertical: 4,
-  },
-  catItem: {
-    width: '33.33%',
     alignItems: 'center',
-    paddingVertical: 14,
-    gap: 6,
+    gap: SPACING.s3,
+    paddingVertical: SPACING.s3,
   },
-  catIconWrap: {
-    width: 48, height: 48, borderRadius: 14,
+  bdIcon: {
+    width: 36, height: 36, borderRadius: RADII.item,
     alignItems: 'center', justifyContent: 'center',
+    flexShrink: 0,
   },
-  catName: { fontSize: 10, color: c.subtext, fontWeight: '500', textAlign: 'center' },
+  bdInfo: { flex: 1, gap: 6 },
+  bdTopRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
+  bdName: { fontFamily: FONT.medium, fontSize: TYPE.body, color: c.text },
+  bdAmount: { fontFamily: FONT.medium, fontSize: TYPE.body, color: c.text },
+  bdBarBg: { height: 4, borderRadius: 2, backgroundColor: c.divider, overflow: 'hidden' },
+  bdBarFill: { height: 4, borderRadius: 2, backgroundColor: c.accent },
+  bdPercent: {
+    fontFamily: FONT.medium,
+    fontSize: TYPE.caption,
+    color: c.accent700,
+    width: 36,
+    textAlign: 'right',
+  },
 
   // Filter chips
   filterRow: {
-    paddingHorizontal: 16,
+    paddingHorizontal: SPACING.screenX,
     paddingBottom: 10,
     gap: 8,
   },
   filterChip: {
-    paddingHorizontal: 18,
+    paddingHorizontal: 14,
     paddingVertical: 7,
-    borderRadius: 20,
-    borderWidth: 0.5,
-    borderColor: c.border,
+    borderRadius: RADII.pill,
     backgroundColor: c.white,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: c.border,
     marginRight: 8,
   },
-  filterChipActive: { backgroundColor: c.primary, borderColor: c.primary },
-  filterText: { fontSize: 12, color: c.subtext },
-  filterTextActive: { color: '#fff', fontWeight: '500' },
+  filterChipActive: { backgroundColor: c.accent100, borderColor: c.accent100 },
+  filterText: { fontFamily: FONT.regular, fontSize: TYPE.body, color: c.subtext },
+  filterTextActive: { fontFamily: FONT.medium, color: c.accent700 },
 
   // Transaction list
   txCard: {
     backgroundColor: c.white,
-    borderRadius: 14,
-    marginHorizontal: 16,
-    borderWidth: 0.5,
-    borderColor: c.border,
+    borderRadius: RADII.card,
+    marginHorizontal: SPACING.screenX,
+    paddingHorizontal: SPACING.s4,
     overflow: 'hidden',
   },
   txRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
     paddingVertical: 13,
-    gap: 12,
+    gap: SPACING.s3,
   },
   txIconWrap: {
-    width: 44, height: 44, borderRadius: 12,
+    width: 40, height: 40, borderRadius: RADII.item,
     alignItems: 'center', justifyContent: 'center',
     flexShrink: 0,
   },
   txInfo: { flex: 1 },
-  txName: { fontSize: 13, fontWeight: '500', color: c.text },
-  txMeta: { fontSize: 11, color: c.hint, marginTop: 2 },
+  txName: { fontFamily: FONT.medium, fontSize: TYPE.body, color: c.text },
+  txMeta: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.muted, marginTop: 2 },
   txRight: { alignItems: 'flex-end', gap: 2 },
-  txAmount: { fontSize: 13, fontWeight: '600', color: COLOR_DANGER },
-  txTime: { fontSize: 10, color: c.muted },
-  txDivider: { height: 0.5, backgroundColor: c.divider, marginLeft: 72 },
+  txAmount: { fontFamily: FONT.semibold, fontSize: TYPE.body, color: c.danger },
+  txTime: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.muted },
+  txDivider: { height: StyleSheet.hairlineWidth, backgroundColor: c.divider, marginLeft: 52 },
 
   // Add Expense Modal
   modalOverlay: {
@@ -568,45 +549,46 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     marginBottom: 20,
   },
   modalTitle: {
-    fontSize: 17, fontWeight: '600', color: c.text,
+    fontFamily: FONT.semibold, fontSize: TYPE.title, color: c.text,
     marginBottom: 16,
   },
   inputLabel: {
-    fontSize: 11, color: c.hint,
-    letterSpacing: 0.5, fontWeight: '500',
+    fontFamily: FONT.regular, fontSize: TYPE.caption,
+    letterSpacing: 0.5, color: c.muted,
     marginBottom: 8, marginTop: 12,
   },
   amountInputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: c.primaryBorder,
-    borderRadius: 12,
+    borderColor: c.accent100,
+    borderRadius: RADII.item,
     paddingHorizontal: 14,
-    backgroundColor: c.primaryLight,
+    backgroundColor: c.accent100,
     height: 52,
     gap: 8,
   },
-  currencySign: { fontSize: 18, color: c.primaryDark, fontWeight: '600' },
+  currencySign: { fontFamily: FONT.semibold, fontSize: TYPE.title, color: c.accent700 },
   amountInput: {
-    flex: 1, fontSize: 22, fontWeight: '700',
+    flex: 1, fontFamily: FONT.semibold, fontSize: 22,
     color: c.text, paddingVertical: 0,
   },
   catPickerRow: { gap: 10, paddingVertical: 4 },
   catPickerItem: { alignItems: 'center', gap: 4, width: 64 },
   catPickerIcon: {
-    width: 44, height: 44, borderRadius: 12,
+    width: 44, height: 44, borderRadius: RADII.item,
     alignItems: 'center', justifyContent: 'center',
   },
   catPickerItemActive: {},
-  catPickerLabel: { fontSize: 10, color: c.subtext, textAlign: 'center' },
+  catPickerLabel: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.subtext, textAlign: 'center' },
   noteInput: {
-    borderWidth: 0.5,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: c.border,
-    borderRadius: 12,
+    borderRadius: RADII.item,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    fontSize: 13,
+    fontFamily: FONT.regular,
+    fontSize: TYPE.body,
     color: c.text,
     minHeight: 60,
     textAlignVertical: 'top',
@@ -616,15 +598,15 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   modalBtnCancel: {
     flex: 1,
     backgroundColor: c.bg,
-    borderRadius: 12, height: 50,
+    borderRadius: RADII.item, height: 50,
     alignItems: 'center', justifyContent: 'center',
   },
-  modalBtnCancelText: { fontSize: 14, fontWeight: '500', color: c.subtext },
+  modalBtnCancelText: { fontFamily: FONT.medium, fontSize: TYPE.itemTitle, color: c.subtext },
   modalBtnSave: {
     flex: 2,
-    backgroundColor: c.primary,
-    borderRadius: 12, height: 50,
+    backgroundColor: c.heroDark,
+    borderRadius: RADII.item, height: 50,
     alignItems: 'center', justifyContent: 'center',
   },
-  modalBtnSaveText: { fontSize: 14, fontWeight: '600', color: '#fff' },
+  modalBtnSaveText: { fontFamily: FONT.semibold, fontSize: TYPE.itemTitle, color: c.offWhite },
 });

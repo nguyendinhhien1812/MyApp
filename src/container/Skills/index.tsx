@@ -11,7 +11,9 @@ import {
 import { Icon } from '@rneui/themed';
 import { ProgressBar } from 'react-native-paper';
 import { AppChip } from '../../components/UI';
+import SubHeader from '../../components/UI/SubHeader';
 import { ThemeColors } from '../../theme/paperTheme';
+import { RADII, TYPE, SPACING, FONT } from '../../theme/tokens';
 import { useThemeColors } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { SKILLS, LEVEL_BADGE, TOTAL_YEARS, TOTAL_PROJECTS, SkillItem } from './data';
@@ -55,14 +57,7 @@ const SkillsScreen = ({ navigation }: Props) => {
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Header cam */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.goBack()}>
-          <Icon type="ionicon" name="arrow-back" size={18} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t.skills.title}</Text>
-        <View style={styles.headerBtn} />
-      </View>
+      <SubHeader title={t.skills.title} onBack={() => navigation.goBack()} />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         {/* Thống kê tổng quan */}
@@ -117,7 +112,7 @@ const SkillsScreen = ({ navigation }: Props) => {
               </Text>
               <ProgressBar
                 progress={skill.percent / 100}
-                color={colors.primary}
+                color={colors.accent}
                 style={styles.progress}
               />
             </View>
@@ -136,48 +131,21 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   // 1. Container chính
   safe: { flex: 1, backgroundColor: c.bg },
 
-  // 2. Header
-  header: {
-    backgroundColor: c.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 8,
-  },
-  headerBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-  },
-
   // 3. Scroll
-  scroll: { padding: 16, gap: 12, paddingBottom: 32 },
+  scroll: { padding: SPACING.screenX, gap: SPACING.s3, paddingBottom: 32 },
 
   // 4. Summary card
   summaryCard: {
     flexDirection: 'row',
     backgroundColor: c.white,
-    borderRadius: 14,
-    borderWidth: 0.5,
-    borderColor: c.primaryBorder,
-    paddingVertical: 14,
+    borderRadius: RADII.card,
+    paddingVertical: SPACING.s4,
   },
   summaryItem: { flex: 1, alignItems: 'center', gap: 2 },
-  summaryValue: { fontSize: 18, fontWeight: '700', color: c.text },
-  summaryValueAccent: { color: c.success },
-  summaryLabel: { fontSize: 11, color: c.subtext },
-  summaryDivider: { width: 0.5, backgroundColor: c.divider },
+  summaryValue: { fontFamily: FONT.semibold, fontSize: TYPE.title, color: c.text },
+  summaryValueAccent: { color: c.accent700 },
+  summaryLabel: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.subtext },
+  summaryDivider: { width: StyleSheet.hairlineWidth, backgroundColor: c.divider },
 
   // 5. Filter
   filterRow: { gap: 8, paddingRight: 16 },
@@ -186,17 +154,15 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   skillCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: SPACING.s3,
     backgroundColor: c.white,
-    borderRadius: 14,
-    borderWidth: 0.5,
-    borderColor: c.border,
-    padding: 14,
+    borderRadius: RADII.card,
+    padding: SPACING.s4,
   },
   skillIconWrap: {
     width: 40,
     height: 40,
-    borderRadius: 10,
+    borderRadius: RADII.item,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -207,9 +173,9 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     justifyContent: 'space-between',
     gap: 8,
   },
-  skillName: { fontSize: 14, fontWeight: '500', color: c.text, flexShrink: 1 },
-  levelBadge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
-  levelText: { fontSize: 10, fontWeight: '500' },
-  skillSub: { fontSize: 11, color: c.subtext },
-  progress: { height: 5, borderRadius: 3, marginTop: 3 },
+  skillName: { fontFamily: FONT.medium, fontSize: TYPE.body, color: c.text, flexShrink: 1 },
+  levelBadge: { borderRadius: RADII.chip, paddingHorizontal: 8, paddingVertical: 2 },
+  levelText: { fontFamily: FONT.medium, fontSize: 10 },
+  skillSub: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.subtext },
+  progress: { height: 4, borderRadius: 2, marginTop: 4, backgroundColor: c.divider },
 });

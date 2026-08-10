@@ -11,9 +11,13 @@ import {
 } from 'react-native';
 import { Icon } from '@rneui/themed';
 import { AppSnackbar } from '../../../components/UI';
+import SubHeader from '../../../components/UI/SubHeader';
+import AppIcon from '../../../components/Icon';
+import { ICON_TYPE } from '../../../components/Icon/style';
 import { useLanguage } from '../../../context/LanguageContext';
 import { useThemeColors } from '../../../context/ThemeContext';
 import { ThemeColors } from '../../../theme/paperTheme';
+import { RADII, TYPE, SPACING, FONT } from '../../../theme/tokens';
 
 // ─── Brand colors ─────────────────────────────────────────────────────────────
 const COLOR_DANGER   = '#c0392b';
@@ -89,13 +93,7 @@ const ExpenseDetail = ({ navigation, route }: Props) => {
   if (!item) {
     return (
       <SafeAreaView style={styles.safe}>
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.goBack()}>
-            <Icon type="ionicon" name="arrow-back" size={18} color="#fff" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>{t.expense.detailTitle}</Text>
-          <View style={styles.headerBtn} />
-        </View>
+        <SubHeader title={t.expense.detailTitle} onBack={() => navigation.goBack()} />
       </SafeAreaView>
     );
   }
@@ -103,16 +101,15 @@ const ExpenseDetail = ({ navigation, route }: Props) => {
   return (
     <SafeAreaView style={styles.safe}>
 
-      {/* ── Header cam ── */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.goBack()}>
-          <Icon type="ionicon" name="arrow-back" size={18} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t.expense.detailTitle}</Text>
-        <TouchableOpacity style={styles.headerBtn}>
-          <Icon type="ionicon" name="share-outline" size={18} color="#fff" />
-        </TouchableOpacity>
-      </View>
+      <SubHeader
+        title={t.expense.detailTitle}
+        onBack={() => navigation.goBack()}
+        right={
+          <TouchableOpacity onPress={() => setToast(t.common.demoFeature)} hitSlop={8}>
+            <AppIcon type={ICON_TYPE.Iconoir} name="share-ios" size={20} color={colors.accent700} />
+          </TouchableOpacity>
+        }
+      />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -180,11 +177,11 @@ const ExpenseDetail = ({ navigation, route }: Props) => {
           activeOpacity={0.7}
           onPress={() => setToast(t.common.demoFeature)}>
           <View style={styles.receiptIcon}>
-            <Icon type="ionicon" name="cloud-upload-outline" size={24} color={colors.primaryDark} />
+            <Icon type="ionicon" name="cloud-upload-outline" size={24} color={colors.accent700} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.receiptTitle}>{t.expense.uploadReceipt}</Text>
-            <Text style={styles.receiptSub}>JPG, PNG, PDF · tối đa 5MB</Text>
+            <Text style={styles.receiptSub}>{t.expense.receiptHint}</Text>
           </View>
           <Icon type="ionicon" name="chevron-forward" size={16} color={colors.muted} />
         </TouchableOpacity>
@@ -202,7 +199,7 @@ const ExpenseDetail = ({ navigation, route }: Props) => {
           style={styles.primaryBtn}
           activeOpacity={0.85}
           onPress={() => setToast(t.expense.noteSaved)}>
-          <Icon type="ionicon" name="checkmark-circle-outline" size={18} color="#fff" />
+          <Icon type="ionicon" name="checkmark-circle-outline" size={18} color={colors.offWhite} />
           <Text style={styles.primaryBtnText}>{t.expense.saveNote}</Text>
         </TouchableOpacity>
       </View>
@@ -224,60 +221,39 @@ export default ExpenseDetail;
 const makeStyles = (c: ThemeColors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: c.bg },
 
-  // Header
-  header: {
-    backgroundColor: c.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 8,
-  },
-  headerBtn: {
-    width: 34, height: 34, borderRadius: 17,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  headerTitle: {
-    flex: 1, textAlign: 'center',
-    fontSize: 16, fontWeight: '600', color: '#fff',
-  },
-
   scroll: { paddingBottom: 16 },
 
   // Hero section
   heroSection: {
     alignItems: 'center',
     paddingVertical: 28,
-    paddingHorizontal: 16,
+    paddingHorizontal: SPACING.screenX,
   },
   heroIconWrap: {
-    width: 72, height: 72, borderRadius: 20,
+    width: 72, height: 72, borderRadius: RADII.card,
     alignItems: 'center', justifyContent: 'center',
     marginBottom: 12,
   },
-  heroName: { fontSize: 18, fontWeight: '600', color: c.text, marginBottom: 6 },
-  heroAmount: { fontSize: 28, fontWeight: '700', color: COLOR_DANGER, letterSpacing: -0.5 },
+  heroName: { fontFamily: FONT.semibold, fontSize: TYPE.title, color: c.text, marginBottom: 6 },
+  heroAmount: { fontFamily: FONT.bold, fontSize: 28, color: COLOR_DANGER },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     backgroundColor: '#e8f8f0',
-    borderRadius: 10,
+    borderRadius: RADII.pill,
     paddingHorizontal: 12,
     paddingVertical: 5,
     marginTop: 10,
   },
   statusDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: COLOR_SUCCESS },
-  statusText: { fontSize: 12, color: COLOR_SUCCESS, fontWeight: '500' },
+  statusText: { fontFamily: FONT.medium, fontSize: TYPE.body, color: COLOR_SUCCESS },
 
   // Card
   card: {
     backgroundColor: c.white,
-    borderRadius: 14,
-    marginHorizontal: 16,
-    borderWidth: 0.5,
-    borderColor: c.border,
+    borderRadius: RADII.card,
+    marginHorizontal: SPACING.screenX,
     overflow: 'hidden',
   },
 
@@ -286,23 +262,30 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: SPACING.s4,
+    paddingVertical: SPACING.s3,
   },
-  detailLabel: { fontSize: 13, color: c.subtext },
-  detailValue: { fontSize: 13, fontWeight: '500', color: c.text },
-  rowDivider: { height: 0.5, backgroundColor: c.divider, marginHorizontal: 16 },
+  detailLabel: { fontFamily: FONT.regular, fontSize: TYPE.body, color: c.subtext },
+  detailValue: { fontFamily: FONT.medium, fontSize: TYPE.body, color: c.text },
+  rowDivider: { height: StyleSheet.hairlineWidth, backgroundColor: c.divider, marginHorizontal: SPACING.s4 },
 
   // Section label
   sectionLabel: {
-    fontSize: 11, color: c.hint,
-    letterSpacing: 0.6, fontWeight: '500',
-    marginHorizontal: 20, marginTop: 20, marginBottom: 8,
+    fontFamily: FONT.regular,
+    fontSize: TYPE.caption,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: c.muted,
+    marginHorizontal: SPACING.screenX,
+    marginTop: SPACING.s5,
+    marginBottom: SPACING.s2,
   },
 
   // Note input
   noteInput: {
-    fontSize: 13, color: c.text,
+    fontFamily: FONT.regular,
+    fontSize: TYPE.body,
+    color: c.text,
     minHeight: 60,
     textAlignVertical: 'top',
     paddingVertical: 4,
@@ -313,42 +296,40 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: c.white,
-    borderRadius: 14,
-    marginHorizontal: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderWidth: 0.5,
-    borderColor: c.border,
-    gap: 12,
+    borderRadius: RADII.card,
+    marginHorizontal: SPACING.screenX,
+    paddingHorizontal: SPACING.s4,
+    paddingVertical: SPACING.s3,
+    gap: SPACING.s3,
   },
   receiptIcon: {
-    width: 44, height: 44, borderRadius: 12,
-    backgroundColor: c.primaryLight,
+    width: 44, height: 44, borderRadius: RADII.item,
+    backgroundColor: c.accent100,
     alignItems: 'center', justifyContent: 'center',
   },
-  receiptTitle: { fontSize: 13, fontWeight: '500', color: c.text },
-  receiptSub: { fontSize: 11, color: c.hint, marginTop: 2 },
+  receiptTitle: { fontFamily: FONT.medium, fontSize: TYPE.body, color: c.text },
+  receiptSub: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.muted, marginTop: 2 },
 
   // Bottom bar
   bottomBar: {
     backgroundColor: c.white,
-    paddingHorizontal: 16,
+    paddingHorizontal: SPACING.screenX,
     paddingTop: 10,
     paddingBottom: 28,
     gap: 8,
-    borderTopWidth: 0.5,
+    borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: c.divider,
   },
   sslRow: { flexDirection: 'row', alignItems: 'center', gap: 4, justifyContent: 'center' },
-  sslText: { fontSize: 10, color: c.muted },
+  sslText: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.muted },
   primaryBtn: {
-    backgroundColor: c.primary,
-    borderRadius: 12,
+    backgroundColor: c.heroDark,
+    borderRadius: RADII.item,
     height: 50,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
   },
-  primaryBtnText: { fontSize: 14, fontWeight: '600', color: '#fff' },
+  primaryBtnText: { fontFamily: FONT.semibold, fontSize: TYPE.itemTitle, color: c.offWhite },
 });

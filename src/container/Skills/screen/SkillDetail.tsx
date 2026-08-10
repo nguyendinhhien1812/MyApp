@@ -9,9 +9,10 @@ import {
   ScrollView,
 } from 'react-native';
 import { Icon } from '@rneui/themed';
-import { ProgressBar } from 'react-native-paper';
 import { AppButton } from '../../../components/UI';
+import SubHeader from '../../../components/UI/SubHeader';
 import { ThemeColors } from '../../../theme/paperTheme';
+import { RADII, TYPE, SPACING, FONT } from '../../../theme/tokens';
 import { useThemeColors } from '../../../context/ThemeContext';
 import { useLanguage } from '../../../context/LanguageContext';
 import { getSkillById, LEVEL_BADGE, GITHUB_URL } from '../data';
@@ -58,14 +59,7 @@ const SkillDetail = ({ navigation, route }: Props) => {
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Header cam */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.goBack()}>
-          <Icon type="ionicon" name="arrow-back" size={18} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{skill.name}</Text>
-        <View style={styles.headerBtn} />
-      </View>
+      <SubHeader title={skill.name} onBack={() => navigation.goBack()} />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         {/* Hero card */}
@@ -79,11 +73,9 @@ const SkillDetail = ({ navigation, route }: Props) => {
               {levelLabel} · {skill.percent}%
             </Text>
           </View>
-          <ProgressBar
-            progress={skill.percent / 100}
-            color={colors.primary}
-            style={styles.heroProgress}
-          />
+          <View style={styles.heroProgress}>
+            <View style={[styles.heroProgressFill, { width: `${skill.percent}%` }]} />
+          </View>
           <Text style={styles.heroSub}>
             {skill.years} {t.skills.yearsExp} · {skill.keywords}
           </Text>
@@ -126,6 +118,7 @@ const SkillDetail = ({ navigation, route }: Props) => {
         <AppButton
           title={t.skills.viewGithub}
           icon="github"
+          variant="dark"
           onPress={() =>
             navigation.navigate('WebViewScreen', { url: GITHUB_URL, title: 'GitHub' })
           }
@@ -143,81 +136,59 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   // 1. Container chính
   safe: { flex: 1, backgroundColor: c.bg },
 
-  // 2. Header
-  header: {
-    backgroundColor: c.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 8,
-  },
-  headerBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-  },
-
   // 3. Scroll
-  scroll: { padding: 16, gap: 12, paddingBottom: 32 },
+  scroll: { padding: SPACING.screenX, gap: SPACING.s3, paddingBottom: 32 },
 
   // 4. Hero card
   heroCard: {
     backgroundColor: c.white,
-    borderRadius: 16,
-    borderWidth: 0.5,
-    borderColor: c.primaryBorder,
-    padding: 20,
+    borderRadius: RADII.card,
+    padding: SPACING.s5,
     alignItems: 'center',
   },
   heroIconWrap: {
     width: 56,
     height: 56,
-    borderRadius: 16,
+    borderRadius: RADII.item,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  heroName: { fontSize: 17, fontWeight: '600', color: c.text, marginTop: 10 },
-  levelBadge: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 3, marginTop: 6 },
-  levelText: { fontSize: 11, fontWeight: '500' },
+  heroName: { fontFamily: FONT.semibold, fontSize: TYPE.title, color: c.text, marginTop: 10 },
+  levelBadge: { borderRadius: RADII.chip, paddingHorizontal: 10, paddingVertical: 3, marginTop: 6 },
+  levelText: { fontFamily: FONT.medium, fontSize: TYPE.caption },
   heroProgress: {
-    height: 6,
+    height: 5,
     borderRadius: 3,
     alignSelf: 'stretch',
     marginTop: 14,
+    backgroundColor: c.divider,
+    overflow: 'hidden',
   },
-  heroSub: { fontSize: 11, color: c.subtext, marginTop: 8, textAlign: 'center' },
+  heroProgressFill: {
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: c.accent,
+  },
+  heroSub: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.subtext, marginTop: 8, textAlign: 'center' },
 
   // 5. Section title
-  sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
-  accentBar: { width: 4, height: 18, backgroundColor: c.primary, borderRadius: 2 },
-  sectionTitleText: { fontSize: 15, fontWeight: '500', color: c.text },
+  sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: SPACING.s2 },
+  accentBar: { width: 3, height: 16, backgroundColor: c.accent, borderRadius: 2 },
+  sectionTitleText: { fontFamily: FONT.semibold, fontSize: TYPE.title, color: c.text },
 
   // 6. Cards & rows
   card: {
     backgroundColor: c.white,
-    borderRadius: 14,
-    borderWidth: 0.5,
-    borderColor: c.border,
+    borderRadius: RADII.card,
     overflow: 'hidden',
   },
-  rowBorder: { borderBottomWidth: 0.5, borderBottomColor: c.divider },
+  rowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.divider },
   hlRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
+    paddingHorizontal: SPACING.s4,
+    paddingVertical: SPACING.s3,
   },
   hlDot: {
     width: 20,
@@ -228,24 +199,24 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     justifyContent: 'center',
     marginTop: 1,
   },
-  hlText: { flex: 1, fontSize: 13, color: c.text, lineHeight: 19 },
+  hlText: { flex: 1, fontFamily: FONT.regular, fontSize: TYPE.body, color: c.text, lineHeight: 19 },
   prjRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
+    paddingHorizontal: SPACING.s4,
+    paddingVertical: SPACING.s3,
   },
   prjIconWrap: {
     width: 30,
     height: 30,
-    borderRadius: 8,
+    borderRadius: RADII.chip,
     alignItems: 'center',
     justifyContent: 'center',
   },
   prjInfo: { flex: 1 },
-  prjName: { fontSize: 13, color: c.text },
-  prjTech: { fontSize: 10, color: c.hint, marginTop: 1 },
+  prjName: { fontFamily: FONT.medium, fontSize: TYPE.body, color: c.text },
+  prjTech: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.muted, marginTop: 1 },
 
   // 7. Bottom CTA
   githubBtn: { marginTop: 4 },

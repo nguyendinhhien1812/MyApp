@@ -19,6 +19,7 @@ import { AppButton, AppDialog } from '../../components/UI';
 import { useLanguage } from '../../context/LanguageContext';
 import { useThemeColors } from '../../context/ThemeContext';
 import { ThemeColors } from '../../theme/paperTheme';
+import { RADII, TYPE, SPACING, FONT } from '../../theme/tokens';
 import type { Translations } from '../../i18n/translations';
 
 // ─── 3. Validation schema ──────────────────────────────────────────────────
@@ -58,10 +59,10 @@ const LoginScreen = ({ navigation }: Props) => {
 
   const onSubmit = (data: LoginForm) => {
     setSubmitting(true);
-    // Giả lập gọi API — thay bằng auth service thật khi có
+    // Giả lập gọi API — thay bằng auth service thật khi có.
+    // KHÔNG log `data`: object này chứa password.
     setTimeout(() => {
       setSubmitting(false);
-      console.log('Login payload:', data);
       navigation.reset({ index: 0, routes: [{ name: 'HomeTabs' }] });
     }, 1200);
   };
@@ -77,7 +78,7 @@ const LoginScreen = ({ navigation }: Props) => {
           keyboardShouldPersistTaps="handled">
           {/* Logo + welcome */}
           <View style={styles.logoWrap}>
-            <Icon type="ionicon" name="wallet-outline" size={34} color={colors.primaryDark} />
+            <Icon type="ionicon" name="wallet-outline" size={34} color={colors.accent700} />
           </View>
           <Text style={styles.title}>{t.login.welcome}</Text>
           <Text style={styles.subtitle}>{t.login.subtitle}</Text>
@@ -111,6 +112,7 @@ const LoginScreen = ({ navigation }: Props) => {
             <AppButton
               title={submitting ? t.login.submitting : t.login.submit}
               loading={submitting}
+              variant="dark"
               onPress={handleSubmit(onSubmit)}
               style={styles.submitBtn}
             />
@@ -157,21 +159,22 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   logoWrap: {
     width: 72,
     height: 72,
-    borderRadius: 20,
-    backgroundColor: c.primaryLight,
+    borderRadius: RADII.card,
+    backgroundColor: c.accent100,
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'center',
-    marginBottom: 20,
+    marginBottom: SPACING.s5,
   },
   title: {
+    fontFamily: FONT.bold,
     fontSize: 26,
-    fontWeight: '700',
     color: c.text,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 13,
+    fontFamily: FONT.regular,
+    fontSize: TYPE.body,
     color: c.subtext,
     textAlign: 'center',
     marginTop: 6,
@@ -180,7 +183,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
 
   // 4. Form
   form: {
-    gap: 16,
+    gap: SPACING.s4,
   },
   optionsRow: {
     flexDirection: 'row',
@@ -188,9 +191,9 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     justifyContent: 'space-between',
   },
   forgotText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: c.primaryDark,
+    fontFamily: FONT.medium,
+    fontSize: TYPE.body,
+    color: c.accent700,
   },
 
   // 5. Bottom CTA
@@ -204,7 +207,8 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     gap: 4,
   },
   securityText: {
-    fontSize: 11,
+    fontFamily: FONT.regular,
+    fontSize: TYPE.caption,
     color: c.muted,
   },
 });

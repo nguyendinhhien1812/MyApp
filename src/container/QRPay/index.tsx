@@ -10,15 +10,17 @@ import {
 } from 'react-native';
 import { Icon } from '@rneui/themed';
 import Svg, { Rect } from 'react-native-svg';
+import AppIcon from '../../components/Icon';
+import { ICON_TYPE } from '../../components/Icon/style';
+import SubHeader from '../../components/UI/SubHeader';
 import { AppSnackbar } from '../../components/UI';
 import { useLanguage } from '../../context/LanguageContext';
 import { useThemeColors } from '../../context/ThemeContext';
 import { ThemeColors } from '../../theme/paperTheme';
+import { RADII, TYPE, SPACING, FONT } from '../../theme/tokens';
 
-const PRIMARY = '#E89951';
-const PRIMARY_DARK = '#b36a1a';
-const PRIMARY_LIGHT = '#fdf3e7';
-const PRIMARY_BORDER = '#f0c48a';
+const PRIMARY = '#b68235'; // đồng — dùng cho logo giữa QR
+const USER_NAME = 'Nguyễn Đình Hiến'; // tên riêng — không dịch
 
 /** Simple QR-like SVG pattern */
 const QRCode = () => (
@@ -93,39 +95,38 @@ const QRPayScreen = ({ navigation }: Props) => {
   const handleShare = async () => {
     try {
       await Share.share({ message: 'Mã QR chuyển tiền: Nguyễn Đình Hiến - Vietcombank 9876 5432 10' });
-    } catch {}
+    } catch {
+      // Share bị user huỷ — hành vi bình thường, không phải lỗi cần báo
+    }
   };
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.goBack()}>
-          <Icon type="ionicon" name="arrow-back" size={18} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>QR Pay</Text>
-        <TouchableOpacity
-          style={styles.headerBtn}
-          onPress={() => setToast(t.common.demoFeature)}>
-          <Icon type="ionicon" name="ellipsis-horizontal" size={18} color="#fff" />
-        </TouchableOpacity>
-      </View>
+      <SubHeader
+        title={t.qrpay.title}
+        onBack={() => navigation.goBack()}
+        right={
+          <TouchableOpacity onPress={() => setToast(t.common.demoFeature)} hitSlop={8}>
+            <AppIcon type={ICON_TYPE.Iconoir} name="more-horiz" size={20} color={colors.accent700} />
+          </TouchableOpacity>
+        }
+      />
 
-      {/* Tab bar (still in orange area) */}
+      {/* Tab segmented control */}
       <View style={styles.tabArea}>
         <View style={styles.tabBar}>
           <TouchableOpacity
             style={[styles.tab, activeTab === 'myqr' && styles.tabActive]}
             onPress={() => setActiveTab('myqr')}>
             <Text style={[styles.tabText, activeTab === 'myqr' && styles.tabTextActive]}>
-              Mã của tôi
+              {t.qrpay.tabMyQr}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.tab, activeTab === 'scan' && styles.tabActive]}
             onPress={() => setActiveTab('scan')}>
             <Text style={[styles.tabText, activeTab === 'scan' && styles.tabTextActive]}>
-              Quét mã QR
+              {t.qrpay.tabScan}
             </Text>
           </TouchableOpacity>
         </View>
@@ -140,15 +141,15 @@ const QRPayScreen = ({ navigation }: Props) => {
 
             {/* QR Card */}
             <View style={styles.card}>
-              <Text style={styles.sectionLabel}>MÃ QR CỦA TÔI</Text>
+              <Text style={styles.sectionLabel}>{t.qrpay.myQrLabel}</Text>
               <View style={styles.qrWrapper}>
                 <QRCode />
               </View>
-              <Text style={styles.qrName}>Nguyễn Đình Hiến</Text>
+              <Text style={styles.qrName}>{USER_NAME}</Text>
               <Text style={styles.qrAccount}>Vietcombank · 9876 5432 10</Text>
               <View style={styles.qrPill}>
-                <Icon type="ionicon" name="scan-outline" size={12} color={colors.primaryDark} />
-                <Text style={styles.qrPillText}>Scan để chuyển tiền</Text>
+                <Icon type="ionicon" name="scan-outline" size={12} color={colors.accent700} />
+                <Text style={styles.qrPillText}>{t.qrpay.scanToTransfer}</Text>
               </View>
               <View style={{ height: 16 }} />
             </View>
@@ -157,8 +158,8 @@ const QRPayScreen = ({ navigation }: Props) => {
             <View style={styles.card}>
               <View style={styles.toggleRow}>
                 <View style={styles.toggleInfo}>
-                  <Text style={styles.toggleLabel}>Yêu cầu số tiền cụ thể</Text>
-                  <Text style={styles.toggleSub}>Người gửi thấy số tiền bạn muốn nhận</Text>
+                  <Text style={styles.toggleLabel}>{t.qrpay.requestAmount}</Text>
+                  <Text style={styles.toggleSub}>{t.qrpay.requestAmountSub}</Text>
                 </View>
                 <TouchableOpacity
                   style={[styles.toggle, amountEnabled ? styles.toggleOn : styles.toggleOff]}
@@ -168,7 +169,7 @@ const QRPayScreen = ({ navigation }: Props) => {
               </View>
               {amountEnabled && (
                 <View style={styles.amountInput}>
-                  <Text style={styles.amountPlaceholder}>Nhập số tiền...</Text>
+                  <Text style={styles.amountPlaceholder}>{t.qrpay.amountPlaceholder}</Text>
                 </View>
               )}
             </View>
@@ -181,19 +182,19 @@ const QRPayScreen = ({ navigation }: Props) => {
               <TouchableOpacity
                 style={styles.btnOutline}
                 onPress={() => setToast(t.qrpay.qrSaved)}>
-                <Icon type="ionicon" name="download-outline" size={16} color={colors.primaryDark} />
+                <Icon type="ionicon" name="download-outline" size={16} color={colors.accent700} />
                 <Text style={styles.btnOutlineText}>{t.qrpay.saveImage}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.btnSolid} onPress={handleShare}>
                 <Icon type="ionicon" name="share-outline" size={16} color="#fff" />
-                <Text style={styles.btnSolidText}>Chia sẻ</Text>
+                <Text style={styles.btnSolidText}>{t.qrpay.share}</Text>
               </TouchableOpacity>
             </View>
             <TouchableOpacity
               style={styles.btnOutlineFull}
               onPress={() => setActiveTab('scan')}>
-              <Icon type="ionicon" name="qr-code-outline" size={16} color={colors.primaryDark} />
-              <Text style={styles.btnOutlineText}>Quét mã QR người khác</Text>
+              <Icon type="ionicon" name="qr-code-outline" size={16} color={colors.accent700} />
+              <Text style={styles.btnOutlineText}>{t.qrpay.scanOther}</Text>
             </TouchableOpacity>
           </View>
         </>
@@ -217,7 +218,7 @@ const QRPayScreen = ({ navigation }: Props) => {
             <View style={styles.scanLine} />
           </View>
 
-          <Text style={styles.scanHint}>Đưa mã QR vào khung để quét</Text>
+          <Text style={styles.scanHint}>{t.qrpay.scanHint}</Text>
 
           {/* Controls */}
           <View style={styles.scanControls}>
@@ -229,7 +230,7 @@ const QRPayScreen = ({ navigation }: Props) => {
                   type="ionicon"
                   name={flashOn ? 'flashlight' : 'flashlight-outline'}
                   size={20}
-                  color={flashOn ? colors.primaryDark : '#fff'}
+                  color={flashOn ? colors.accent700 : '#fff'}
                 />
               </TouchableOpacity>
               <Text style={styles.controlLabel}>{t.qrpay.flash}</Text>
@@ -252,11 +253,11 @@ const QRPayScreen = ({ navigation }: Props) => {
                 <QRCodeSmall />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.sheetName}>Mã QR của tôi</Text>
-                <Text style={styles.sheetBank}>Nguyễn Đình Hiến · VCB</Text>
+                <Text style={styles.sheetName}>{t.qrpay.sheetMyQr}</Text>
+                <Text style={styles.sheetBank}>{USER_NAME} · VCB</Text>
               </View>
               <TouchableOpacity style={styles.sheetShare} onPress={handleShare}>
-                <Text style={styles.sheetShareText}>Chia sẻ</Text>
+                <Text style={styles.sheetShareText}>{t.qrpay.share}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -279,157 +280,125 @@ export default QRPayScreen;
 const makeStyles = (c: ThemeColors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: c.bg },
 
-  header: {
-    backgroundColor: c.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 8,
-  },
-  headerBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: { flex: 1, textAlign: 'center', fontSize: 16, fontWeight: '600', color: '#fff' },
-
-  // Tab
+  // Tab segmented control (nền sáng)
   tabArea: {
-    backgroundColor: c.primary,
-    paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingHorizontal: SPACING.screenX,
+    paddingTop: SPACING.s2,
+    paddingBottom: SPACING.s3,
   },
   tabBar: {
-    backgroundColor: 'rgba(0,0,0,0.12)',
-    borderRadius: 10,
+    backgroundColor: c.divider,
+    borderRadius: RADII.item,
     padding: 3,
     flexDirection: 'row',
     gap: 3,
   },
-  tab: { flex: 1, height: 30, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  tab: { flex: 1, height: 34, borderRadius: RADII.chip, alignItems: 'center', justifyContent: 'center' },
   tabActive: { backgroundColor: c.white },
-  tabText: { fontSize: 12, color: 'rgba(255,255,255,0.8)', fontWeight: '500' },
-  tabTextActive: { color: c.primaryDark, fontWeight: '600' },
+  tabText: { fontFamily: FONT.medium, fontSize: TYPE.body, color: c.subtext },
+  tabTextActive: { fontFamily: FONT.semibold, color: c.accent700 },
 
   // My QR
-  scroll: { padding: 16, gap: 12, paddingBottom: 20 },
-  card: { backgroundColor: c.white, borderRadius: 16, overflow: 'hidden', alignItems: 'center' },
+  scroll: { padding: SPACING.screenX, gap: SPACING.s3, paddingBottom: 20 },
+  card: { backgroundColor: c.white, borderRadius: RADII.card, overflow: 'hidden', alignItems: 'center' },
   sectionLabel: {
-    fontSize: 10,
-    color: c.hint,
-    letterSpacing: 0.6,
-    fontWeight: '500',
-    marginTop: 16,
-    marginBottom: 12,
+    fontFamily: FONT.regular,
+    fontSize: TYPE.caption,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: c.muted,
+    marginTop: SPACING.s4,
+    marginBottom: SPACING.s3,
   },
   qrWrapper: {
-    padding: 12,
+    padding: 14,
     backgroundColor: c.white,
-    borderRadius: 12,
-    borderWidth: 0.5,
+    borderRadius: RADII.item,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: c.border,
   },
-  qrName: { fontSize: 16, fontWeight: '600', color: c.text, marginTop: 12 },
-  qrAccount: { fontSize: 12, color: c.subtext, marginTop: 4 },
+  qrName: { fontFamily: FONT.semibold, fontSize: TYPE.title, color: c.text, marginTop: 12 },
+  qrAccount: { fontFamily: FONT.regular, fontSize: TYPE.body, color: c.subtext, marginTop: 4 },
   qrPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: c.primaryLight,
-    borderRadius: 20,
+    backgroundColor: c.accent100,
+    borderRadius: RADII.pill,
     paddingHorizontal: 12,
     paddingVertical: 5,
     marginTop: 10,
-    borderWidth: 0.5,
-    borderColor: c.primaryBorder,
   },
-  qrPillText: { fontSize: 11, color: c.primaryDark, fontWeight: '500' },
+  qrPillText: { fontFamily: FONT.medium, fontSize: TYPE.caption, color: c.accent700 },
 
   // Amount toggle
   toggleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    gap: 12,
+    padding: SPACING.s4,
+    gap: SPACING.s3,
     alignSelf: 'stretch',
   },
   toggleInfo: { flex: 1 },
-  toggleLabel: { fontSize: 14, fontWeight: '500', color: c.text },
-  toggleSub: { fontSize: 11, color: c.hint, marginTop: 2 },
-  toggle: { width: 46, height: 26, borderRadius: 13 },
-  toggleOn: { backgroundColor: c.primary },
-  toggleOff: { backgroundColor: c.border },
-  toggleThumb: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: '#fff',
-    position: 'absolute',
-    top: 2,
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 3,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 2,
-  },
-  thumbOn: { right: 2 },
-  thumbOff: { left: 2 },
+  toggleLabel: { fontFamily: FONT.medium, fontSize: TYPE.body, color: c.text },
+  toggleSub: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.subtext, marginTop: 2 },
+  toggle: { width: 40, height: 22, borderRadius: 11, justifyContent: 'center', borderWidth: 1 },
+  toggleOn: { backgroundColor: c.accent, borderColor: c.accent },
+  toggleOff: { backgroundColor: 'transparent', borderColor: c.border },
+  toggleThumb: { width: 16, height: 16, borderRadius: 8, position: 'absolute' },
+  thumbOn: { right: 2, backgroundColor: c.offWhite },
+  thumbOff: { left: 2, backgroundColor: c.muted },
   amountInput: {
-    marginHorizontal: 16,
-    marginBottom: 14,
-    backgroundColor: c.divider,
-    borderRadius: 10,
+    marginHorizontal: SPACING.s4,
+    marginBottom: SPACING.s4,
+    backgroundColor: c.accent100,
+    borderRadius: RADII.item,
     padding: 12,
     alignSelf: 'stretch',
   },
-  amountPlaceholder: { fontSize: 14, color: c.muted, fontStyle: 'italic' },
+  amountPlaceholder: { fontFamily: FONT.regular, fontSize: TYPE.body, color: c.muted, fontStyle: 'italic' },
 
   // Bottom actions
-  bottomActions: { padding: 16, gap: 10, backgroundColor: c.bg },
-  actionRow: { flexDirection: 'row', gap: 10 },
+  bottomActions: { padding: SPACING.screenX, gap: SPACING.s2, backgroundColor: c.bg },
+  actionRow: { flexDirection: 'row', gap: SPACING.s2 },
   btnOutline: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    height: 46,
-    borderRadius: 12,
+    height: 48,
+    borderRadius: RADII.item,
     borderWidth: 1,
-    borderColor: c.primary,
+    borderColor: c.accent,
   },
-  btnOutlineText: { fontSize: 13, fontWeight: '500', color: c.primaryDark },
+  btnOutlineText: { fontFamily: FONT.medium, fontSize: TYPE.body, color: c.accent700 },
   btnSolid: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    height: 46,
-    borderRadius: 12,
-    backgroundColor: c.primary,
+    height: 48,
+    borderRadius: RADII.item,
+    backgroundColor: c.heroDark,
   },
-  btnSolidText: { fontSize: 13, fontWeight: '600', color: '#fff' },
+  btnSolidText: { fontFamily: FONT.semibold, fontSize: TYPE.body, color: c.offWhite },
   btnOutlineFull: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    height: 46,
-    borderRadius: 12,
+    height: 48,
+    borderRadius: RADII.item,
     borderWidth: 1,
-    borderColor: c.primary,
+    borderColor: c.accent,
   },
 
   // Scanner
   scanContainer: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: c.heroDark,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 14,
@@ -452,7 +421,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     position: 'absolute',
     width: 22,
     height: 22,
-    borderColor: c.primary,
+    borderColor: c.accent,
     borderStyle: 'solid',
   },
   cornerTL: { top: 0, left: 0, borderTopWidth: 3, borderLeftWidth: 3, borderRadius: 3 },
@@ -464,10 +433,10 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     left: 4,
     right: 4,
     height: 2,
-    backgroundColor: 'rgba(232,153,81,0.7)',
+    backgroundColor: 'rgba(216,183,131,0.85)',
     borderRadius: 1,
   },
-  scanHint: { fontSize: 12, color: 'rgba(255,255,255,0.5)', textAlign: 'center' },
+  scanHint: { fontFamily: FONT.regular, fontSize: TYPE.body, color: 'rgba(253,252,251,0.55)', textAlign: 'center' },
 
   scanControls: { flexDirection: 'row', gap: 36 },
   controlItem: { alignItems: 'center', gap: 6 },
@@ -512,15 +481,13 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     borderWidth: 0.5,
     borderColor: c.border,
   },
-  sheetName: { fontSize: 14, fontWeight: '600', color: c.text },
-  sheetBank: { fontSize: 11, color: c.subtext, marginTop: 2 },
+  sheetName: { fontFamily: FONT.semibold, fontSize: TYPE.body, color: c.text },
+  sheetBank: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.subtext, marginTop: 2 },
   sheetShare: {
-    backgroundColor: c.primaryLight,
-    borderWidth: 0.5,
-    borderColor: c.primaryBorder,
-    borderRadius: 8,
+    backgroundColor: c.accent100,
+    borderRadius: RADII.chip,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
-  sheetShareText: { fontSize: 12, color: c.primaryDark, fontWeight: '500' },
+  sheetShareText: { fontFamily: FONT.medium, fontSize: TYPE.caption, color: c.accent700 },
 });

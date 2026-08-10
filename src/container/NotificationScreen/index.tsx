@@ -12,6 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useLanguage } from '../../context/LanguageContext';
 import { useThemeColors } from '../../context/ThemeContext';
 import { ThemeColors } from '../../theme/paperTheme';
+import { RADII, TYPE, SPACING, FONT } from '../../theme/tokens';
 
 type NotifItem = {
   id: number;
@@ -129,7 +130,7 @@ const NotificationScreen = () => {
         </View>
         <View style={styles.headerActions}>
           <TouchableOpacity style={styles.headerIconBtn} onPress={markAllRead}>
-            <Icon type="ionicon" name="checkmark-done-outline" size={20} color={colors.primaryDark} />
+            <Icon type="ionicon" name="checkmark-done-outline" size={20} color={colors.accent700} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.headerIconBtn}
@@ -208,64 +209,60 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 10,
+    paddingHorizontal: SPACING.screenX,
+    paddingTop: SPACING.s4,
+    paddingBottom: SPACING.s3,
   },
-  headerTitle: { fontSize: 26, fontWeight: '700', color: c.text },
-  headerSub: { fontSize: 12, color: c.primary, fontWeight: '500', marginTop: 2 },
+  headerTitle: { fontFamily: FONT.bold, fontSize: 26, color: c.text },
+  headerSub: { fontFamily: FONT.medium, fontSize: TYPE.caption, color: c.accent700, marginTop: 2 },
   headerActions: { flexDirection: 'row', gap: 6, paddingTop: 4 },
   headerIconBtn: {
     width: 34,
     height: 34,
-    borderRadius: 10,
-    backgroundColor: c.white,
+    borderRadius: RADII.chip,
+    backgroundColor: c.accent100,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 0.5,
-    borderColor: c.border,
   },
 
   filterRow: {
     flexDirection: 'row',
     gap: 8,
-    paddingHorizontal: 16,
-    marginBottom: 12,
+    paddingHorizontal: SPACING.screenX,
+    marginBottom: SPACING.s3,
   },
   filterChip: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingVertical: 7,
-    borderRadius: 20,
-    borderWidth: 0.5,
+    borderRadius: RADII.pill,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: c.border,
     backgroundColor: c.white,
   },
   filterChipActive: {
-    backgroundColor: c.primary,
-    borderColor: c.primary,
+    backgroundColor: c.accent100,
+    borderColor: c.accent100,
   },
-  filterText: { fontSize: 12, color: c.subtext },
-  filterTextActive: { color: '#fff', fontWeight: '500' },
+  filterText: { fontFamily: FONT.regular, fontSize: TYPE.body, color: c.subtext },
+  filterTextActive: { fontFamily: FONT.medium, color: c.accent700 },
 
-  listContent: { paddingHorizontal: 12, paddingBottom: 40 },
+  listContent: { paddingHorizontal: SPACING.screenX, paddingBottom: 120 },
 
   notifRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: SPACING.s3,
     backgroundColor: c.white,
-    borderRadius: 14,
-    padding: 14,
+    borderRadius: RADII.card,
+    padding: SPACING.s4,
     alignItems: 'flex-start',
   },
   notifRowUnread: {
-    backgroundColor: c.primaryLight,
-    borderWidth: 0.5,
-    borderColor: c.primaryBorder,
+    backgroundColor: c.accent100,
   },
   notifIcon: {
     width: 44,
     height: 44,
-    borderRadius: 12,
+    borderRadius: RADII.item,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
@@ -277,15 +274,15 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 3,
   },
-  notifTitle: { fontSize: 13, fontWeight: '500', color: c.text, flex: 1 },
-  notifTitleUnread: { fontWeight: '600', color: c.primaryDark },
-  notifBody: { fontSize: 12, color: c.subtext, lineHeight: 17 },
-  notifTime: { fontSize: 11, color: c.muted, marginTop: 5 },
+  notifTitle: { fontFamily: FONT.medium, fontSize: TYPE.body, color: c.text, flex: 1 },
+  notifTitleUnread: { fontFamily: FONT.semibold, color: c.accent700 },
+  notifBody: { fontFamily: FONT.regular, fontSize: TYPE.body, color: c.subtext, lineHeight: 18 },
+  notifTime: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.muted, marginTop: 5 },
   unreadDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: c.primary,
+    backgroundColor: c.accent,
     marginLeft: 6,
     flexShrink: 0,
   },
@@ -297,10 +294,10 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: c.bg,
+    backgroundColor: c.white,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  emptyTitle: { fontSize: 15, fontWeight: '500', color: c.subtext },
-  emptyDesc: { fontSize: 12, color: c.muted },
+  emptyTitle: { fontFamily: FONT.medium, fontSize: TYPE.itemTitle, color: c.subtext },
+  emptyDesc: { fontFamily: FONT.regular, fontSize: TYPE.body, color: c.muted },
 });

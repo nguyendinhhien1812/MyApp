@@ -11,9 +11,11 @@ import {
 import { Icon } from '@rneui/themed';
 import { StackScreenProps } from '@react-navigation/stack';
 import { AppDialog, AppSnackbar } from '../../../components/UI';
+import SubHeader from '../../../components/UI/SubHeader';
 import { useLanguage } from '../../../context/LanguageContext';
 import { useThemeColors } from '../../../context/ThemeContext';
 import { ThemeColors } from '../../../theme/paperTheme';
+import { RADII, TYPE, SPACING, FONT } from '../../../theme/tokens';
 
 const RECIPIENT = {
   name: 'John Smith',
@@ -45,14 +47,7 @@ const TransferMoney = ({ navigation, route }: Props) => {
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.goBack()}>
-          <Icon type="ionicon" name="arrow-back" size={18} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Xác nhận chuyển</Text>
-        <View style={styles.headerBtn} />
-      </View>
+      <SubHeader title={t.transferScreen.title} onBack={() => navigation.goBack()} />
 
       <ScrollView
         contentContainerStyle={styles.scroll}
@@ -60,7 +55,7 @@ const TransferMoney = ({ navigation, route }: Props) => {
 
         {/* Người nhận */}
         <View style={styles.card}>
-          <Text style={styles.sectionLabel}>NGƯỜI NHẬN</Text>
+          <Text style={styles.sectionLabel}>{t.transferScreen.recipient}</Text>
           <View style={styles.recipientRow}>
             <Image source={{ uri: recipient.avatar }} style={styles.avatar} />
             <View style={styles.recipientInfo}>
@@ -71,7 +66,7 @@ const TransferMoney = ({ navigation, route }: Props) => {
             </View>
             <View style={styles.verifiedBadge}>
               <Icon type="ionicon" name="checkmark-circle" size={12} color="#16a34a" />
-              <Text style={styles.verifiedText}>Đã xác minh</Text>
+              <Text style={styles.verifiedText}>{t.transferScreen.verified}</Text>
             </View>
           </View>
         </View>
@@ -79,33 +74,33 @@ const TransferMoney = ({ navigation, route }: Props) => {
         {/* Số tiền hero */}
         <View style={styles.card}>
           <View style={styles.amountHero}>
-            <Text style={styles.sectionLabel}>SỐ TIỀN CHUYỂN</Text>
+            <Text style={styles.sectionLabel}>{t.transferScreen.amountLabel}</Text>
             <Text style={styles.amountBig}>{money(AMOUNT)}</Text>
             <View style={styles.freeBadge}>
               <Icon type="ionicon" name="checkmark-circle" size={12} color="#16a34a" />
-              <Text style={styles.freeText}>Phí: Miễn phí</Text>
+              <Text style={styles.freeText}>{t.transferScreen.feeFree}</Text>
             </View>
           </View>
           <View style={styles.divider} />
           <View style={styles.row}>
-            <Text style={styles.rowLabel}>Nội dung</Text>
-            <Text style={styles.rowValue}>Chuyển tiền ăn tối</Text>
+            <Text style={styles.rowLabel}>{t.transferScreen.note}</Text>
+            <Text style={styles.rowValue}>{t.transferScreen.noteValue}</Text>
           </View>
         </View>
 
         {/* Tổng kết */}
         <View style={styles.card}>
           <View style={styles.row}>
-            <Text style={styles.rowLabel}>Từ tài khoản</Text>
-            <Text style={styles.rowValue}>TK Thanh toán</Text>
+            <Text style={styles.rowLabel}>{t.transferScreen.fromAccount}</Text>
+            <Text style={styles.rowValue}>{t.transferScreen.fromAccountValue}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.rowLabel}>Số dư hiện tại</Text>
+            <Text style={styles.rowLabel}>{t.transferScreen.balanceNow}</Text>
             <Text style={styles.rowValue}>{money(balance)}</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.row}>
-            <Text style={styles.rowLabel}>Số dư sau khi chuyển</Text>
+            <Text style={styles.rowLabel}>{t.transferScreen.balanceAfter}</Text>
             <Text style={styles.rowRemain}>{money(balance - AMOUNT)}</Text>
           </View>
         </View>
@@ -113,7 +108,7 @@ const TransferMoney = ({ navigation, route }: Props) => {
         {/* Security note */}
         <View style={styles.securityRow}>
           <Icon type="ionicon" name="shield-checkmark-outline" size={14} color={colors.muted} />
-          <Text style={styles.securityText}>Giao dịch được mã hoá 256-bit SSL</Text>
+          <Text style={styles.securityText}>{t.transferScreen.ssl}</Text>
         </View>
 
       </ScrollView>
@@ -122,14 +117,14 @@ const TransferMoney = ({ navigation, route }: Props) => {
       <View style={styles.bottom}>
         <View style={styles.securityRowCenter}>
           <Icon type="ionicon" name="lock-closed-outline" size={13} color={colors.hint} />
-          <Text style={styles.securityTextSmall}>Bảo mật bởi Face ID</Text>
+          <Text style={styles.securityTextSmall}>{t.transferScreen.faceIdNote}</Text>
         </View>
         <TouchableOpacity
           style={styles.confirmBtn}
           activeOpacity={0.85}
           onPress={() => setConfirmVisible(true)}>
           <Icon type="ionicon" name="happy-outline" size={20} color="#fff" />
-          <Text style={styles.confirmText}>Xác nhận bằng Face ID</Text>
+          <Text style={styles.confirmText}>{t.transferScreen.confirmFaceId}</Text>
         </TouchableOpacity>
       </View>
 
@@ -167,78 +162,54 @@ export default TransferMoney;
 const makeStyles = (c: ThemeColors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: c.bg },
 
-  // Header
-  header: {
-    backgroundColor: c.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 8,
-  },
-  headerBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-  },
-
   // Scroll
-  scroll: { padding: 16, gap: 12, paddingBottom: 16 },
+  scroll: { padding: SPACING.screenX, gap: SPACING.s3, paddingBottom: 16 },
 
   // Card
   card: {
     backgroundColor: c.white,
-    borderRadius: 16,
+    borderRadius: RADII.card,
     overflow: 'hidden',
   },
   sectionLabel: {
-    fontSize: 10,
-    color: c.hint,
-    letterSpacing: 0.6,
-    fontWeight: '500',
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 10,
+    fontFamily: FONT.regular,
+    fontSize: TYPE.caption,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: c.muted,
+    paddingHorizontal: SPACING.s4,
+    paddingTop: SPACING.s4,
+    paddingBottom: SPACING.s3,
   },
 
   // Recipient
   recipientRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    gap: SPACING.s3,
+    paddingHorizontal: SPACING.s4,
+    paddingBottom: SPACING.s4,
   },
   avatar: {
     width: 46,
     height: 46,
     borderRadius: 23,
     borderWidth: 1.5,
-    borderColor: c.primaryBorder,
+    borderColor: c.accent,
   },
   recipientInfo: { flex: 1 },
-  recipientName: { fontSize: 15, fontWeight: '600', color: c.text },
-  recipientBank: { fontSize: 12, color: c.subtext, marginTop: 3 },
+  recipientName: { fontFamily: FONT.semibold, fontSize: TYPE.itemTitle, color: c.text },
+  recipientBank: { fontFamily: FONT.regular, fontSize: TYPE.body, color: c.subtext, marginTop: 3 },
   verifiedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
     backgroundColor: '#e6f7ef',
-    borderRadius: 20,
+    borderRadius: RADII.pill,
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
-  verifiedText: { fontSize: 9, color: '#16a34a', fontWeight: '500' },
+  verifiedText: { fontFamily: FONT.medium, fontSize: 9, color: '#16a34a' },
 
   // Amount hero
   amountHero: {
@@ -248,34 +219,33 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     gap: 8,
   },
   amountBig: {
+    fontFamily: FONT.bold,
     fontSize: 34,
-    fontWeight: '700',
     color: c.text,
-    letterSpacing: -0.5,
   },
   freeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     backgroundColor: '#e6f7ef',
-    borderRadius: 20,
+    borderRadius: RADII.pill,
     paddingHorizontal: 12,
     paddingVertical: 5,
   },
-  freeText: { fontSize: 11, color: '#16a34a', fontWeight: '500' },
+  freeText: { fontFamily: FONT.medium, fontSize: TYPE.caption, color: '#16a34a' },
 
   // Rows
-  divider: { height: 0.5, backgroundColor: c.divider, marginHorizontal: 16 },
+  divider: { height: StyleSheet.hairlineWidth, backgroundColor: c.divider, marginHorizontal: SPACING.s4 },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: SPACING.s4,
     paddingVertical: 13,
   },
-  rowLabel: { fontSize: 14, color: c.subtext },
-  rowValue: { fontSize: 14, color: c.text, fontWeight: '500' },
-  rowRemain: { fontSize: 14, color: c.primary, fontWeight: '700' },
+  rowLabel: { fontFamily: FONT.regular, fontSize: TYPE.body, color: c.subtext },
+  rowValue: { fontFamily: FONT.medium, fontSize: TYPE.body, color: c.text },
+  rowRemain: { fontFamily: FONT.semibold, fontSize: TYPE.body, color: c.accent700 },
 
   // Security
   securityRow: {
@@ -285,11 +255,11 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     gap: 5,
     paddingVertical: 4,
   },
-  securityText: { fontSize: 11, color: c.muted },
+  securityText: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.muted },
 
   // Bottom
   bottom: {
-    padding: 16,
+    padding: SPACING.screenX,
     paddingBottom: 24,
     gap: 10,
     backgroundColor: c.bg,
@@ -300,15 +270,15 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     justifyContent: 'center',
     gap: 5,
   },
-  securityTextSmall: { fontSize: 11, color: c.hint },
+  securityTextSmall: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.hint },
   confirmBtn: {
-    backgroundColor: c.primary,
-    borderRadius: 14,
+    backgroundColor: c.heroDark,
+    borderRadius: RADII.item,
     height: 52,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
   },
-  confirmText: { fontSize: 15, fontWeight: '600', color: '#fff' },
+  confirmText: { fontFamily: FONT.semibold, fontSize: TYPE.itemTitle, color: c.offWhite },
 });
