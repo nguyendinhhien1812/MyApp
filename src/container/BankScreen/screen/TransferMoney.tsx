@@ -16,6 +16,7 @@ import { useLanguage } from '../../../context/LanguageContext';
 import { useThemeColors } from '../../../context/ThemeContext';
 import { ThemeColors } from '../../../theme/paperTheme';
 import { RADII, TYPE, SPACING, FONT } from '../../../theme/tokens';
+import { money } from '../../../utils/money';
 
 const RECIPIENT = {
   name: 'John Smith',
@@ -26,12 +27,6 @@ const RECIPIENT = {
 
 const AMOUNT = 500000;
 
-const money = (n: number) =>
-  new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-    maximumFractionDigits: 0,
-  }).format(n);
 
 interface Props extends StackScreenProps<any> {}
 
@@ -272,7 +267,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   },
   securityTextSmall: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.hint },
   confirmBtn: {
-    backgroundColor: c.heroDark,
+    backgroundColor: c.btnSolid,
     borderRadius: RADII.item,
     height: 52,
     flexDirection: 'row',

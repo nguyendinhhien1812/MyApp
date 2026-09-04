@@ -10,5 +10,5 @@ export const ICON_TYPE = {
     Octicons: 'Octicons',
     Zocial: 'Zocial',
     SimpleLineIcons: 'SimpleLineIcons',
-    Iconoir: 'Iconoir'
+    Iconoir: 'Iconoir',
 };

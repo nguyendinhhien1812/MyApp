@@ -20,6 +20,8 @@ import SkillNavigator from './SkillNavigator';
 import EditProfileScreen from '../container/EditProfile';
 import SecurityScreen from '../container/Security';
 import TermsScreen from '../container/Terms';
+import MiniAppsScreen from '../container/MiniApps';
+import MiniAppHostScreen from '../container/MiniApps/MiniAppHost';
 
 const MainNavigator = () => {
   const navigators = [
@@ -66,6 +68,14 @@ const MainNavigator = () => {
     {
       name: 'TermsScreen',
       component: TermsScreen,
+    },
+    {
+      name: 'MiniAppsScreen',
+      component: MiniAppsScreen,
+    },
+    {
+      name: 'MiniAppHostScreen',
+      component: MiniAppHostScreen,
     },
   ];
 

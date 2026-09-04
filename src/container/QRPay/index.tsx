@@ -312,7 +312,9 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   },
   qrWrapper: {
     padding: 14,
-    backgroundColor: c.white,
+    // Mã QR vẽ ô màu #1a1a1a cố định nên nền giấy phải luôn sáng —
+    // dùng c.white thì ở chế độ tối thành đen trên đen, máy không quét được.
+    backgroundColor: '#FFFFFF',
     borderRadius: RADII.item,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: c.border,
@@ -381,7 +383,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     gap: 6,
     height: 48,
     borderRadius: RADII.item,
-    backgroundColor: c.heroDark,
+    backgroundColor: c.btnSolid,
   },
   btnSolidText: { fontFamily: FONT.semibold, fontSize: TYPE.body, color: c.offWhite },
   btnOutlineFull: {

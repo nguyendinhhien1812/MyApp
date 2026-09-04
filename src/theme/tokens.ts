@@ -31,6 +31,10 @@ export const SPACING = {
   screenX: 24, // padding ngang cố định mỗi màn
 } as const;
 
+// Đệm đáy cho các màn NẰM TRONG tab: thanh tab cao 72 + safe area + khoảng thở.
+// Thiếu cái này thì phần tử cuối danh sách bị thanh tab đè lên.
+export const TAB_BAR_SPACE = 118;
+
 // Font Be Vietnam Pro (400/500/600/700).
 // Tên family = tên file .ttf (không đuôi) sau khi link bằng `npx react-native-asset`.
 // Đặt các file vào assets/fonts: BeVietnamPro-{Regular,Medium,SemiBold,Bold}.ttf

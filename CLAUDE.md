@@ -32,7 +32,7 @@ logger.error('invest', 'không tải được tỷ giá', err);
 ```
 
 Scope đang dùng — **dùng lại thay vì tạo mới nếu phù hợp**:
-`theme` · `about` · `webview` · `chatbot` · `invest`
+`theme` · `about` · `webview` · `chatbot` · `invest` · `miniapp`
 
 ## Bắt buộc khi viết UI
 
@@ -44,6 +44,41 @@ Scope đang dùng — **dùng lại thay vì tạo mới nếu phù hợp**:
 - **Header màn con**: dùng `<SubHeader>`, không tự dựng header.
 - **Kiểm tra trước khi xong**: đổi sang EN → text đổi hết; bật chế độ Tối → không khối nào
   bị "tàng hình" (nền tối trên nền tối).
+
+## Mini-app (Module Federation)
+
+Host nạp mini-app từ bundle tải lúc chạy. Tên `loyalty` phải trùng ở **ba** chỗ:
+`remotes` trong `rspack.config.mjs`, `name`/`filename` trong
+`miniapps/loyalty/rspack.config.mjs`, và `id` trong registry.
+
+Bắt buộc dùng **`ModuleFederationPluginV2`** (cần `@module-federation/enhanced`), kèm
+`dts: false` và `dev: false`. Lý do:
+
+- **V1 hỏng**: module tham chiếu remote chạy trong `__webpack_require__.I` lúc khởi động,
+  tức TRƯỚC khi `ScriptManager` khởi tạo → `Cannot read property 'addResolver' of undefined`.
+- **`dev: true` hỏng**: MF2 bật plugin gợi ý type qua WebSocket, React Native không có
+  → `Cannot read property 'prototype' of undefined`.
+
+**Resolver trong `index.js` phải đăng ký với `priority: 10`** (mặc định là 2). MF2 tự đăng
+ký một resolver cho mỗi remote, dùng URL build-time trong `rspack.config.mjs`, và nó được
+đẩy vào `enqueuedResolvers` TRƯỚC khi `ScriptManager` khởi tạo. Cùng priority thì nó đứng
+trước, registry không bao giờ được hỏi, mini-app cứ tải từ `localhost:9000` — lỗi im lặng,
+chỉ lộ ra khi tắt server local.
+
+Chạy thử local: `npm run miniapp:build` rồi `npm run miniapp:serve` (cổng 9000).
+Phát hành thật: `./miniapps/release.sh loyalty <x.y.z>` (build → assets → deploy Worker).
+
+Bundle production nằm ở `server/assets/bundles/` và **đi kèm bản deploy Worker** — deploy
+khi thư mục rỗng là gỡ sạch mini-app đang chạy. Vì thế thư mục đó được commit.
+
+## Chọn provider AI
+
+`server/` tự chọn theo secret: `ANTHROPIC_API_KEY` → Claude, `GEMINI_API_KEY` → Gemini,
+có cả hai thì Claude thắng. App **không biết** đang dùng cái nào — nó chỉ nói hình dạng
+message của Anthropic, Worker lo việc dịch (`server/src/providers/`).
+
+Thêm provider mới = thêm một file trong `providers/` với ba hàm
+`isConfigured` / `complete` / `streamText`, rồi đưa vào mảng `PROVIDERS`.
 
 ## Chạy app
 

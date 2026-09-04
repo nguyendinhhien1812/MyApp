@@ -10,6 +10,7 @@ import { COLORS_DARK, COLORS_LIGHT } from './theme/ColorScheme';
 import { paperLightTheme, paperDarkTheme } from './theme/paperTheme';
 import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider, useAppTheme } from './context/ThemeContext';
+import Splash from './components/Splash';
 
 LogBox.ignoreLogs(['Warning: ...']); // Ignore log notification by message
 LogBox.ignoreAllLogs(); // Ignore all log notifications
@@ -33,6 +34,7 @@ const ThemedApp = () => {
           backgroundColor={isDark ? '#121212' : '#F2F2F7'}
         />
         <AppNavigator />
+        <Splash />
       </PaperProvider>
     </RNEThemeProvider>
   );

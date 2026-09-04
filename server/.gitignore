@@ -1,0 +1,6 @@
+node_modules/
+.wrangler/
+# Biến môi trường cho `wrangler dev` — chứa secret, KHÔNG commit.
+# Secret thật nạp bằng `npx wrangler secret put <TÊN>`.
+.dev.vars
+.admin-token

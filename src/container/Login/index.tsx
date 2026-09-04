@@ -57,7 +57,7 @@ const LoginScreen = ({ navigation }: Props) => {
     mode: 'onTouched',
   });
 
-  const onSubmit = (data: LoginForm) => {
+  const onSubmit = (_data: LoginForm) => {
     setSubmitting(true);
     // Giả lập gọi API — thay bằng auth service thật khi có.
     // KHÔNG log `data`: object này chứa password.

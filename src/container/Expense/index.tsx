@@ -19,83 +19,21 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useThemeColors } from '../../context/ThemeContext';
 import { ThemeColors } from '../../theme/paperTheme';
 import { RADII, TYPE, SPACING, FONT } from '../../theme/tokens';
+import { CategoryId, getCatName, CATEGORY_VISUALS } from './categories';
+import { moneyAbs } from '../../utils/money';
+import {
+  listCategories,
+  listExpenses,
+  totalSpent,
+} from '../../services/expenseService';
 
-// ─── Brand colors ─────────────────────────────────────────────────────────────
-// Giữ lại để dùng cho dữ liệu tĩnh (CATEGORIES/TRANSACTIONS) — không đổi theo theme.
-const PRIMARY        = '#E89951';
-const PRIMARY_DARK   = '#b36a1a';
-const COLOR_DANGER   = '#c0392b';
-const COLOR_SUCCESS  = '#1a7a40';
-const UP_ON_DARK     = '#4ade80'; // xanh sáng trên nền tối (hero)
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-type CategoryItem = {
-  id: string;
-  name: string;
-  icon: string;
-  iconBg: string;
-  iconColor: string;
-  total: number;
-  percent: number;
-};
-
-type TxItem = {
-  id: number;
-  name: string;
-  category: string;
-  categoryId: string;
-  icon: string;
-  iconBg: string;
-  iconColor: string;
-  amount: number;
-  date: string;
-  time: string;
-};
+// Xanh sáng cho nhãn trên khối hero luôn tối — không đổi theo theme.
+const UP_ON_DARK = '#4ade80';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-const money = (n: number) =>
-  new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-    maximumFractionDigits: 0,
-  }).format(Math.abs(n));
 
-// i18n-safe: maps categoryId → translated name
-const getCatName = (id: string, t: any): string => {
-  const map: Record<string, string> = {
-    food:      t.expense.catFood,
-    shopping:  t.expense.catShopping,
-    fun:       t.expense.catFun,
-    transport: t.expense.catTransport,
-    utility:   t.expense.catUtility,
-    other:     t.expense.catOther,
-  };
-  return map[id] ?? id;
-};
-
-// ─── Static data ──────────────────────────────────────────────────────────────
-const CATEGORIES: CategoryItem[] = [
-  { id: 'food',      name: 'Ăn uống',    icon: 'restaurant-outline',      iconBg: '#fff4e8', iconColor: PRIMARY_DARK, total: 3_200_000, percent: 0.38 },
-  { id: 'shopping',  name: 'Mua sắm',    icon: 'bag-handle-outline',      iconBg: '#f5f0ff', iconColor: '#6c3fc4',   total: 2_100_000, percent: 0.25 },
-  { id: 'fun',       name: 'Giải trí',   icon: 'game-controller-outline', iconBg: '#e8f0f8', iconColor: '#1a4a7a',  total: 890_000,   percent: 0.11 },
-  { id: 'transport', name: 'Di chuyển',  icon: 'car-outline',             iconBg: '#e8f8f0', iconColor: COLOR_SUCCESS, total: 650_000, percent: 0.08 },
-  { id: 'utility',   name: 'Tiện ích',   icon: 'flash-outline',           iconBg: '#ffeaea', iconColor: COLOR_DANGER, total: 1_485_110, percent: 0.18 },
-  { id: 'other',     name: 'Khác',       icon: 'ellipsis-horizontal',     iconBg: '#f0f0f0', iconColor: '#888',     total: 0,         percent: 0 },
-];
-
-const TRANSACTIONS: TxItem[] = [
-  { id: 1,  name: 'Starbucks Coffee',    category: 'Ăn uống',   categoryId: 'food',      icon: 'cafe-outline',           iconBg: '#fff4e8', iconColor: PRIMARY_DARK,   amount: -163_980,  date: '10/09/2024', time: '17:13' },
-  { id: 2,  name: 'Netflix',             category: 'Giải trí',  categoryId: 'fun',       icon: 'play-circle-outline',    iconBg: '#ffeaea', iconColor: COLOR_DANGER,   amount: -60_230,   date: '09/09/2024', time: '12:00' },
-  { id: 3,  name: 'Spotify Premium',     category: 'Giải trí',  categoryId: 'fun',       icon: 'musical-notes-outline',  iconBg: '#e8f8f0', iconColor: COLOR_SUCCESS,  amount: -29_900,   date: '08/09/2024', time: '09:00' },
-  { id: 4,  name: 'Bữa trưa văn phòng', category: 'Ăn uống',   categoryId: 'food',      icon: 'restaurant-outline',     iconBg: '#fff4e8', iconColor: PRIMARY_DARK,   amount: -85_000,   date: '08/09/2024', time: '12:30' },
-  { id: 5,  name: 'Shopee',             category: 'Mua sắm',   categoryId: 'shopping',  icon: 'bag-handle-outline',     iconBg: '#f5f0ff', iconColor: '#6c3fc4',      amount: -250_000,  date: '07/09/2024', time: '20:45' },
-  { id: 6,  name: 'Grab',              category: 'Di chuyển', categoryId: 'transport', icon: 'car-outline',            iconBg: '#e8f8f0', iconColor: COLOR_SUCCESS,  amount: -35_000,   date: '07/09/2024', time: '08:10' },
-  { id: 7,  name: 'Pay H&M',           category: 'Mua sắm',   categoryId: 'shopping',  icon: 'shirt-outline',          iconBg: '#f5f0ff', iconColor: '#6c3fc4',      amount: -199_000,  date: '06/09/2024', time: '14:22' },
-  { id: 8,  name: 'Điện EVN',          category: 'Tiện ích',  categoryId: 'utility',   icon: 'flash-outline',          iconBg: '#ffeaea', iconColor: COLOR_DANGER,   amount: -320_000,  date: '05/09/2024', time: '10:00' },
-];
-
-// Filter id → categoryId mapping (index-based, i18n-safe)
-const FILTER_IDS = ['', 'food', 'shopping', 'fun', 'transport', 'utility', 'other'];
+// Chip lọc theo index; '' = tất cả
+const FILTER_IDS: Array<'' | CategoryId> = ['', 'food', 'shopping', 'fun', 'transport', 'utility', 'other'];
 
 // ─── Main Screen ─────────────────────────────────────────────────────────────
 interface Props { navigation: any; }
@@ -112,13 +50,6 @@ const ExpenseScreen = ({ navigation }: Props) => {
   const [addCatIdx, setAddCatIdx]       = useState(0);
 
   // ─── Sub-component: Section title (dùng styles theo theme) ───────────────
-  const SectionTitle = ({ title }: { title: string }) => (
-    <View style={styles.sectionTitleRow}>
-      <View style={styles.accentBar} />
-      <Text style={styles.sectionTitleText}>{title}</Text>
-    </View>
-  );
-
   const filters = [
     t.expense.filterAll,
     t.expense.filterFood,
@@ -130,11 +61,11 @@ const ExpenseScreen = ({ navigation }: Props) => {
   ];
 
   // Index-based filter — never compare to label string
-  const filtered = TRANSACTIONS.filter(item =>
-    activeFilter === 0 ? true : item.categoryId === FILTER_IDS[activeFilter],
+  const filtered = listExpenses(
+    activeFilter === 0 ? undefined : { categoryId: FILTER_IDS[activeFilter] as CategoryId },
   );
 
-  const totalMonth = TRANSACTIONS.reduce((s, i) => s + Math.abs(i.amount), 0);
+  const totalMonth = totalSpent();
 
   const handleSaveExpense = () => {
     setAddModal(false);
@@ -165,7 +96,7 @@ const ExpenseScreen = ({ navigation }: Props) => {
         {/* ── Hero card ── */}
         <View style={styles.heroCard}>
           <Text style={styles.heroLabel}>{t.expense.totalMonth}</Text>
-          <Text style={styles.heroAmount}>{money(totalMonth)}</Text>
+          <Text style={styles.heroAmount}>{moneyAbs(totalMonth)}</Text>
 
           {/* Trend badge */}
           <View style={styles.trendBadge}>
@@ -202,7 +133,7 @@ const ExpenseScreen = ({ navigation }: Props) => {
         {/* ── Breakdown theo danh mục ── */}
         <Text style={styles.sectionLabel}>{t.expense.categoryTitle}</Text>
         <View style={styles.breakdownList}>
-          {CATEGORIES.filter(cat => cat.total > 0).map(cat => {
+          {listCategories().filter(cat => cat.total > 0).map(cat => {
             const pct = Math.round(cat.percent * 100);
             return (
               <TouchableOpacity
@@ -215,13 +146,13 @@ const ExpenseScreen = ({ navigation }: Props) => {
                   setActiveFilter(idx > 0 ? idx : 0);
                   scrollRef.current?.scrollToEnd({ animated: true });
                 }}>
-                <View style={[styles.bdIcon, { backgroundColor: cat.iconBg }]}>
-                  <Icon type="ionicon" name={cat.icon} size={18} color={cat.iconColor} />
+                <View style={[styles.bdIcon, { backgroundColor: CATEGORY_VISUALS[cat.id].iconBg }]}>
+                  <Icon type="ionicon" name={CATEGORY_VISUALS[cat.id].icon} size={18} color={CATEGORY_VISUALS[cat.id].iconColor} />
                 </View>
                 <View style={styles.bdInfo}>
                   <View style={styles.bdTopRow}>
                     <Text style={styles.bdName}>{getCatName(cat.id, t)}</Text>
-                    <Text style={styles.bdAmount}>{money(cat.total)}</Text>
+                    <Text style={styles.bdAmount}>{moneyAbs(cat.total)}</Text>
                   </View>
                   <View style={styles.bdBarBg}>
                     <View style={[styles.bdBarFill, { width: `${pct}%` }]} />
@@ -235,7 +166,7 @@ const ExpenseScreen = ({ navigation }: Props) => {
 
         {/* ── Recent transactions ── */}
         <View style={styles.sectionHeader}>
-          <SectionTitle title={t.expense.recentTx} />
+          <SectionTitle styles={styles} title={t.expense.recentTx} />
           <TouchableOpacity
             onPress={() => {
               setActiveFilter(0);
@@ -268,15 +199,15 @@ const ExpenseScreen = ({ navigation }: Props) => {
                 style={styles.txRow}
                 activeOpacity={0.7}
                 onPress={() => navigation.navigate('ExpenseDetail' as never, { item } as never)}>
-                <View style={[styles.txIconWrap, { backgroundColor: item.iconBg }]}>
-                  <Icon type="ionicon" name={item.icon} size={20} color={item.iconColor} />
+                <View style={[styles.txIconWrap, { backgroundColor: CATEGORY_VISUALS[item.categoryId].iconBg }]}>
+                  <Icon type="ionicon" name={item.icon} size={20} color={CATEGORY_VISUALS[item.categoryId].iconColor} />
                 </View>
                 <View style={styles.txInfo}>
                   <Text style={styles.txName}>{item.name}</Text>
                   <Text style={styles.txMeta}>{getCatName(item.categoryId, t)} · {item.date}</Text>
                 </View>
                 <View style={styles.txRight}>
-                  <Text style={styles.txAmount}>{money(item.amount)}</Text>
+                  <Text style={styles.txAmount}>{moneyAbs(item.amount)}</Text>
                   <Text style={styles.txTime}>{item.time}</Text>
                 </View>
               </TouchableOpacity>
@@ -320,13 +251,13 @@ const ExpenseScreen = ({ navigation }: Props) => {
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.catPickerRow}>
-              {CATEGORIES.filter(c => c.id !== 'other').map((cat, i) => (
+              {listCategories().filter(c => c.id !== 'other').map((cat, i) => (
                 <TouchableOpacity
                   key={cat.id}
                   style={[styles.catPickerItem, addCatIdx === i && styles.catPickerItemActive]}
                   onPress={() => setAddCatIdx(i)}>
-                  <View style={[styles.catPickerIcon, { backgroundColor: addCatIdx === i ? colors.accent : cat.iconBg }]}>
-                    <Icon type="ionicon" name={cat.icon} size={18} color={addCatIdx === i ? colors.offWhite : cat.iconColor} />
+                  <View style={[styles.catPickerIcon, { backgroundColor: addCatIdx === i ? colors.accent : CATEGORY_VISUALS[cat.id].iconBg }]}>
+                    <Icon type="ionicon" name={CATEGORY_VISUALS[cat.id].icon} size={18} color={addCatIdx === i ? colors.offWhite : CATEGORY_VISUALS[cat.id].iconColor} />
                   </View>
                   <Text style={[styles.catPickerLabel, addCatIdx === i && { color: colors.accent700, fontFamily: FONT.semibold }]}>
                     {getCatName(cat.id, t)}
@@ -365,6 +296,18 @@ const ExpenseScreen = ({ navigation }: Props) => {
 export default ExpenseScreen;
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
+/** Kiểu bảng style, để component tách ra ngoài vẫn đúng kiểu. */
+type Styles = ReturnType<typeof makeStyles>;
+
+// Đặt NGOÀI component cha: định nghĩa bên trong thì mỗi lần cha vẽ lại sẽ tạo
+// một hàm mới, React coi là loại component khác và huỷ cả cây con.
+const SectionTitle = ({ title, styles }: { title: string; styles: Styles }) => (
+  <View style={styles.sectionTitleRow}>
+    <View style={styles.accentBar} />
+    <Text style={styles.sectionTitleText}>{title}</Text>
+  </View>
+);
+
 const makeStyles = (c: ThemeColors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: c.bg },
 
@@ -493,8 +436,8 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     paddingVertical: 7,
     borderRadius: RADII.pill,
     backgroundColor: c.white,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: c.border,
+    borderWidth: 1,
+    borderColor: c.borderStrong,
     marginRight: 8,
   },
   filterChipActive: { backgroundColor: c.accent100, borderColor: c.accent100 },
@@ -604,7 +547,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   modalBtnCancelText: { fontFamily: FONT.medium, fontSize: TYPE.itemTitle, color: c.subtext },
   modalBtnSave: {
     flex: 2,
-    backgroundColor: c.heroDark,
+    backgroundColor: c.btnSolid,
     borderRadius: RADII.item, height: 50,
     alignItems: 'center', justifyContent: 'center',
   },

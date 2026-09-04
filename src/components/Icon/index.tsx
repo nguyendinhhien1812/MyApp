@@ -44,7 +44,7 @@ const getIconComponent = (type: string) => {
 };
 
 const Icon = ({ type, name, color, size }: IconProps) => {
-    if (type == ICON_TYPE.Iconoir) {
+    if (type === ICON_TYPE.Iconoir) {
         const componentName = getComponentName(name);
         //@ts-ignore
         const IconComponent = Iconoir[componentName] ?? Iconoir.QuestionMark;

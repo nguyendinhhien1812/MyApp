@@ -15,25 +15,33 @@ import {
   PanResponder,
   Pressable,
   Dimensions,
+  Clipboard,
 } from 'react-native';
 import { Icon } from '@rneui/themed';
+import { useNavigation } from '@react-navigation/native';
 import { ThemeColors } from '../../theme/paperTheme';
 import { logger } from '../../utils/logger';
+import { askDirect } from '../../services/directAi';
+import { TOOL_DECLARATIONS } from '../../services/toolDeclarations';
 import { RADII, TYPE, FONT } from '../../theme/tokens';
 import { AppButton } from '../UI';
 import { useLanguage } from '../../context/LanguageContext';
 import { useThemeColors } from '../../context/ThemeContext';
 import type { Translations } from '../../i18n/translations';
+import { loadHistory, saveHistory, clearHistory, loadApiKey, saveApiKey } from '../../services/chatService';
+import { runTool, NavIntent } from '../../services/toolRunner';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const BUTTON_SIZE = 60;
 
-// Model free-tier hiện hành của Google (gemini-1.5-flash đã ngừng hỗ trợ)
-const GEMINI_MODEL = 'gemini-2.0-flash';
 const SYSTEM_PROMPT =
   'Bạn là trợ lý AI thân thiện của MyApp — ứng dụng quản lý tài chính cá nhân gồm: ' +
   'Ngân hàng (chuyển tiền, QR Pay, nạp tiền, quản lý thẻ), Đầu tư (cổ phiếu, tỷ giá), ' +
   'Chi phí (thống kê chi tiêu). Trả lời ngắn gọn, hữu ích, bằng đúng ngôn ngữ người dùng đang dùng.';
+
+// Proxy giữ API key phía server (xem server/README.md). Để rỗng thì bỏ qua proxy.
+// Đây chỉ là URL, không phải bí mật — nằm trong bundle là bình thường.
+const AI_PROXY_URL = '';
 
 // Giữ key trong bộ nhớ phiên — không mất khi đóng/mở lại chat
 let cachedApiKey = '';
@@ -55,55 +63,118 @@ const demoReply = (input: string, t: Translations): string => {
   return t.chatbot.demoFallback;
 };
 
-// ─── 4. Gemini API — multi-turn, kèm system prompt ─────────────────────────
-const askGemini = async (
-  history: ChatMessage[],
-  apiKey: string,
+
+// fetch của RN 0.74 không có response.body nên không đọc stream được.
+// XMLHttpRequest thì responseText lớn dần theo onprogress — cắt phần mới ra là có delta.
+const askProxyStream = (
+  messages: unknown[],
   t: Translations,
-): Promise<{ text: string; isError: boolean }> => {
-  try {
-    let contents = history
-      .filter(m => m.role !== 'error')
-      .slice(-20) // giới hạn ngữ cảnh gửi đi
-      .map(m => ({
-        role: m.role === 'user' ? 'user' : 'model',
-        parts: [{ text: m.text }],
-      }));
-    // Gemini yêu cầu content đầu tiên phải là role 'user' — bỏ các tin bot đứng đầu
-    const firstUser = contents.findIndex(c => c.role === 'user');
-    contents = firstUser > 0 ? contents.slice(firstUser) : contents;
+  onDelta: (chunk: string) => void,
+): Promise<{ text: string; isError: boolean }> =>
+  new Promise(resolve => {
+    const xhr = new XMLHttpRequest();
+    let consumed = 0; // đã xử lý tới đâu trong responseText
+    let pending = ''; // phần đuôi chưa trọn dòng
+    let full = '';
+    let failed = false;
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-          contents,
-        }),
-      },
-    );
-    const data = await response.json();
+    const drain = () => {
+      pending += xhr.responseText.slice(consumed);
+      consumed = xhr.responseText.length;
 
-    if (!response.ok || data.error) {
-      const code = data.error?.code ?? response.status;
-      if (code === 400 || code === 401 || code === 403) {
-        return { text: t.chatbot.errInvalidKey, isError: true };
+      const lines = pending.split('\n');
+      pending = lines.pop() ?? '';
+
+      for (const line of lines) {
+        if (!line.startsWith('data:')) {
+          continue;
+        }
+        const payload = line.slice(5).trim();
+        if (!payload || payload === '[DONE]') {
+          continue;
+        }
+        try {
+          const parsed = JSON.parse(payload);
+          if (parsed.error) {
+            failed = true;
+          } else if (parsed.t) {
+            full += parsed.t;
+            onDelta(parsed.t);
+          }
+        } catch {
+          // Dòng vỡ do cắt giữa chừng — bỏ qua, lần sau sẽ đủ
+        }
       }
-      // Chi tiết lỗi thô chỉ vào log — user cuối chỉ thấy thông báo thân thiện
-      logger.error('chatbot', `Gemini trả lỗi ${code}`, data.error?.message);
-      return { text: t.chatbot.errNetwork, isError: true };
-    }
+    };
 
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) {return { text: t.chatbot.errNetwork, isError: true };}
-    return { text, isError: false };
+    xhr.onprogress = drain;
+    xhr.onload = () => {
+      drain();
+      if (xhr.status === 429) {
+        resolve({ text: t.chatbot.errRateLimit, isError: true });
+        return;
+      }
+      if (failed || xhr.status < 200 || xhr.status >= 300 || !full) {
+        logger.error('chatbot', `stream lỗi ${xhr.status}`);
+        resolve({ text: t.chatbot.errNetwork, isError: true });
+        return;
+      }
+      resolve({ text: full, isError: false });
+    };
+    xhr.onerror = () => {
+      logger.error('chatbot', 'không gọi được stream');
+      resolve({ text: t.chatbot.errNetwork, isError: true });
+    };
+
+    xhr.open('POST', `${AI_PROXY_URL}/chat/stream`);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.send(JSON.stringify({ messages }));
+  });
+
+// Chặng 1 của vòng tool calling: hỏi model xem có cần gọi hàm nào không.
+// Không stream được ở chặng này vì thứ trả về là lệnh gọi hàm chứ không phải chữ.
+type ToolTurn =
+  | { kind: 'text'; text: string }
+  // id do Claude sinh ra; phải gửi lại nguyên vẹn trong tool_result thì model
+  // mới ghép được kết quả với lời gọi.
+  | { kind: 'call'; id: string; name: string; input: Record<string, unknown> }
+  | { kind: 'error' };
+
+const askForTool = async (messages: unknown[]): Promise<ToolTurn> => {
+  try {
+    const res = await fetch(`${AI_PROXY_URL}/chat/tools`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      logger.error('chatbot', `chặng tool lỗi ${res.status}`, data?.error);
+      return { kind: 'error' };
+    }
+    if (data.toolUse?.id && data.toolUse?.name) {
+      return { kind: 'call', id: data.toolUse.id, name: data.toolUse.name, input: data.toolUse.input ?? {} };
+    }
+    if (typeof data.text === 'string') {
+      return { kind: 'text', text: data.text };
+    }
+    return { kind: 'error' };
   } catch (err) {
-    logger.error('chatbot', 'gọi Gemini thất bại', err);
-    return { text: t.chatbot.errNetwork, isError: true };
+    logger.error('chatbot', 'không gọi được chặng tool', err);
+    return { kind: 'error' };
   }
 };
+
+// Hình dạng của Anthropic: { role: 'user' | 'assistant', content }.
+// Server vẫn cắt lại lượt và độ dài — đây chỉ là lớp lọc đầu tiên.
+const toMessages = (history: ChatMessage[]) =>
+  history
+    .filter(m => m.role !== 'error')
+    .slice(-20)
+    .map(m => ({
+      role: m.role === 'user' ? 'user' : 'assistant',
+      content: m.text,
+    }));
 
 // ─── 6. Main component ─────────────────────────────────────────────────────
 const Chatbot = () => {
@@ -112,43 +183,27 @@ const Chatbot = () => {
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   // Typing indicator (3 chấm nhấp nháy) — inner component để dùng `styles` theo theme
-  const TypingDots = () => {
-    const dots = [useRef(new Animated.Value(0.3)).current,
-                  useRef(new Animated.Value(0.3)).current,
-                  useRef(new Animated.Value(0.3)).current];
-
-    useEffect(() => {
-      const anims = dots.map((v, i) =>
-        Animated.loop(
-          Animated.sequence([
-            Animated.delay(i * 180),
-            Animated.timing(v, { toValue: 1, duration: 350, useNativeDriver: true }),
-            Animated.timing(v, { toValue: 0.3, duration: 350, useNativeDriver: true }),
-          ]),
-        ),
-      );
-      anims.forEach(a => a.start());
-      return () => anims.forEach(a => a.stop());
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    return (
-      <View style={[styles.bubble, styles.botBubble, styles.typingBubble]}>
-        {dots.map((v, i) => (
-          <Animated.View key={i} style={[styles.typingDot, { opacity: v }]} />
-        ))}
-      </View>
-    );
-  };
 
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [apiKey, setApiKey] = useState(cachedApiKey);
   const [keyDraft, setKeyDraft] = useState('');
   const [showKeyPanel, setShowKeyPanel] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  // Chờ đọc xong AsyncStorage rồi mới cho phép ghi, nếu không lần ghi đầu
+  // (mảng rỗng) sẽ xoá mất lịch sử vừa nạp.
+  const [historyLoaded, setHistoryLoaded] = useState(false);
+  const navigation = useNavigation<any>();
+  // Model có thể yêu cầu mở màn; chỉ mở SAU khi nó nói xong, để người dùng
+  // đọc được lời giải thích trước khi bị chuyển đi.
+  const pendingNavRef = useRef<NavIntent | null>(null);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [toast, setToast] = useState('');
   const scrollViewRef = useRef<ScrollView>(null);
+  // Câu hỏi cuối để nút "Thử lại" gửi lại đúng nội dung đó
+  const lastSentRef = useRef('');
+  // Chỉ tự cuộn khi người dùng đang ở gần đáy, tránh giật khi họ đọc lại
+  const nearBottomRef = useRef(true);
 
   // FAB kéo thả, hút về mép màn hình
   const pan = useRef(
@@ -177,12 +232,93 @@ const Chatbot = () => {
     }),
   ).current;
 
+  useEffect(() => {
+    // Dán key một lần là xong — lần mở app sau tự nạp lại
+    loadApiKey().then(k => {
+      if (k) { cachedApiKey = k; setApiKey(k); }
+    });
+
+    loadHistory().then(saved => {
+      if (saved.length) { setMessages(saved); }
+      setHistoryLoaded(true);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (historyLoaded) { saveHistory(messages); }
+  }, [messages, historyLoaded]);
+
   const pushMessage = (text: string, role: ChatMessage['role']) =>
     setMessages(prev => [...prev, { id: `${Date.now()}-${role}`, text, role }]);
+
+  const streamInto = async (convo: unknown[]) => {
+    const streamId = `${Date.now()}-stream`;
+    let opened = false;
+
+    const { text: reply, isError } = await askProxyStream(convo, t, chunk => {
+      setMessages(prev => {
+        if (!opened) {
+          opened = true;
+          return [...prev, { id: streamId, text: chunk, role: 'bot' }];
+        }
+        return prev.map(m => (m.id === streamId ? { ...m, text: m.text + chunk } : m));
+      });
+    });
+
+    if (isError) {
+      // Bỏ phần đã bồi dở rồi thay bằng bong bóng lỗi có nút thử lại
+      setMessages(prev => prev.filter(m => m.id !== streamId));
+      pushMessage(reply, 'error');
+      pendingNavRef.current = null;
+      return;
+    }
+    if (!opened) { pushMessage(reply, 'bot'); }
+
+    const nav = pendingNavRef.current;
+    pendingNavRef.current = null;
+    if (nav) {
+      setIsChatOpen(false);
+      navigation.navigate(nav.screen, {
+        ...(nav.contactName ? { contact: { name: nav.contactName } } : {}),
+        ...(nav.amount ? { amount: nav.amount } : {}),
+      });
+    }
+  };
+
+  const newChat = () => {
+    clearHistory();
+    setMessages([]);
+    setInputText('');
+    lastSentRef.current = '';
+  };
+
+  const retryLast = () => {
+    if (!lastSentRef.current) {return;}
+    // Gỡ bong bóng lỗi và câu hỏi hỏng ở cuối, rồi gửi lại từ đầu
+    setMessages(prev => {
+      const trimmed = [...prev];
+      while (trimmed.length && trimmed[trimmed.length - 1].role !== 'user') {
+        trimmed.pop();
+      }
+      trimmed.pop();
+      return trimmed;
+    });
+    const again = lastSentRef.current;
+    setTimeout(() => send(again), 0);
+  };
+
+  const copyMessage = (text: string) => {
+    // Clipboard của core RN đã deprecated nhưng vẫn chạy ở 0.74; đổi sang
+    // @react-native-clipboard/clipboard khi nào cần đụng lại phần native.
+    Clipboard.setString(text);
+    setToast(t.chatbot.copied);
+    setTimeout(() => setToast(''), 1600);
+  };
 
   const send = async (rawText?: string) => {
     const text = (rawText ?? inputText).trim();
     if (!text || isLoading) {return;}
+    lastSentRef.current = text;
 
     const userMsg: ChatMessage = { id: `${Date.now()}-user`, text, role: 'user' };
     const history = [...messages, userMsg];
@@ -190,9 +326,57 @@ const Chatbot = () => {
     setInputText('');
     setIsLoading(true);
 
+    // Key người dùng tự nhập được ưu tiên; không có thì đi qua proxy;
+    // không cấu hình proxy thì rơi về demo.
     if (apiKey) {
-      const { text: reply, isError } = await askGemini(history, apiKey, t);
-      pushMessage(reply, isError ? 'error' : 'bot');
+      const turns = history
+        .filter(m => m.role !== 'error')
+        .slice(-20)
+        .map(m => ({ role: (m.role === 'user' ? 'user' : 'assistant') as 'user' | 'assistant', text: m.text }));
+      // Model gọi tool -> app tự chạy -> trả dữ liệu để model diễn giải.
+      // `nav` gom lại đây rồi mới điều hướng sau khi có câu trả lời, để người
+      // dùng đọc xong mới bị chuyển màn.
+      const { text: reply, error } = await askDirect(turns, apiKey, SYSTEM_PROMPT, {
+        tools: TOOL_DECLARATIONS,
+        runTool: async (name, input) => {
+          const { data, nav } = await runTool(name, input);
+          if (nav) { pendingNavRef.current = nav; }
+          return data;
+        },
+      });
+      const msg =
+        error === 'invalidKey' ? t.chatbot.errInvalidKey
+        : error === 'rateLimit' ? t.chatbot.errRateLimit
+        : error ? t.chatbot.errNetwork
+        : reply;
+      pushMessage(msg, error ? 'error' : 'bot');
+    } else if (AI_PROXY_URL) {
+      // Vòng tool calling 2 chặng: hỏi model cần hàm gì -> app tự chạy hàm ->
+      // gửi kết quả lên -> model diễn giải. Chỉ chặng cuối mới stream được.
+      let convo: any[] = toMessages(history);
+      const turn = await askForTool(convo);
+
+      if (turn.kind === 'error') {
+        pushMessage(t.chatbot.errNetwork, 'error');
+      } else if (turn.kind === 'call') {
+        const { data, nav } = await runTool(turn.name, turn.input).catch(err => {
+          logger.error('chatbot', `chạy tool ${turn.name} thất bại`, err);
+          return { data: { ok: false, reason: 'không lấy được dữ liệu' }, nav: undefined };
+        });
+
+        if (nav) { pendingNavRef.current = nav; }
+
+        // Lượt gọi tool và kết quả phải khớp nhau qua tool_use_id
+        convo = [
+          ...convo,
+          { role: 'assistant', content: [{ type: 'tool_use', id: turn.id, name: turn.name, input: turn.input }] },
+          { role: 'user', content: [{ type: 'tool_result', tool_use_id: turn.id, content: JSON.stringify(data) }] },
+        ];
+        await streamInto(convo);
+      } else {
+        // Model trả lời thẳng, không cần hàm nào
+        pushMessage(turn.text, 'bot');
+      }
     } else {
       // Demo mode: giả lập độ trễ suy nghĩ
       await new Promise(r => setTimeout(r, 700));
@@ -204,6 +388,7 @@ const Chatbot = () => {
   const saveKey = () => {
     const k = keyDraft.trim();
     cachedApiKey = k;
+    saveApiKey(k);
     setApiKey(k);
     setKeyDraft('');
     setShowKeyPanel(false);
@@ -212,10 +397,14 @@ const Chatbot = () => {
 
   const removeKey = () => {
     cachedApiKey = '';
+    saveApiKey('');
     setApiKey('');
     setKeyDraft('');
     setShowKeyPanel(false);
   };
+
+  // Trả lời bằng AI thật khi có key riêng hoặc đã cấu hình proxy
+  const isLive = !!apiKey || !!AI_PROXY_URL;
 
   const suggestions = [t.chatbot.suggestion1, t.chatbot.suggestion2, t.chatbot.suggestion3];
 
@@ -248,14 +437,25 @@ const Chatbot = () => {
             <View style={styles.headerInfo}>
               <Text style={styles.headerTitle}>{t.chatbot.title}</Text>
               <View style={styles.statusRow}>
-                <View style={[styles.statusDot, apiKey ? styles.statusDotAi : styles.statusDotDemo]} />
+                <View style={[styles.statusDot, isLive ? styles.statusDotAi : styles.statusDotDemo]} />
                 <Text style={styles.statusText}>
-                  {apiKey ? t.chatbot.statusAi : t.chatbot.statusDemo}
+                  {isLive ? t.chatbot.statusAi : t.chatbot.statusDemo}
                 </Text>
               </View>
             </View>
+            {messages.length > 0 && (
+              <TouchableOpacity
+                style={styles.headerBtn}
+                onPress={newChat}
+                accessibilityRole="button"
+                accessibilityLabel={t.chatbot.newChat}>
+                <Icon name="create-outline" type="ionicon" color="#fff" size={17} />
+              </TouchableOpacity>
+            )}
             <TouchableOpacity
               style={styles.headerBtn}
+              accessibilityRole="button"
+              accessibilityLabel={t.chatbot.keyTitle}
               onPress={() => {
                 setKeyDraft('');
                 setShowKeyPanel(true);
@@ -272,7 +472,17 @@ const Chatbot = () => {
             style={styles.messageList}
             contentContainerStyle={styles.messageContent}
             ref={scrollViewRef}
-            onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}>
+            scrollEventThrottle={80}
+            onScroll={e => {
+              const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
+              const distance = contentSize.height - layoutMeasurement.height - contentOffset.y;
+              nearBottomRef.current = distance < 60;
+            }}
+            onContentSizeChange={() => {
+              if (nearBottomRef.current) {
+                scrollViewRef.current?.scrollToEnd({ animated: true });
+              }
+            }}>
             {/* Tin nhắn chào — luôn hiện, đổi theo ngôn ngữ */}
             <View style={[styles.bubble, styles.botBubble]}>
               <Text style={styles.botText}>{t.chatbot.welcome}</Text>
@@ -293,29 +503,50 @@ const Chatbot = () => {
               </View>
             )}
 
-            {messages.map(msg => (
-              <View
-                key={msg.id}
-                style={[
-                  styles.bubble,
-                  msg.role === 'user' ? styles.userBubble : styles.botBubble,
-                  msg.role === 'error' && styles.errorBubble,
-                ]}>
-                <Text
-                  style={
-                    msg.role === 'user'
-                      ? styles.userText
-                      : msg.role === 'error'
-                        ? styles.errorText
-                        : styles.botText
-                  }>
-                  {msg.text}
-                </Text>
+            {messages.map((msg, i) => (
+              <View key={msg.id}>
+                <TouchableOpacity
+                  activeOpacity={1}
+                  onLongPress={() => copyMessage(msg.text)}
+                  delayLongPress={350}
+                  style={[
+                    styles.bubble,
+                    msg.role === 'user' ? styles.userBubble : styles.botBubble,
+                    msg.role === 'error' && styles.errorBubble,
+                  ]}>
+                  <Text
+                    style={
+                      msg.role === 'user'
+                        ? styles.userText
+                        : msg.role === 'error'
+                          ? styles.errorText
+                          : styles.botText
+                    }>
+                    {msg.text}
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Chỉ bong bóng lỗi cuối cùng mới cho thử lại */}
+                {msg.role === 'error' && i === messages.length - 1 && (
+                  <TouchableOpacity
+                    style={styles.retryBtn}
+                    onPress={retryLast}
+                    accessibilityRole="button">
+                    <Icon name="refresh" type="ionicon" size={13} color={colors.accent700} />
+                    <Text style={styles.retryText}>{t.chatbot.retry}</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             ))}
 
-            {isLoading && <TypingDots />}
+            {isLoading && <TypingDots styles={styles} />}
           </ScrollView>
+
+          {toast ? (
+            <View style={styles.copyToast} pointerEvents="none">
+              <Text style={styles.copyToastText}>{toast}</Text>
+            </View>
+          ) : null}
 
           {/* Input bar */}
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
@@ -383,6 +614,41 @@ const Chatbot = () => {
 export default Chatbot;
 
 // ─── 7. Styles ─────────────────────────────────────────────────────────────
+/** Kiểu bảng style, để component tách ra ngoài vẫn đúng kiểu. */
+type Styles = ReturnType<typeof makeStyles>;
+
+// Đặt NGOÀI component cha. Riêng component này thì bắt buộc: nó có useRef và
+// useEffect bên trong, mà mỗi lần cha vẽ lại React sẽ huỷ rồi dựng lại nó —
+// animation ba chấm giật về đầu và vòng lặp bị dựng lại liên tục.
+const TypingDots = ({ styles }: { styles: Styles }) => {
+  const dots = [useRef(new Animated.Value(0.3)).current,
+                useRef(new Animated.Value(0.3)).current,
+                useRef(new Animated.Value(0.3)).current];
+
+  useEffect(() => {
+    const anims = dots.map((v, i) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.delay(i * 180),
+          Animated.timing(v, { toValue: 1, duration: 350, useNativeDriver: true }),
+          Animated.timing(v, { toValue: 0.3, duration: 350, useNativeDriver: true }),
+        ]),
+      ),
+    );
+    anims.forEach(a => a.start());
+    return () => anims.forEach(a => a.stop());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <View style={[styles.bubble, styles.botBubble, styles.typingBubble]}>
+      {dots.map((v, i) => (
+        <Animated.View key={i} style={[styles.typingDot, { opacity: v }]} />
+      ))}
+    </View>
+  );
+};
+
 const makeStyles = (c: ThemeColors) => StyleSheet.create({
   // FAB
   fabContainer: {
@@ -435,6 +701,30 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   statusDotAi: { backgroundColor: '#7dffb0' },
   statusDotDemo: { backgroundColor: '#ffe08a' },
   statusText: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: 'rgba(253,252,251,0.75)' },
+  retryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    alignSelf: 'flex-start',
+    marginTop: 6,
+    marginLeft: 4,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: RADII.pill,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: c.border,
+  },
+  retryText: { fontFamily: FONT.medium, fontSize: TYPE.caption, color: c.accent700 },
+  copyToast: {
+    position: 'absolute',
+    bottom: 96,
+    alignSelf: 'center',
+    backgroundColor: c.heroDark,
+    borderRadius: RADII.pill,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+  },
+  copyToastText: { fontFamily: FONT.medium, fontSize: TYPE.caption, color: c.offWhite },
   headerBtn: {
     width: 34,
     height: 34,
@@ -465,7 +755,8 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     paddingHorizontal: 2,
   },
   errorBubble: {
-    backgroundColor: '#fdecea',
+    // Trước đây hardcode '#fdecea' -> chế độ Tối thành khối hồng chói
+    backgroundColor: c.dangerBg,
     paddingHorizontal: 14,
   },
   userText: { fontFamily: FONT.regular, fontSize: TYPE.body, color: c.accent700, lineHeight: 20 },

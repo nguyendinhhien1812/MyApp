@@ -1,0 +1,18 @@
+{
+  "miniApps": [
+    {
+      "id": "loyalty",
+      "name": { "vi": "Tích điểm", "en": "Loyalty" },
+      "icon": "gift-outline",
+      "versions": [
+        {
+          "version": "1.0.0",
+          "status": "active",
+          "rollout": 100,
+          "container": "https://myapp-ai-proxy.kyonguyen00775.workers.dev/bundles/loyalty/1.0.0/loyalty.container.bundle",
+          "chunkBase": "https://myapp-ai-proxy.kyonguyen00775.workers.dev/bundles/loyalty/1.0.0"
+        }
+      ]
+    }
+  ]
+}

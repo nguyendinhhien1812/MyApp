@@ -18,10 +18,21 @@ import SubHeader from '../../components/UI/SubHeader';
 import Icon2 from '../../components/Icon';
 import { ICON_TYPE } from '../../components/Icon/style';
 import { useLanguage } from '../../context/LanguageContext';
+import { Translations } from '../../i18n/translations';
 import { useThemeColors } from '../../context/ThemeContext';
 import { ThemeColors } from '../../theme/paperTheme';
 import { logger } from '../../utils/logger';
+import {
+  MarketTab,
+  Stock,
+  Rates,
+  listStocks,
+  getPortfolioSeries,
+  fetchRates as apiFetchRates,
+  fetchLiveHOSE,
+} from '../../services/investmentService';
 import { RADII, TYPE, SPACING, FONT } from '../../theme/tokens';
+import { money, shortMoney } from '../../utils/money';
 
 // Màu lãi/lỗ dùng bản SÁNG khi đứng trên nền tối (portfolio hero)
 const UP_ON_DARK = '#4ade80';
@@ -30,80 +41,33 @@ const DOWN_ON_DARK = '#f87171';
 const PRIMARY      = '#E89951';
 const PRIMARY_DARK = '#b36a1a';
 const PRIMARY_LIGHT = '#fdf3e7';
-const PRIMARY_BORDER = '#f0c48a';
 const SCREEN_WIDTH = Dimensions.get('window').width;
-
-// ─── API URLs ────────────────────────────────────────────────────────────────
-
-const RATES_API =
-  'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.min.json';
-
-// Works from React Native native app (no CORS); may be blocked in browser/sandbox
-const STOCK_API =
-  'https://apipubaws.tcbs.com.vn/stock-insight/v1/stock/ticker-list?tickers=VNM,VIC,FPT,VCB,TCB,HPG,MBB,BID,CTG,ACB';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const money = (n: number) =>
-  new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-    maximumFractionDigits: 0,
-  }).format(n);
 
-const shortMoney = (n: number) => {
-  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}tỷ`;
-  if (n >= 1_000_000)     return `${(n / 1_000_000).toFixed(1)}tr`;
-  return `${(n / 1_000).toFixed(0)}k`;
-};
-
-/** Deterministic sparkline shaped by trend direction */
-const makeSparkData = (ticker: string, trend: 'up' | 'down'): number[] => {
-  const hash = ticker.split('').reduce((s, c, i) => s + c.charCodeAt(0) * (i + 3), 0);
-  return Array.from({ length: 7 }, (_, i) => {
-    const noise = ((hash * (i + 7) * 13) % 10) - 5;
-    const trendOff = trend === 'up' ? i * 3 : -i * 3;
-    return Math.max(4, 22 + noise + trendOff);
-  });
-};
-
-const fmtTime = () =>
-  new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-const MARKET_TABS = ['HOSE', 'HNX', 'Vàng', 'Quỹ'] as const;
-type MarketTab = typeof MARKET_TABS[number];
+// HOSE/HNX là tên sàn nên giữ nguyên; gold/fund là key, nhãn lấy từ translations
+const MARKET_TABS: MarketTab[] = ['HOSE', 'HNX', 'gold', 'fund'];
 
-type StockItem = {
-  id: string;
-  ticker: string;
-  name: string;
-  vol: string;
-  price: number;
-  change: number;
-  trend: 'up' | 'down';
-  sparkData: number[];
-  iconBg: string;
-  iconColor: string;
+const stockCount = (n: number, t: Translations) =>
+  `${n} ${n === 1 ? t.investment.stockUnitOne : t.investment.stockUnit}`;
+
+const marketTabLabel = (tab: MarketTab, t: Translations) => {
+  switch (tab) {
+    case 'gold':
+      return t.investment.tabGold;
+    case 'fund':
+      return t.investment.tabFund;
+    default:
+      return tab;
+  }
 };
 
-interface RateData {
-  usdVnd: number;
-  eurVnd: number;
-  goldPerGram: number;
-  updatedAt: string;
-}
-
-// ─── Ticker metadata ──────────────────────────────────────────────────────────
-
-const TICKER_NAMES: Record<string, string> = {
-  VNM: 'Vinamilk', VIC: 'Vingroup', FPT: 'FPT Corp',
-  VCB: 'Vietcombank', TCB: 'Techcombank', HPG: 'Hoà Phát',
-  MBB: 'MB Bank', BID: 'BIDV', CTG: 'VietinBank', ACB: 'ACB Bank',
-};
-
-const TICKER_CONFIG: Record<string, { bg: string; fg: string }> = {
+// Màu ô icon của từng mã — phần TRÌNH BÀY, không nằm trong service.
+const TICKER_VISUALS: Record<string, { bg: string; fg: string }> = {
   VCB: { bg: '#e8f0f8', fg: '#1a4a7a' },
   FPT: { bg: '#fff4e8', fg: PRIMARY_DARK },
   HPG: { bg: '#e8f8f0', fg: '#1a7a40' },
@@ -115,143 +79,15 @@ const TICKER_CONFIG: Record<string, { bg: string; fg: string }> = {
   ACB: { bg: '#e8f0f8', fg: '#1a4a7a' },
   VNM: { bg: '#e8f8f0', fg: '#1a7a40' },
   MWG: { bg: PRIMARY_LIGHT, fg: PRIMARY },
+  SJC: { bg: PRIMARY_LIGHT, fg: PRIMARY },
+  '24K': { bg: '#fff4e8', fg: PRIMARY_DARK },
+  SHB: { bg: '#e8f0f8', fg: '#1a4a7a' },
+  PVS: { bg: '#e8f8f0', fg: '#1a7a40' },
+  VCS: { bg: '#fff4e8', fg: PRIMARY_DARK },
+  'VN Diamond': { bg: '#e8f8f0', fg: '#1a7a40' },
+  'VN30 ETF': { bg: '#e8f0f8', fg: '#1a4a7a' },
 };
-
-// ─── Static mock data (fallback) ──────────────────────────────────────────────
-
-const STOCKS: Record<MarketTab, StockItem[]> = {
-  HOSE: [
-    {
-      id: 'VCB', ticker: 'VCB', name: 'Vietcombank', vol: '4.2M',
-      price: 89500, change: 1.24, trend: 'up',
-      sparkData: makeSparkData('VCB', 'up'),
-      iconBg: '#e8f0f8', iconColor: '#1a4a7a',
-    },
-    {
-      id: 'FPT', ticker: 'FPT', name: 'FPT Corp', vol: '2.8M',
-      price: 125200, change: -0.87, trend: 'down',
-      sparkData: makeSparkData('FPT', 'down'),
-      iconBg: '#fff4e8', iconColor: PRIMARY_DARK,
-    },
-    {
-      id: 'HPG', ticker: 'HPG', name: 'Hoà Phát', vol: '9.1M',
-      price: 27800, change: 2.58, trend: 'up',
-      sparkData: makeSparkData('HPG', 'up'),
-      iconBg: '#e8f8f0', iconColor: '#1a7a40',
-    },
-    {
-      id: 'VIC', ticker: 'VIC', name: 'Vingroup', vol: '3.5M',
-      price: 45600, change: -0.44, trend: 'down',
-      sparkData: makeSparkData('VIC', 'down'),
-      iconBg: '#f5f0ff', iconColor: '#6c3fc4',
-    },
-    {
-      id: 'MWG', ticker: 'MWG', name: 'Thế Giới Di Động', vol: '1.9M',
-      price: 62300, change: 1.77, trend: 'up',
-      sparkData: makeSparkData('MWG', 'up'),
-      iconBg: PRIMARY_LIGHT, iconColor: PRIMARY,
-    },
-  ],
-  HNX: [
-    {
-      id: 'SHB', ticker: 'SHB', name: 'Saigon Hanoi Bank', vol: '8.4M',
-      price: 14200, change: 0.71, trend: 'up',
-      sparkData: makeSparkData('SHB', 'up'),
-      iconBg: '#e8f0f8', iconColor: '#1a4a7a',
-    },
-    {
-      id: 'PVS', ticker: 'PVS', name: 'PTSC', vol: '5.2M',
-      price: 35100, change: -1.12, trend: 'down',
-      sparkData: makeSparkData('PVS', 'down'),
-      iconBg: '#e8f8f0', iconColor: '#1a7a40',
-    },
-    {
-      id: 'VCS', ticker: 'VCS', name: 'Vicostone', vol: '0.8M',
-      price: 78900, change: 0.38, trend: 'up',
-      sparkData: makeSparkData('VCS', 'up'),
-      iconBg: '#fff4e8', iconColor: PRIMARY_DARK,
-    },
-  ],
-  Vàng: [
-    {
-      id: 'SJC', ticker: 'SJC', name: 'Vàng SJC', vol: '',
-      price: 108_500_000, change: 0.46, trend: 'up',
-      sparkData: makeSparkData('SJC', 'up'),
-      iconBg: PRIMARY_LIGHT, iconColor: PRIMARY,
-    },
-    {
-      id: '999', ticker: '24K', name: 'Vàng 24K nhẫn', vol: '',
-      price: 105_200_000, change: -0.22, trend: 'down',
-      sparkData: makeSparkData('24K', 'down'),
-      iconBg: '#fff4e8', iconColor: PRIMARY_DARK,
-    },
-  ],
-  Quỹ: [
-    {
-      id: 'FUEVFVND', ticker: 'VN Diamond', name: 'ETF VN Diamond', vol: '12.5M',
-      price: 18700, change: 1.08, trend: 'up',
-      sparkData: makeSparkData('FUEVFVND', 'up'),
-      iconBg: '#e8f8f0', iconColor: '#1a7a40',
-    },
-    {
-      id: 'E1VFVN30', ticker: 'VN30 ETF', name: 'ETF VN30', vol: '7.8M',
-      price: 14200, change: 0.85, trend: 'up',
-      sparkData: makeSparkData('E1VFVN30', 'up'),
-      iconBg: '#e8f0f8', iconColor: '#1a4a7a',
-    },
-  ],
-};
-
-const PORTFOLIO_DATA = [18, 22, 28, 32, 30, 38, 42, 46, 44, 50, 52, 56];
-
-// ─── TCBS response parser ─────────────────────────────────────────────────────
-
-const parseTCBSItem = (raw: any): StockItem | null => {
-  try {
-    const ticker: string = raw?.ticker || raw?.symbol || raw?.code || '';
-    if (!ticker) return null;
-
-    // TCBS quotes prices in thousands of VND (125.5 → 125,500 VND)
-    const rawPrice: number =
-      raw?.lastPrice ?? raw?.price ?? raw?.closePrice ??
-      raw?.refPrice ?? raw?.avgPrice ?? 0;
-    if (!rawPrice || rawPrice <= 0) return null;
-    const price = Math.round(rawPrice * 1000);
-
-    const changeRaw: number =
-      raw?.pctChange ?? raw?.percentChange ??
-      raw?.priceChangePercent ?? raw?.changePercent ?? 0;
-    const change = Number(Number(changeRaw).toFixed(2));
-    const trend: 'up' | 'down' = change >= 0 ? 'up' : 'down';
-
-    const volRaw: number =
-      raw?.tradingVol ?? raw?.volume ?? raw?.matchedVol ?? raw?.totalVol ?? 0;
-    const vol = volRaw > 0
-      ? volRaw >= 1_000_000
-        ? `${(volRaw / 1_000_000).toFixed(1)}M`
-        : `${(volRaw / 1_000).toFixed(0)}K`
-      : '';
-
-    const cfg = TICKER_CONFIG[ticker];
-
-    return {
-      id: ticker,
-      ticker,
-      name: TICKER_NAMES[ticker] ?? ticker,
-      vol,
-      price,
-      change,
-      trend,
-      sparkData: makeSparkData(ticker, trend),
-      iconBg:    cfg?.bg ?? '#e8f0f8',
-      iconColor: cfg?.fg ?? '#1a4a7a',
-    };
-  } catch (err) {
-    // Một mã lỗi thì bỏ mã đó, không làm sập cả danh sách
-    logger.warn('invest', 'không parse được dữ liệu 1 mã cổ phiếu', err);
-    return null;
-  }
-};
+const tickerVisual = (t: string) => TICKER_VISUALS[t] ?? { bg: '#e8f0f8', fg: '#1a4a7a' };
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 // (defined before sub-components so they can reference it)
@@ -382,7 +218,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   },
   errorText: { flex: 1, fontFamily: FONT.regular, fontSize: TYPE.body, color: c.accent700 },
   errorRetryBtn: {
-    backgroundColor: c.heroDark,
+    backgroundColor: c.btnSolid,
     borderRadius: RADII.chip,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -428,8 +264,8 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     paddingVertical: 7,
     borderRadius: RADII.pill,
     backgroundColor: c.white,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: c.border,
+    borderWidth: 1,
+    borderColor: c.borderStrong,
   },
   mktTabActive: { backgroundColor: c.accent100, borderColor: c.accent100 },
   mktTabText: { fontFamily: FONT.regular, fontSize: TYPE.body, color: c.subtext },
@@ -516,7 +352,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   ctaRow: { flexDirection: 'row', gap: 10 },
   btnBuy: {
     flex: 2,
-    backgroundColor: c.heroDark,
+    backgroundColor: c.btnSolid,
     borderRadius: RADII.item,
     height: 50,
     flexDirection: 'row',
@@ -598,7 +434,7 @@ interface SparkProps {
 
 const SparkLine = ({ data, color, width = 52, height = 28 }: SparkProps) => {
   const n = data.length;
-  if (n < 2) return null;
+  if (n < 2) {return null;}
   const max = Math.max(...data);
   const min = Math.min(...data);
   const range = max - min || 1;
@@ -627,7 +463,7 @@ const PortfolioSparkLine = ({ data, color }: { data: number[]; color: string }) 
   const w = SCREEN_WIDTH - 32 - 32;
   const h = 52;
   const n = data.length;
-  if (n < 2) return null;
+  if (n < 2) {return null;}
   const max = Math.max(...data);
   const min = Math.min(...data);
   const range = max - min || 1;
@@ -739,17 +575,17 @@ const InvestmentScreen = ({ navigation }: Props) => {
   // ── State ──
   const [activeTab, setActiveTab] = useState<MarketTab>('HOSE');
 
-  const [rates,        setRates]        = useState<RateData | null>(null);
+  const [rates,        setRates]        = useState<Rates | null>(null);
   const [ratesLoading, setRatesLoading] = useState(true);
   const [ratesError,   setRatesError]   = useState(false);
 
-  const [liveHOSE,     setLiveHOSE]     = useState<StockItem[] | null>(null);
+  const [liveHOSE,     setLiveHOSE]     = useState<Stock[] | null>(null);
   const [stockLoading, setStockLoading] = useState(true);
   const [stockError,   setStockError]   = useState(false);
 
   // Chi tiết mã + luồng đặt lệnh demo
-  const [selectedStock, setSelectedStock] = useState<StockItem | null>(null);
-  const [orderStock,    setOrderStock]    = useState<StockItem | null>(null);
+  const [selectedStock, setSelectedStock] = useState<Stock | null>(null);
+  const [orderStock,    setOrderStock]    = useState<Stock | null>(null);
   const [orderSide,     setOrderSide]     = useState<'buy' | 'sell' | null>(null);
   const [orderToast,    setOrderToast]    = useState(false);
 
@@ -780,23 +616,7 @@ const InvestmentScreen = ({ navigation }: Props) => {
     setRatesLoading(true);
     setRatesError(false);
     try {
-      const res = await fetch(RATES_API);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = await res.json();
-      const r = json?.usd;
-      if (!r?.vnd || !r?.eur || !r?.xau) throw new Error('Invalid shape');
-
-      const usdVnd = r.vnd as number;
-      const eurVnd = usdVnd / (r.eur as number);
-      const xauUsd = 1 / (r.xau as number);        // USD per troy oz
-      const goldPerGram = (xauUsd * usdVnd) / 31.1035; // VND per gram
-
-      setRates({
-        usdVnd:      Math.round(usdVnd),
-        eurVnd:      Math.round(eurVnd),
-        goldPerGram: Math.round(goldPerGram),
-        updatedAt:   fmtTime(),
-      });
+      setRates(await apiFetchRates());
     } catch (err) {
       logger.error('invest', 'không tải được tỷ giá', err);
       setRatesError(true);
@@ -809,16 +629,7 @@ const InvestmentScreen = ({ navigation }: Props) => {
     setStockLoading(true);
     setStockError(false);
     try {
-      const res = await fetch(STOCK_API, {
-        headers: { Accept: 'application/json' },
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = await res.json();
-      const arr: any[] = json?.data || json?.listStock || json?.stocks || [];
-      if (!Array.isArray(arr) || arr.length === 0) throw new Error('Empty');
-      const parsed = arr.map(parseTCBSItem).filter(Boolean) as StockItem[];
-      if (parsed.length === 0) throw new Error('Parse failed');
-      setLiveHOSE(parsed);
+      setLiveHOSE(await fetchLiveHOSE());
     } catch (err) {
       logger.error('invest', 'không tải được dữ liệu cổ phiếu, dùng dữ liệu mẫu', err);
       setStockError(true);
@@ -835,12 +646,12 @@ const InvestmentScreen = ({ navigation }: Props) => {
   useEffect(() => {
     fetchRates();
     fetchStocks();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, []);
 
   // Which stock list to show
-  const stocks: StockItem[] =
-    activeTab === 'HOSE' && liveHOSE ? liveHOSE : STOCKS[activeTab as MarketTab];
+  const stocks: Stock[] =
+    activeTab === 'HOSE' && liveHOSE ? liveHOSE : listStocks(activeTab);
 
   const showHOSELoading = activeTab === 'HOSE' && stockLoading && !liveHOSE;
   const showHOSEError   = activeTab === 'HOSE' && stockError && !liveHOSE;
@@ -877,17 +688,17 @@ const InvestmentScreen = ({ navigation }: Props) => {
           </View>
 
           <View style={styles.sparklineWrap}>
-            <PortfolioSparkLine data={PORTFOLIO_DATA} color={colors.accent300} />
+            <PortfolioSparkLine data={getPortfolioSeries()} color={colors.accent300} />
           </View>
 
           <View style={styles.allocRow}>
             <View style={styles.allocItem}>
-              <Text style={[styles.allocNum, { color: UP_ON_DARK }]}>3 CP</Text>
+              <Text style={[styles.allocNum, { color: UP_ON_DARK }]}>{stockCount(3, t)}</Text>
               <Text style={styles.allocLabel}>{t.investment.profit}</Text>
             </View>
             <View style={styles.allocDivider} />
             <View style={styles.allocItem}>
-              <Text style={[styles.allocNum, { color: DOWN_ON_DARK }]}>1 CP</Text>
+              <Text style={[styles.allocNum, { color: DOWN_ON_DARK }]}>{stockCount(1, t)}</Text>
               <Text style={styles.allocLabel}>{t.investment.loss}</Text>
             </View>
             <View style={styles.allocDivider} />
@@ -989,7 +800,7 @@ const InvestmentScreen = ({ navigation }: Props) => {
                   styles.mktTabText,
                   activeTab === tab && styles.mktTabTextActive,
                 ]}>
-                {tab}
+                {marketTabLabel(tab, t)}
               </Text>
             </TouchableOpacity>
           ))}
@@ -1019,7 +830,7 @@ const InvestmentScreen = ({ navigation }: Props) => {
               />
             ))
           ) : (
-            stocks.map((stock: StockItem, index: number) => (
+            stocks.map((stock: Stock, index: number) => (
               <TouchableOpacity
                 key={stock.id}
                 activeOpacity={0.75}
@@ -1031,8 +842,8 @@ const InvestmentScreen = ({ navigation }: Props) => {
                   index > 0 && styles.stockRowBorder,
                 ]}>
                 {/* Icon */}
-                <View style={[styles.stockIcon, { backgroundColor: stock.iconBg }]}>
-                  <Text style={[styles.stockTickerIcon, { color: stock.iconColor }]}>
+                <View style={[styles.stockIcon, { backgroundColor: tickerVisual(stock.ticker).bg }]}>
+                  <Text style={[styles.stockTickerIcon, { color: tickerVisual(stock.ticker).fg }]}>
                     {stock.ticker.slice(0, 3)}
                   </Text>
                 </View>
@@ -1054,7 +865,7 @@ const InvestmentScreen = ({ navigation }: Props) => {
                 <View style={styles.sparkWrap}>
                   <SparkLine
                     data={stock.sparkData}
-                    color={stock.trend === 'up' ? '#1a7a40' : '#c0392b'}
+                    color={stock.trend === 'up' ? colors.success : colors.danger}
                   />
                 </View>
 
@@ -1063,7 +874,7 @@ const InvestmentScreen = ({ navigation }: Props) => {
                   <Text
                     style={[
                       styles.priceVal,
-                      { color: stock.trend === 'up' ? '#1a7a40' : '#c0392b' },
+                      { color: stock.trend === 'up' ? colors.success : colors.danger },
                     ]}>
                     {money(stock.price)}
                   </Text>
@@ -1136,9 +947,9 @@ const InvestmentScreen = ({ navigation }: Props) => {
               <>
                 <View style={styles.sheetHeader}>
                   <View
-                    style={[styles.stockIcon, { backgroundColor: selectedStock.iconBg }]}>
+                    style={[styles.stockIcon, { backgroundColor: tickerVisual(selectedStock.ticker).bg }]}>
                     <Text
-                      style={[styles.stockTickerIcon, { color: selectedStock.iconColor }]}>
+                      style={[styles.stockTickerIcon, { color: tickerVisual(selectedStock.ticker).fg }]}>
                       {selectedStock.ticker.slice(0, 3)}
                     </Text>
                   </View>
@@ -1172,7 +983,7 @@ const InvestmentScreen = ({ navigation }: Props) => {
                 <View style={styles.sheetSpark}>
                   <SparkLine
                     data={selectedStock.sparkData}
-                    color={selectedStock.trend === 'up' ? '#1a7a40' : '#c0392b'}
+                    color={selectedStock.trend === 'up' ? colors.success : colors.danger}
                     width={SCREEN_WIDTH - 88}
                     height={64}
                   />

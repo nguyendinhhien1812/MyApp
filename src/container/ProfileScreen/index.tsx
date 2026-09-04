@@ -13,7 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useLanguage } from '../../context/LanguageContext';
 import { useThemeColors } from '../../context/ThemeContext';
 import { ThemeColors } from '../../theme/paperTheme';
-import { RADII, TYPE, SPACING, FONT } from '../../theme/tokens';
+import { RADII, TYPE, SPACING, FONT, TAB_BAR_SPACE } from '../../theme/tokens';
 import { AppDialog } from '../../components/UI';
 
 // Tên riêng — không dịch
@@ -33,49 +33,6 @@ const ProfileScreen = () => {
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const [logoutModal, setLogoutModal] = useState(false);
 
-  // ─── Row component (inner: đóng trên styles + colors) ──────────────────────
-  const ProfileRow = ({
-    icon,
-    label,
-    value,
-    iconBg,
-    iconColor,
-    isLast = false,
-    danger = false,
-    onPress,
-  }: {
-    icon: string;
-    label: string;
-    value?: string;
-    iconBg?: string;
-    iconColor?: string;
-    isLast?: boolean;
-    danger?: boolean;
-    onPress?: () => void;
-  }) => (
-    <>
-      <TouchableOpacity style={styles.profileRow} onPress={onPress} activeOpacity={0.7}>
-        <View style={styles.rowLeft}>
-          <View style={[styles.rowIconWrap, { backgroundColor: danger ? 'rgba(192,57,43,0.12)' : colors.accent100 }]}>
-            <Icon
-              type="ionicon"
-              name={icon}
-              size={17}
-              color={danger ? colors.danger : colors.accent700}
-            />
-          </View>
-          <Text style={[styles.rowLabel, danger && styles.rowLabelDanger]}>{label}</Text>
-        </View>
-        {!danger && (
-          <View style={styles.rowRight}>
-            {value ? <Text style={styles.rowValue}>{value}</Text> : null}
-            <Icon type="ionicon" name="chevron-forward" size={15} color={colors.muted} />
-          </View>
-        )}
-      </TouchableOpacity>
-      {!isLast && <View style={styles.rowDivider} />}
-    </>
-  );
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -120,18 +77,14 @@ const ProfileScreen = () => {
       {/* ── HOẠT ĐỘNG ── */}
       <Text style={styles.sectionLabel}>{t.profile.sectionActivity}</Text>
       <View style={styles.card}>
-        <ProfileRow
+        <ProfileRow styles={styles} colors={colors}
           icon="time-outline"
           label={t.profile.history}
-          iconBg="#e8f0f8"
-          iconColor="#1a4a7a"
           onPress={() => navigation.navigate('Notification' as never)}
         />
-        <ProfileRow
+        <ProfileRow styles={styles} colors={colors}
           icon="card-outline"
           label={t.profile.personalAccount}
-          iconBg="#e8f8f0"
-          iconColor="#1a7a40"
           onPress={() => navigation.navigate('BankScreen' as never)}
           isLast
         />
@@ -140,18 +93,14 @@ const ProfileScreen = () => {
       {/* ── TÀI KHOẢN ── */}
       <Text style={styles.sectionLabel}>{t.profile.sectionAccount}</Text>
       <View style={styles.card}>
-        <ProfileRow
+        <ProfileRow styles={styles} colors={colors}
           icon="shield-checkmark-outline"
           label={t.profile.security}
-          iconBg="#fff4e8"
-          iconColor={colors.accent700}
           onPress={() => (navigation as any).navigate('SecurityScreen')}
         />
-        <ProfileRow
+        <ProfileRow styles={styles} colors={colors}
           icon="document-text-outline"
           label={t.profile.terms}
-          iconBg="#f5f0ff"
-          iconColor="#6c3fc4"
           onPress={() => (navigation as any).navigate('TermsScreen')}
           isLast
         />
@@ -182,7 +131,7 @@ const ProfileScreen = () => {
 
       {/* ── Đăng xuất ── */}
       <View style={[styles.card, { marginTop: 12 }]}>
-        <ProfileRow
+        <ProfileRow styles={styles} colors={colors}
           icon="exit-outline"
           label={t.profile.logout}
           danger
@@ -215,6 +164,57 @@ const ProfileScreen = () => {
 export default ProfileScreen;
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
+
+/** Kiểu bảng style, để component tách ra ngoài vẫn đúng kiểu. */
+type Styles = ReturnType<typeof makeStyles>;
+
+// ─── Row component (inner: đóng trên styles + colors) ──────────────────────
+//
+// Trước đây có props iconBg/iconColor nhưng component bỏ qua, và giá trị các
+// chỗ gọi truyền vào là hex sáng cố định — dùng chúng là chế độ Tối vỡ.
+// Đã xoá hẳn thay vì "sửa" cho chúng có tác dụng: màu icon lấy từ theme.
+const ProfileRow = ({
+  icon,
+  label,
+  value,
+  isLast = false,
+  danger = false,
+  onPress,
+  styles,
+  colors,
+}: {
+  icon: string;
+  label: string;
+  value?: string;
+  isLast?: boolean;
+  danger?: boolean;
+  onPress?: () => void;
+  styles: Styles;
+  colors: ThemeColors;
+}) => (
+  <>
+    <TouchableOpacity style={styles.profileRow} onPress={onPress} activeOpacity={0.7}>
+      <View style={styles.rowLeft}>
+        <View style={[styles.rowIconWrap, { backgroundColor: danger ? 'rgba(192,57,43,0.12)' : colors.accent100 }]}>
+          <Icon
+            type="ionicon"
+            name={icon}
+            size={17}
+            color={danger ? colors.danger : colors.accent700}
+          />
+        </View>
+        <Text style={[styles.rowLabel, danger && styles.rowLabelDanger]}>{label}</Text>
+      </View>
+      {!danger && (
+        <View style={styles.rowRight}>
+          {value ? <Text style={styles.rowValue}>{value}</Text> : null}
+          <Icon type="ionicon" name="chevron-forward" size={15} color={colors.muted} />
+        </View>
+      )}
+    </TouchableOpacity>
+    {!isLast && <View style={styles.rowDivider} />}
+  </>
+);
 
 const makeStyles = (c: ThemeColors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: c.bg },
@@ -318,7 +318,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   rowValue: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.muted },
   rowDivider: { height: StyleSheet.hairlineWidth, backgroundColor: c.divider, marginLeft: 60 },
 
-  scrollContent: { paddingBottom: 120 },
+  scrollContent: { paddingBottom: TAB_BAR_SPACE },
 
   // About card
   aboutCard: {

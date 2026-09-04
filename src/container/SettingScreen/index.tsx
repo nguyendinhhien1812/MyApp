@@ -16,7 +16,7 @@ import { AppSnackbar } from '../../components/UI';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAppTheme, ThemeMode } from '../../context/ThemeContext';
 import { ThemeColors } from '../../theme/paperTheme';
-import { RADII, TYPE, SPACING, FONT } from '../../theme/tokens';
+import { RADII, TYPE, SPACING, FONT, TAB_BAR_SPACE } from '../../theme/tokens';
 import { Lang } from '../../i18n/translations';
 
 const LANG_OPTIONS: { code: Lang; label: string; flag: string; sublabel: string }[] = [
@@ -52,69 +52,7 @@ const SettingScreen = () => {
   const currentThemeLabel =
     THEME_OPTIONS.find(o => o.code === mode)?.label ?? '';
 
-  // Row menu (đóng trong component để dùng styles/colors động)
-  const SettingRow = ({
-    icon,
-    label,
-    value,
-    onPress,
-    isLast = false,
-  }: {
-    icon: string;
-    label: string;
-    value?: string;
-    onPress?: () => void;
-    isLast?: boolean;
-  }) => (
-    <>
-      <TouchableOpacity style={styles.settingRow} onPress={onPress} activeOpacity={0.7}>
-        <View style={styles.rowLeft}>
-          <View style={styles.rowIconWrap}>
-            <Icon type="ionicon" name={icon} size={17} color={colors.accent700} />
-          </View>
-          <Text style={styles.rowLabel}>{label}</Text>
-        </View>
-        <View style={styles.rowRight}>
-          {value ? <Text style={styles.rowValue}>{value}</Text> : null}
-          <Icon type="ionicon" name="chevron-forward" size={15} color={colors.muted} />
-        </View>
-      </TouchableOpacity>
-      {!isLast && <View style={styles.rowDivider} />}
-    </>
-  );
 
-  const ToggleRow = ({
-    icon,
-    label,
-    value,
-    onToggle,
-    isLast = false,
-  }: {
-    icon: string;
-    label: string;
-    value: boolean;
-    onToggle: () => void;
-    isLast?: boolean;
-  }) => (
-    <>
-      <View style={styles.settingRow}>
-        <View style={styles.rowLeft}>
-          <View style={styles.rowIconWrap}>
-            <Icon type="ionicon" name={icon} size={17} color={colors.accent700} />
-          </View>
-          <Text style={styles.rowLabel}>{label}</Text>
-        </View>
-        <Switch
-          value={value}
-          onValueChange={onToggle}
-          trackColor={{ false: colors.border, true: colors.accent }}
-          thumbColor={'#fff'}
-          ios_backgroundColor={colors.border}
-        />
-      </View>
-      {!isLast && <View style={styles.rowDivider} />}
-    </>
-  );
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -126,19 +64,19 @@ const SettingScreen = () => {
       {/* ── CHUNG ── */}
       <Text style={styles.sectionLabel}>{t.setting.sectionGeneral}</Text>
       <View style={styles.card}>
-        <SettingRow
+        <SettingRow styles={styles} colors={colors}
           icon="language-outline"
           label={t.setting.language}
           value={currentLangLabel}
           onPress={() => setLangModal(true)}
         />
-        <SettingRow
+        <SettingRow styles={styles} colors={colors}
           icon="color-palette-outline"
           label={t.setting.appearance}
           value={currentThemeLabel}
           onPress={() => setThemeModal(true)}
         />
-        <ToggleRow
+        <ToggleRow styles={styles} colors={colors}
           icon="notifications-outline"
           label={t.setting.notification}
           value={notification}
@@ -150,17 +88,17 @@ const SettingScreen = () => {
       {/* ── TÀI KHOẢN ── */}
       <Text style={styles.sectionLabel}>{t.setting.sectionAccount}</Text>
       <View style={styles.card}>
-        <SettingRow
+        <SettingRow styles={styles} colors={colors}
           icon="person-outline"
           label={t.setting.profileInfo}
           onPress={() => (navigation as any).navigate('EditProfileScreen')}
         />
-        <SettingRow
+        <SettingRow styles={styles} colors={colors}
           icon="lock-closed-outline"
           label={t.setting.security}
           onPress={() => (navigation as any).navigate('SecurityScreen')}
         />
-        <SettingRow
+        <SettingRow styles={styles} colors={colors}
           icon="shield-checkmark-outline"
           label={t.setting.twoFactor}
           onPress={() => setToast(t.common.demoFeature)}
@@ -171,12 +109,12 @@ const SettingScreen = () => {
       {/* ── KHÁC ── */}
       <Text style={styles.sectionLabel}>{t.setting.sectionOther}</Text>
       <View style={styles.card}>
-        <SettingRow
+        <SettingRow styles={styles} colors={colors}
           icon="document-text-outline"
           label={t.setting.terms}
           onPress={() => (navigation as any).navigate('TermsScreen')}
         />
-        <SettingRow
+        <SettingRow styles={styles} colors={colors}
           icon="help-circle-outline"
           label={t.setting.support}
           onPress={() =>
@@ -186,7 +124,7 @@ const SettingScreen = () => {
             )
           }
         />
-        <SettingRow
+        <SettingRow styles={styles} colors={colors}
           icon="information-circle-outline"
           label={t.setting.about}
           onPress={() => (navigation as any).navigate('AboutScreen')}
@@ -324,6 +262,82 @@ export default SettingScreen;
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
+/** Kiểu bảng style, để component tách ra ngoài vẫn đúng kiểu. */
+type Styles = ReturnType<typeof makeStyles>;
+
+// Đặt NGOÀI component cha: định nghĩa bên trong thì mỗi lần cha vẽ lại sẽ tạo
+// một hàm mới, React coi là loại component khác và huỷ cả cây con.
+const SettingRow = ({
+  icon,
+  label,
+  value,
+  onPress,
+  isLast = false,
+  styles,
+  colors,
+}: {
+  icon: string;
+  label: string;
+  value?: string;
+  onPress?: () => void;
+  isLast?: boolean;
+  styles: Styles;
+  colors: ThemeColors;
+}) => (
+  <>
+    <TouchableOpacity style={styles.settingRow} onPress={onPress} activeOpacity={0.7}>
+      <View style={styles.rowLeft}>
+        <View style={styles.rowIconWrap}>
+          <Icon type="ionicon" name={icon} size={17} color={colors.accent700} />
+        </View>
+        <Text style={styles.rowLabel}>{label}</Text>
+      </View>
+      <View style={styles.rowRight}>
+        {value ? <Text style={styles.rowValue}>{value}</Text> : null}
+        <Icon type="ionicon" name="chevron-forward" size={15} color={colors.muted} />
+      </View>
+    </TouchableOpacity>
+    {!isLast && <View style={styles.rowDivider} />}
+  </>
+);
+
+const ToggleRow = ({
+  icon,
+  label,
+  value,
+  onToggle,
+  isLast = false,
+  styles,
+  colors,
+}: {
+  icon: string;
+  label: string;
+  value: boolean;
+  onToggle: () => void;
+  isLast?: boolean;
+  styles: Styles;
+  colors: ThemeColors;
+}) => (
+  <>
+    <View style={styles.settingRow}>
+      <View style={styles.rowLeft}>
+        <View style={styles.rowIconWrap}>
+          <Icon type="ionicon" name={icon} size={17} color={colors.accent700} />
+        </View>
+        <Text style={styles.rowLabel}>{label}</Text>
+      </View>
+      <Switch
+        value={value}
+        onValueChange={onToggle}
+        trackColor={{ false: colors.border, true: colors.accent }}
+        thumbColor={'#fff'}
+        ios_backgroundColor={colors.border}
+      />
+    </View>
+    {!isLast && <View style={styles.rowDivider} />}
+  </>
+);
+
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: c.bg },
@@ -375,7 +389,7 @@ const makeStyles = (c: ThemeColors) =>
       backgroundColor: c.white,
       borderTopLeftRadius: 24,
       borderTopRightRadius: 24,
-      paddingBottom: 36,
+      paddingBottom: TAB_BAR_SPACE,
       paddingHorizontal: 20,
       paddingTop: 12,
     },

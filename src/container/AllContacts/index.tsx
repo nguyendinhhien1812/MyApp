@@ -16,38 +16,25 @@ import { ICON_TYPE } from '../../components/Icon/style';
 import { AppSnackbar } from '../../components/UI';
 import SubHeader from '../../components/UI/SubHeader';
 import { useLanguage } from '../../context/LanguageContext';
+import { Translations } from '../../i18n/translations';
+import {
+  RelativeTime,
+  searchContacts,
+  recentContacts,
+} from '../../services/contactService';
 import { useThemeColors } from '../../context/ThemeContext';
 import { ThemeColors } from '../../theme/paperTheme';
 import { RADII, TYPE, SPACING, FONT } from '../../theme/tokens';
+import { money, shortMoney } from '../../utils/money';
 
-const money = (n: number) =>
-  new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-    maximumFractionDigits: 0,
-  }).format(n);
 
-const RECENT = [
-  { id: 1, name: 'John', avatar: 'https://i.pravatar.cc/80?img=1', lastAmount: 500000 },
-  { id: 2, name: 'Kevin', avatar: 'https://i.pravatar.cc/80?img=12', lastAmount: 200000 },
-  { id: 3, name: 'Lyda', avatar: 'https://i.pravatar.cc/80?img=5', lastAmount: 1000000 },
-  { id: 4, name: 'Marry', avatar: 'https://i.pravatar.cc/80?img=9', lastAmount: 300000 },
-  { id: 5, name: 'Evelyn', avatar: 'https://i.pravatar.cc/80?img=20', lastAmount: 150000 },
-];
-
-const ALL_CONTACTS = [
-  { id: 1, name: 'John Smith', bank: 'Vietcombank', daysAgo: '2 ngày trước', lastAmount: 500000, avatar: 'https://i.pravatar.cc/80?img=1' },
-  { id: 2, name: 'Kevin Brown', bank: 'Techcombank', daysAgo: '4 ngày trước', lastAmount: 200000, avatar: 'https://i.pravatar.cc/80?img=12' },
-  { id: 3, name: 'Lyda Hansen', bank: 'BIDV', daysAgo: '5 ngày trước', lastAmount: 1000000, avatar: 'https://i.pravatar.cc/80?img=5' },
-  { id: 4, name: 'Marry White', bank: 'ACB', daysAgo: '1 tuần trước', lastAmount: 300000, avatar: 'https://i.pravatar.cc/80?img=9' },
-  { id: 5, name: 'Evelyn Davis', bank: 'MB Bank', daysAgo: '2 tuần trước', lastAmount: 150000, avatar: 'https://i.pravatar.cc/80?img=20' },
-  { id: 6, name: 'Michael Lee', bank: 'TPBank', daysAgo: '3 tuần trước', lastAmount: 800000, avatar: 'https://i.pravatar.cc/80?img=3' },
-  { id: 7, name: 'Sarah Kim', bank: 'Sacombank', daysAgo: '1 tháng trước', lastAmount: 450000, avatar: 'https://i.pravatar.cc/80?img=47' },
-];
-
-const formatAmount = (n: number) => {
-  if (n >= 1000000) return `${n / 1000000}tr`;
-  return `${n / 1000}k`;
+const lastSeenLabel = (rt: RelativeTime, t: Translations) => {
+  const one = rt.value === 1;
+  const unit =
+    rt.unit === 'days' ? (one ? t.common.dayAgo : t.common.daysAgo)
+    : rt.unit === 'weeks' ? (one ? t.common.weekAgo : t.common.weeksAgo)
+    : one ? t.common.monthAgo : t.common.monthsAgo;
+  return `${rt.value} ${unit}`;
 };
 
 interface Props {
@@ -58,13 +45,11 @@ const AllContactsScreen = ({ navigation }: Props) => {
   const { t } = useLanguage();
   const colors = useThemeColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const [search, setSearch] = useState('');
   const [toast, setToast] = useState('');
 
-  const filtered = ALL_CONTACTS.filter(c =>
-    c.name.toLowerCase().includes(search.toLowerCase()) ||
-    c.bank.toLowerCase().includes(search.toLowerCase()),
-  );
+  const filtered = searchContacts(search);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -109,7 +94,7 @@ const AllContactsScreen = ({ navigation }: Props) => {
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.recentList}>
-                {RECENT.map(item => (
+                {recentContacts().map(item => (
                   <TouchableOpacity
                     key={item.id}
                     style={styles.recentItem}
@@ -121,8 +106,8 @@ const AllContactsScreen = ({ navigation }: Props) => {
                     <View style={styles.recentAvatarWrap}>
                       <Image source={{ uri: item.avatar }} style={styles.recentAvatar} />
                     </View>
-                    <Text style={styles.recentName}>{item.name}</Text>
-                    <Text style={styles.recentAmount}>-{formatAmount(item.lastAmount)}</Text>
+                    <Text style={styles.recentName}>{item.shortName}</Text>
+                    <Text style={styles.recentAmount}>-{shortMoney(item.lastAmount, { trim: true })}</Text>
                   </TouchableOpacity>
                 ))}
                 {/* Add new */}
@@ -141,7 +126,7 @@ const AllContactsScreen = ({ navigation }: Props) => {
             </View>
           ) : null
         }
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        ItemSeparatorComponent={Separator}
         renderItem={({ item, index }) => (
           <View
             style={[
@@ -152,7 +137,7 @@ const AllContactsScreen = ({ navigation }: Props) => {
             <Image source={{ uri: item.avatar }} style={styles.avatar} />
             <View style={styles.contactInfo}>
               <Text style={styles.contactName}>{item.name}</Text>
-              <Text style={styles.contactBank}>{item.bank} · {item.daysAgo}</Text>
+              <Text style={styles.contactBank}>{item.bank} · {lastSeenLabel(item.lastSeen, t)}</Text>
             </View>
             <View style={styles.contactRight}>
               <Text style={styles.contactAmount}>-{money(item.lastAmount)}</Text>
@@ -188,6 +173,22 @@ const AllContactsScreen = ({ navigation }: Props) => {
 };
 
 export default AllContactsScreen;
+
+// Ở module scope chứ không lồng trong màn. Nó cần màu theo theme nên tự gọi
+// useThemeColors thay vì nhận styles qua props — FlatList không cho truyền
+// props tuỳ ý vào ItemSeparatorComponent.
+const Separator = () => {
+  const c = useThemeColors();
+  return (
+    <View
+      style={{
+        height: StyleSheet.hairlineWidth,
+        backgroundColor: c.divider,
+        marginLeft: 72,
+      }}
+    />
+  );
+};
 
 const makeStyles = (c: ThemeColors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: c.bg },
@@ -259,7 +260,6 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   },
   contactRowFirst: { borderTopLeftRadius: RADII.card, borderTopRightRadius: RADII.card },
   contactRowLast: { borderBottomLeftRadius: RADII.card, borderBottomRightRadius: RADII.card },
-  separator: { height: StyleSheet.hairlineWidth, backgroundColor: c.divider, marginLeft: 72 },
   avatar: {
     width: 44,
     height: 44,

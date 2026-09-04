@@ -24,6 +24,8 @@ export type ThemeColors = {
 
   success: string;
   danger: string;
+  /** Nền cho khối lỗi (bong bóng chat lỗi, banner). */
+  dangerBg: string;
   info: string;
   purple: string;
 
@@ -35,6 +37,21 @@ export type ThemeColors = {
   muted: string;
   border: string;
   divider: string;
+
+  // ─── Thanh tab ────────────────────────────────────────────────────────────
+  // Tách riêng vì thứ tự phân tầng đảo giữa 2 mode: nền sáng thì thanh phải
+  // nổi bằng cách tối/trắng hơn nền, nền tối thì phải SÁNG hơn card mới nổi.
+  tabBar: string;         // nền thanh
+  tabBarActiveBg: string; // ô bo tròn sau mục đang chọn
+  tabBarBorder: string;
+
+  // Nút CTA đặc: nền sáng dùng khối tối, nền tối chuyển sang đồng đặc
+  // (nút tối trên nền tối mất khối). Chữ trắng ngà đọc được trên cả hai.
+  btnSolid: string;
+
+  // Đường bao của thành phần bấm được (chip, tab chưa chọn). Đậm hơn `border`
+  // vốn dành cho divider — hairline màu `border` chỉ 1.28:1 nên gần như vô hình.
+  borderStrong: string;
 };
 
 export const LIGHT: ThemeColors = {
@@ -43,27 +60,34 @@ export const LIGHT: ThemeColors = {
   primaryLight:  '#fdf3e7',
   primaryBorder: '#f0c48a',
 
-  accent:     '#b68235',
-  accent100:  '#f4ebdb',
+  accent:     '#A8732B', // chỉ cho mảng trang trí KHÔNG chứa chữ (progress, dot)
+  accent100:  '#F3E8D5',
   accent300:  '#d8b783', // đồng sáng cho nền tối
-  accent700:  '#8a5e1c', // đồng ấm cho chữ/icon trên nền sáng
-  heroCopper: '#8a5e1c', // nền hero đồng ấm
+  accent700:  '#855819', // đồng đậm cho CHỮ/ICON — đậm hơn #99661F để đạt AA trên #F3E8D5
+  heroCopper: '#99661F', // nền hero, chữ trắng lên đây đạt 4.91:1
   heroDark:   '#1a1815',
   offWhite:   '#fdfcfb',
 
   success: '#1a7a40',
   danger:  '#c0392b',
+  dangerBg: '#fdecea',
   info:    '#1a4a7a',
   purple:  '#6c3fc4',
 
-  bg:      '#F2F2F7',
-  white:   '#ffffff',
-  text:    '#1a1a1a',
-  subtext: '#888888',
-  hint:    '#aaaaaa',
-  muted:   '#bbbbbb',
-  border:  '#e8e8e8',
-  divider: '#F0F0F0',
+  bg:      '#F8F6F2',
+  white:   '#FFFFFF',
+  text:    '#1A1815',
+  subtext: '#736E66', // đậm hơn #888888 cũ: bản cũ chỉ 3.54:1 trên nền trắng
+  hint:    '#9C968C',
+  muted:   '#B3ADA3',
+  border:  '#E8E3DB',
+  divider: '#F0EDE7',
+
+  tabBar:         '#FFFFFF',
+  tabBarActiveBg: '#F3E8D5',
+  tabBarBorder:   '#E8E3DB',
+  btnSolid:       '#1a1815',
+  borderStrong:   '#C4BAA9',
 };
 
 export const DARK: ThemeColors = {
@@ -72,27 +96,37 @@ export const DARK: ThemeColors = {
   primaryLight:  '#2a2016', // cam trầm làm nền badge
   primaryBorder: '#4a3a22',
 
-  accent:     '#c99a54', // vàng đồng sáng hơn cho nền tối
-  accent100:  '#2a2016', // nền accent trầm
+  // Vai trò tách đôi: accent là màu NỀN, accent700 là màu CHỮ.
+  // Dùng #8C5F22 làm chữ trên card tối chỉ được 2.96:1 — không đọc được.
+  accent:     '#8C5F22', // nền nút/chip đặc, chữ trắng lên đây đạt 5.43:1
+  accent100:  '#34281A', // nền accent trầm
   accent300:  '#d8b783', // đồng sáng cho nền tối (giống light)
-  accent700:  '#e0b877', // accent sáng để đọc chữ/icon trên nền tối
-  heroCopper: '#8a5e1c', // nền hero giữ đồng ấm đậm ở cả 2 mode
+  accent700:  '#e0b877', // đồng sáng cho CHỮ/ICON trên nền tối — 8.86:1
+  heroCopper: '#8C5F22',
   heroDark:   '#1a1815',
   offWhite:   '#fdfcfb',
 
   success: '#4ade80',
   danger:  '#f87171',
+  dangerBg: '#2E1A18',
   info:    '#60a5fa',
   purple:  '#c9a6f5',
 
   bg:      '#121212',
-  white:   '#1e1e1e', // nền card
+  white:   '#1F1F1F', // nền card
   text:    '#f2f2f2',
-  subtext: '#9a9a9a',
+  subtext: '#A6A6A6',
   hint:    '#7a7a7a',
   muted:   '#6a6a6a',
-  border:  '#2c2c2c',
-  divider: '#262626',
+  border:  '#2A2A2A',
+  divider: '#242424',
+
+  // Nền tối thì thanh tab phải SÁNG hơn card #1F1F1F mới nổi lên được
+  tabBar:         '#1F1F1F',
+  tabBarActiveBg: '#34281A',
+  tabBarBorder:   '#2A2A2A',
+  btnSolid:       '#8C5F22', // chữ trắng lên đây đạt 5.43:1
+  borderStrong:   '#575047',
 };
 
 // Tương thích ngược: code cũ import { BRAND } vẫn chạy (= palette sáng)

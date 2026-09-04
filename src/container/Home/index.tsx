@@ -15,7 +15,7 @@ import Chatbot from '../../components/Chatbot';
 import { useLanguage } from '../../context/LanguageContext';
 import { useThemeColors } from '../../context/ThemeContext';
 import { ThemeColors } from '../../theme/paperTheme';
-import { RADII, TYPE, SPACING, FONT } from '../../theme/tokens';
+import { RADII, TYPE, SPACING, FONT, TAB_BAR_SPACE } from '../../theme/tokens';
 import { SKILLS, GITHUB_URL } from '../Skills/data';
 
 const AVATAR_URL =
@@ -49,6 +49,7 @@ const HomeScreen = () => {
     { id: 2, name: t.home.invest,  tagline: t.home.investDesc,  icon: 'graph-up',    screen: 'InvestmentScreen' },
     { id: 3, name: t.home.expense, tagline: t.home.expenseDesc, icon: 'calculator',  screen: 'ExpenseScreen' },
     { id: 4, name: t.home.aiChat,  tagline: t.home.aiChatDesc,  icon: 'chat-bubble', screen: null },
+    { id: 5, name: t.home.remoteApps, tagline: t.home.remoteAppsDesc, icon: 'packages', screen: 'MiniAppsScreen' },
   ];
 
   const CONTACTS = [
@@ -60,17 +61,6 @@ const HomeScreen = () => {
 
   const openUrl = (url: string, title: string) =>
     navigation.navigate('WebViewScreen', { url, title });
-
-  const SectionHeader = ({ title, onPress }: { title: string; onPress?: () => void }) => (
-    <View style={styles.sectionHeader}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      {onPress && (
-        <TouchableOpacity onPress={onPress}>
-          <Text style={styles.seeAll}>{t.home.viewAll}</Text>
-        </TouchableOpacity>
-      )}
-    </View>
-  );
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -128,7 +118,7 @@ const HomeScreen = () => {
 
         {/* Kỹ năng nổi bật — carousel */}
         <View style={styles.section}>
-          <SectionHeader title={t.home.topSkills} onPress={() => navigation.navigate('SkillsScreen')} />
+          <SectionHeader styles={styles} viewAllLabel={t.home.viewAll} title={t.home.topSkills} onPress={() => navigation.navigate('SkillsScreen')} />
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -158,7 +148,7 @@ const HomeScreen = () => {
 
         {/* Mini-app trong hồ sơ */}
         <View style={styles.section}>
-          <SectionHeader title={t.home.miniApps} />
+          <SectionHeader styles={styles} viewAllLabel={t.home.viewAll} title={t.home.miniApps} />
           <View style={styles.miniList}>
             {MINI_APPS.map(app => (
               <TouchableOpacity
@@ -201,11 +191,37 @@ const HomeScreen = () => {
 
 export default HomeScreen;
 
+/** Kiểu bảng style, để component tách ra ngoài vẫn đúng kiểu. */
+type Styles = ReturnType<typeof makeStyles>;
+
+// Đặt NGOÀI component cha: định nghĩa bên trong thì mỗi lần cha vẽ lại sẽ tạo
+// một hàm mới, React coi là loại component khác và huỷ cả cây con.
+const SectionHeader = ({
+  title,
+  onPress,
+  styles,
+  viewAllLabel,
+}: {
+  title: string;
+  onPress?: () => void;
+  styles: Styles;
+  viewAllLabel: string;
+}) => (
+  <View style={styles.sectionHeader}>
+    <Text style={styles.sectionTitle}>{title}</Text>
+    {onPress && (
+      <TouchableOpacity onPress={onPress}>
+        <Text style={styles.seeAll}>{viewAllLabel}</Text>
+      </TouchableOpacity>
+    )}
+  </View>
+);
+
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     safeArea: { flex: 1, backgroundColor: c.bg },
     scrollView: { flex: 1 },
-    scrollContent: { paddingBottom: 100 },
+    scrollContent: { paddingBottom: TAB_BAR_SPACE },
 
     // Header
     header: {
