@@ -7,7 +7,11 @@
     "ios": "react-native run-ios --port 8088",
     "lint": "eslint .",
     "start": "react-native start --port 8088",
-    "test": "jest"
+    "test": "jest",
+    "miniapp:build": "react-native bundle --platform ios --dev false --entry-file miniapps/loyalty/index.js --config miniapps/loyalty/rspack.config.mjs --bundle-output miniapps/loyalty/build/entry.bundle && rm -f miniapps/loyalty/build/entry.bundle* miniapps/loyalty/build/index.bundle*",
+    "miniapp:serve": "npx serve miniapps/loyalty/build -l 9000 --cors",
+    "tools:check": "node tools/gen-tool-declarations.mjs --check",
+    "tools:gen": "node tools/gen-tool-declarations.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
@@ -37,6 +41,7 @@
     "@babel/preset-env": "^7.20.0",
     "@babel/runtime": "^7.20.0",
     "@callstack/repack": "^5.2.5",
+    "@module-federation/enhanced": "0.22.0",
     "@react-native-community/cli": "10.2.0",
     "@react-native-community/cli-platform-android": "10.2.0",
     "@react-native-community/cli-platform-ios": "10.2.0",

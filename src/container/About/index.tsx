@@ -52,30 +52,8 @@ const AboutScreen = ({ navigation }: Props) => {
       setToast(t.common.linkOpenFailed);
     });
 
-  // ─── Contact button ─────────────────────────────────────────────────────────
-  const ContactBtn = ({
-    icon, label, url, color, bg,
-  }: {
-    icon: string; label: string; url: string; color: string; bg: string;
-  }) => (
-    <TouchableOpacity
-      style={[styles.contactBtn, { backgroundColor: bg }]}
-      onPress={() => openLink(url)}
-      activeOpacity={0.8}>
-      <Icon type="ionicon" name={icon} size={18} color={color} />
-      <Text style={[styles.contactBtnText, { color }]}>{label}</Text>
-    </TouchableOpacity>
-  );
 
-  // ─── Feature row ────────────────────────────────────────────────────────────
-  const FeatureRow = ({ text }: { text: string }) => (
-    <View style={styles.featureRow}>
-      <View style={styles.featureCheck}>
-        <Icon type="ionicon" name="checkmark" size={11} color="#fff" />
-      </View>
-      <Text style={styles.featureText}>{text}</Text>
-    </View>
-  );
+
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -126,21 +104,21 @@ const AboutScreen = ({ navigation }: Props) => {
 
           {/* Contact buttons */}
           <View style={styles.contactRow}>
-            <ContactBtn
+            <ContactBtn styles={styles} onOpen={openLink}
               icon="mail-outline"
               label="Gmail"
               url="https://mail.google.com/mail/u/0/#inbox"
               color="#1a4a7a"
               bg="#e8f0f8"
             />
-            <ContactBtn
+            <ContactBtn styles={styles} onOpen={openLink}
               icon="logo-github"
               label="GitHub"
               url="https://github.com/nguyendinhhien1812"
               color="#1a1a1a"
               bg="#f0f0f5"
             />
-            <ContactBtn
+            <ContactBtn styles={styles} onOpen={openLink}
               icon="logo-linkedin"
               label="LinkedIn"
               url="https://www.linkedin.com/in/hi%E1%BA%BFn-nguy%E1%BB%85n-271b8a2ab/"
@@ -173,13 +151,13 @@ const AboutScreen = ({ navigation }: Props) => {
         </View>
 
         <View style={styles.featureCard}>
-          <FeatureRow text={t.about.feat1} />
-          <FeatureRow text={t.about.feat2} />
-          <FeatureRow text={t.about.feat3} />
-          <FeatureRow text={t.about.feat4} />
-          <FeatureRow text={t.about.feat5} />
-          <FeatureRow text={t.about.feat6} />
-          <FeatureRow text={t.about.feat7} />
+          <FeatureRow styles={styles} text={t.about.feat1} />
+          <FeatureRow styles={styles} text={t.about.feat2} />
+          <FeatureRow styles={styles} text={t.about.feat3} />
+          <FeatureRow styles={styles} text={t.about.feat4} />
+          <FeatureRow styles={styles} text={t.about.feat5} />
+          <FeatureRow styles={styles} text={t.about.feat6} />
+          <FeatureRow styles={styles} text={t.about.feat7} />
         </View>
 
         {/* ── Source code CTA ── */}
@@ -215,6 +193,49 @@ const AboutScreen = ({ navigation }: Props) => {
 export default AboutScreen;
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
+
+/** Kiểu bảng style, để component tách ra ngoài vẫn đúng kiểu. */
+type Styles = ReturnType<typeof makeStyles>;
+
+// Đặt NGOÀI component cha: định nghĩa bên trong thì mỗi lần cha vẽ lại sẽ tạo
+// một hàm mới, React coi là loại component khác và huỷ cả cây con — mất state,
+// animation giật lại từ đầu.
+// ─── Contact button ─────────────────────────────────────────────────────────
+const ContactBtn = ({
+  icon,
+  label,
+  url,
+  color,
+  bg,
+  styles,
+  onOpen,
+}: {
+  icon: string;
+  label: string;
+  url: string;
+  color: string;
+  bg: string;
+  styles: Styles;
+  onOpen: (url: string) => void;
+}) => (
+  <TouchableOpacity
+    style={[styles.contactBtn, { backgroundColor: bg }]}
+    onPress={() => onOpen(url)}
+    activeOpacity={0.8}>
+    <Icon type="ionicon" name={icon} size={18} color={color} />
+    <Text style={[styles.contactBtnText, { color }]}>{label}</Text>
+  </TouchableOpacity>
+);
+
+// ─── Feature row ────────────────────────────────────────────────────────────
+const FeatureRow = ({ text, styles }: { text: string; styles: Styles }) => (
+  <View style={styles.featureRow}>
+    <View style={styles.featureCheck}>
+      <Icon type="ionicon" name="checkmark" size={11} color="#fff" />
+    </View>
+    <Text style={styles.featureText}>{text}</Text>
+  </View>
+);
 
 const makeStyles = (c: ThemeColors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: c.bg },
@@ -370,7 +391,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
 
   // Source CTA
   sourceCta: {
-    backgroundColor: c.heroDark,
+    backgroundColor: c.btnSolid,
     borderRadius: RADII.item,
     marginHorizontal: SPACING.screenX,
     height: 52,

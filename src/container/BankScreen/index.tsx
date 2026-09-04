@@ -10,50 +10,35 @@ import {
 } from 'react-native';
 import { QuickAction } from './components';
 import { StackScreenProps } from '@react-navigation/stack';
+import { BankStackParamList } from '../../navigation/BankNavigator';
 import SubHeader from '../../components/UI/SubHeader';
 import { useLanguage } from '../../context/LanguageContext';
+import { Translations } from '../../i18n/translations';
+import {
+  DateGroup,
+  getBalance,
+  listTransactions,
+  groupTransactionsByDate,
+  listQuickSend,
+} from '../../services/accountService';
 import { useThemeColors } from '../../context/ThemeContext';
 import { ThemeColors } from '../../theme/paperTheme';
 import { RADII, TYPE, SPACING, FONT } from '../../theme/tokens';
+import { moneyAbs } from '../../utils/money';
 
-interface BankScreenProps extends StackScreenProps<{}> {}
+interface BankScreenProps extends StackScreenProps<BankStackParamList, 'BankScreen'> {}
 
-const money = (n: number) =>
-  new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-    maximumFractionDigits: 0,
-  }).format(Math.abs(n));
 
-const quickSendList = [
-  { id: 1, name: 'John',   avatar: 'https://randomuser.me/api/portraits/men/75.jpg' },
-  { id: 2, name: 'Kevin',  avatar: 'https://randomuser.me/api/portraits/men/32.jpg' },
-  { id: 3, name: 'Lyda',   avatar: 'https://randomuser.me/api/portraits/women/44.jpg' },
-  { id: 4, name: 'Marry',  avatar: 'https://randomuser.me/api/portraits/women/68.jpg' },
-  { id: 5, name: 'Evelyn', avatar: 'https://randomuser.me/api/portraits/women/12.jpg' },
-];
-
-type Transaction = {
-  id: number;
-  name: string;
-  time: string;
-  dateGroup: string;
-  amount: number;
-  type: 'income' | 'expense';
+const dateGroupLabel = (group: DateGroup, t: Translations) => {
+  switch (group) {
+    case 'today':
+      return t.common.today;
+    case 'yesterday':
+      return t.common.yesterday;
+    case 'daysAgo2':
+      return `2 ${t.common.daysAgo}`;
+  }
 };
-
-const transactions: Transaction[] = [
-  { id: 1,  name: 'Transfer from Elly',  time: '02:45', dateGroup: 'Hôm nay',      amount: 450000,   type: 'income' },
-  { id: 2,  name: 'Spotify Premium',     time: '01:10', dateGroup: 'Hôm nay',      amount: -8000,    type: 'expense' },
-  { id: 3,  name: 'Coffee at Highland',  time: '11:32', dateGroup: 'Hôm nay',      amount: -35000,   type: 'expense' },
-  { id: 4,  name: 'Lương tháng 11',      time: '09:00', dateGroup: 'Hôm nay',      amount: 12000000, type: 'income' },
-  { id: 5,  name: 'Tiền điện',           time: '08:00', dateGroup: 'Hôm qua',      amount: -350000,  type: 'expense' },
-  { id: 6,  name: 'Chuyển tiền cho mẹ', time: '07:30', dateGroup: 'Hôm qua',      amount: -1000000, type: 'expense' },
-  { id: 7,  name: 'Zalopay Cashback',    time: '06:00', dateGroup: 'Hôm qua',      amount: 150000,   type: 'income' },
-  { id: 8,  name: 'Grab Ride',           time: '05:00', dateGroup: '2 ngày trước', amount: -52000,   type: 'expense' },
-  { id: 9,  name: 'YouTube Premium',     time: '04:00', dateGroup: '2 ngày trước', amount: -30000,   type: 'expense' },
-  { id: 10, name: 'Transfer from David', time: '10:00', dateGroup: '2 ngày trước', amount: 2200000,  type: 'income' },
-];
 
 const BankScreen = ({ navigation }: BankScreenProps) => {
   const { t } = useLanguage();
@@ -63,23 +48,13 @@ const BankScreen = ({ navigation }: BankScreenProps) => {
   const [balanceVisible, setBalanceVisible] = useState(true);
   const [activeFilter, setActiveFilter] = useState(0); // 0=all, 1=in, 2=out
 
-  const balance = 1000000000;
+  const balance = getBalance();
 
-  const filteredTx = transactions.filter(tx => {
-    if (activeFilter === 1) return tx.type === 'income';
-    if (activeFilter === 2) return tx.type === 'expense';
-    return true;
-  });
-
-  const groupedTx = filteredTx.reduce<{ dateGroup: string; data: Transaction[] }[]>(
-    (acc, tx) => {
-      const group = acc.find(g => g.dateGroup === tx.dateGroup);
-      if (group) { group.data.push(tx); }
-      else { acc.push({ dateGroup: tx.dateGroup, data: [tx] }); }
-      return acc;
-    },
-    [],
+  const filteredTx = listTransactions(
+    activeFilter === 1 ? { type: 'income' } : activeFilter === 2 ? { type: 'expense' } : undefined,
   );
+
+  const groupedTx = groupTransactionsByDate(filteredTx);
 
   const ListHeader = (
     <View>
@@ -88,7 +63,7 @@ const BankScreen = ({ navigation }: BankScreenProps) => {
         <Text style={styles.balanceLabel}>{t.bank.balance}</Text>
         <View style={styles.balanceRow}>
           <Text style={styles.balanceAmount}>
-            {balanceVisible ? money(balance) : '• • • • • •'}
+            {balanceVisible ? moneyAbs(balance) : '• • • • • •'}
           </Text>
           <TouchableOpacity onPress={() => setBalanceVisible(v => !v)} hitSlop={8}>
             <Text style={styles.balanceToggle}>
@@ -100,12 +75,11 @@ const BankScreen = ({ navigation }: BankScreenProps) => {
           <QuickAction
             icon="data-transfer-both"
             label={t.bank.transfer}
-            // @ts-ignore route params
             onPress={() => navigation.navigate('TransferMoney', { balance })}
           />
-          <QuickAction icon="qr-code"     label={t.bank.qrPay} onPress={() => navigation.navigate('QRPay' as never)} />
-          <QuickAction icon="wallet"      label={t.bank.topUp} onPress={() => navigation.navigate('TopUp' as never)} />
-          <QuickAction icon="credit-card" label={t.bank.card}  onPress={() => navigation.navigate('CardManagement' as never)} />
+          <QuickAction icon="qr-code"     label={t.bank.qrPay} onPress={() => navigation.navigate('QRPay')} />
+          <QuickAction icon="wallet"      label={t.bank.topUp} onPress={() => navigation.navigate('TopUp')} />
+          <QuickAction icon="credit-card" label={t.bank.card}  onPress={() => navigation.navigate('CardManagement')} />
         </View>
       </View>
 
@@ -114,7 +88,7 @@ const BankScreen = ({ navigation }: BankScreenProps) => {
         {/* Gửi nhanh */}
         <View style={styles.sectionHeaderRow}>
           <Text style={styles.sectionTitle}>{t.bank.quickSend}</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('AllContacts' as never)}>
+          <TouchableOpacity onPress={() => navigation.navigate('AllContacts')}>
             <Text style={styles.seeAll}>{t.bank.viewAll}</Text>
           </TouchableOpacity>
         </View>
@@ -123,12 +97,11 @@ const BankScreen = ({ navigation }: BankScreenProps) => {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.quickSendRow}
         >
-          {quickSendList.map(item => (
+          {listQuickSend().map(item => (
             <TouchableOpacity
               key={item.id}
               style={styles.contactItem}
               onPress={() =>
-                // @ts-ignore route params
                 navigation.navigate('TransferMoney', {
                   balance,
                   contact: { name: item.name, avatar: item.avatar },
@@ -177,7 +150,7 @@ const BankScreen = ({ navigation }: BankScreenProps) => {
         contentContainerStyle={styles.listContent}
         renderItem={({ item: group, index: gi }) => (
           <View style={[styles.txGroup, gi > 0 && { marginTop: SPACING.s4 }]}>
-            <Text style={styles.dateGroup}>{group.dateGroup}</Text>
+            <Text style={styles.dateGroup}>{dateGroupLabel(group.dateGroup, t)}</Text>
             {group.data.map(tx => {
               const pos = tx.type === 'income';
               const color = pos ? c.success : c.danger;
@@ -196,7 +169,7 @@ const BankScreen = ({ navigation }: BankScreenProps) => {
                     <Text style={styles.txTime}>{tx.time}</Text>
                   </View>
                   <Text style={[styles.txAmount, { color }]}>
-                    {pos ? '+' : '-'}{money(tx.amount)}
+                    {pos ? '+' : '-'}{moneyAbs(tx.amount)}
                   </Text>
                 </View>
               );
@@ -293,8 +266,8 @@ const makeStyles = (c: ThemeColors) =>
       paddingVertical: 4,
       borderRadius: RADII.chip,
       backgroundColor: c.white,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: c.border,
+      borderWidth: 1,
+      borderColor: c.borderStrong,
     },
     filterChipActive: { backgroundColor: c.accent100, borderColor: c.accent100 },
     filterLabel: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.subtext },

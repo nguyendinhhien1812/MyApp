@@ -16,86 +16,22 @@ import { useThemeColors } from '../../../context/ThemeContext';
 import { ThemeColors } from '../../../theme/paperTheme';
 import { RADII, TYPE, SPACING, FONT } from '../../../theme/tokens';
 import SubHeader from '../../../components/UI/SubHeader';
+import { getCatName, CATEGORY_VISUALS } from '../categories';
+import { money, shortMoney } from '../../../utils/money';
+import {
+  spendingByCategory,
+  topExpenses,
+  getChart,
+  Period,
+} from '../../../services/expenseService';
 
-// ─── Brand colors ─────────────────────────────────────────────────────────────
-// Giữ lại để dùng cho dữ liệu tĩnh (CAT_STATS/TOP_TX) — không đổi theo theme.
-const PRIMARY = '#E89951';
-const PRIMARY_DARK = '#b36a1a';
-const COLOR_DANGER = '#c0392b';
+// Xanh lãi dùng trên khối hero luôn tối — không đổi theo theme.
 const COLOR_SUCCESS = '#1a7a40';
 
+const PERIOD_KEYS: Period[] = ['week', 'month', 'year'];
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-const money = (n: number) =>
-  new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-    maximumFractionDigits: 0,
-  }).format(n);
 
-const shortMoney = (n: number): string => {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}tr`;
-  return `${(n / 1_000).toFixed(0)}k`;
-};
-
-// i18n-safe: maps categoryId → translated name
-const getCatName = (id: string, t: any): string => {
-  const map: Record<string, string> = {
-    food: t.expense.catFood,
-    shopping: t.expense.catShopping,
-    fun: t.expense.catFun,
-    transport: t.expense.catTransport,
-    utility: t.expense.catUtility,
-    other: t.expense.catOther,
-  };
-  return map[id] ?? id;
-};
-
-// ─── Chart data per period ────────────────────────────────────────────────────
-const CHART_DATA = {
-  week: {
-    labels: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'],
-    values: [163_980, 85_000, 250_000, 199_000, 320_000, 60_230, 35_000],
-  },
-  month: {
-    labels: ['T1', 'T2', 'T3', 'T4'],
-    values: [2_100_000, 3_450_000, 1_890_000, 885_110],
-  },
-  year: {
-    labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'],
-    values: [7_200_000, 8_100_000, 6_500_000, 9_300_000, 7_800_000, 8_500_000,
-      10_200_000, 9_100_000, 8_325_110, 7_600_000, 8_900_000, 11_000_000],
-  },
-};
-
-// Period index → key mapping (i18n-safe)
-const PERIOD_KEYS: Array<keyof typeof CHART_DATA> = ['week', 'month', 'year'];
-
-// ─── Category breakdown data ───────────────────────────────────────────────────
-type CategoryStat = {
-  id: string;
-  name: string;
-  icon: string;
-  iconBg: string;
-  iconColor: string;
-  barColor: string;
-  total: number;
-  percent: number;
-};
-
-const CAT_STATS: CategoryStat[] = [
-  { id: 'food', name: 'Ăn uống', icon: 'restaurant-outline', iconBg: '#fff4e8', iconColor: PRIMARY_DARK, barColor: PRIMARY, total: 3_200_000, percent: 0.38 },
-  { id: 'shopping', name: 'Mua sắm', icon: 'bag-handle-outline', iconBg: '#f5f0ff', iconColor: '#6c3fc4', barColor: '#6c3fc4', total: 2_100_000, percent: 0.25 },
-  { id: 'utility', name: 'Tiện ích', icon: 'flash-outline', iconBg: '#ffeaea', iconColor: COLOR_DANGER, barColor: COLOR_DANGER, total: 1_485_110, percent: 0.18 },
-  { id: 'fun', name: 'Giải trí', icon: 'game-controller-outline', iconBg: '#e8f0f8', iconColor: '#1a4a7a', barColor: '#1a4a7a', total: 890_000, percent: 0.11 },
-  { id: 'transport', name: 'Di chuyển', icon: 'car-outline', iconBg: '#e8f8f0', iconColor: COLOR_SUCCESS, barColor: COLOR_SUCCESS, total: 650_000, percent: 0.08 },
-];
-
-// Top transactions
-const TOP_TX = [
-  { id: 1, name: 'Điện EVN', categoryId: 'utility', icon: 'flash-outline', iconBg: '#ffeaea', iconColor: COLOR_DANGER, amount: 320_000 },
-  { id: 2, name: 'Shopee', categoryId: 'shopping', icon: 'bag-handle-outline', iconBg: '#f5f0ff', iconColor: '#6c3fc4', amount: 250_000 },
-  { id: 3, name: 'Starbucks Coffee', categoryId: 'food', icon: 'cafe-outline', iconBg: '#fff4e8', iconColor: PRIMARY_DARK, amount: 163_980 },
-];
 
 // ─── Bar chart component ───────────────────────────────────────────────────────
 const SCREEN_W = Dimensions.get('window').width;
@@ -183,8 +119,10 @@ const ExpenseStats = ({ navigation }: Props) => {
   const [activePeriod, setActivePeriod] = useState(1); // 0=week 1=month 2=year
 
   const periodFilters = [t.expense.weekFilter, t.expense.monthFilter, t.expense.yearFilter];
-  const chartData = CHART_DATA[PERIOD_KEYS[activePeriod]];
+  const chartData = getChart(PERIOD_KEYS[activePeriod]);
   const total = chartData.values.reduce((s, v) => s + v, 0);
+  const catStats = spendingByCategory();
+  const topTx = topExpenses(3);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -228,10 +166,10 @@ const ExpenseStats = ({ navigation }: Props) => {
         {/* ── Category breakdown ── */}
         <Text style={styles.sectionLabel}>{t.expense.topCategories}</Text>
         <View style={styles.card}>
-          {CAT_STATS.map((cat, i) => (
-            <View key={cat.id} style={[styles.catRow, i < CAT_STATS.length - 1 && { marginBottom: 16 }]}>
-              <View style={[styles.catIconWrap, { backgroundColor: cat.iconBg }]}>
-                <Icon type="ionicon" name={cat.icon} size={17} color={cat.iconColor} />
+          {catStats.map((cat, i) => (
+            <View key={cat.id} style={[styles.catRow, i < catStats.length - 1 && { marginBottom: 16 }]}>
+              <View style={[styles.catIconWrap, { backgroundColor: CATEGORY_VISUALS[cat.id].iconBg }]}>
+                <Icon type="ionicon" name={CATEGORY_VISUALS[cat.id].icon} size={17} color={CATEGORY_VISUALS[cat.id].iconColor} />
               </View>
               <View style={styles.catInfo}>
                 <View style={styles.catLabelRow}>
@@ -242,7 +180,7 @@ const ExpenseStats = ({ navigation }: Props) => {
                   <View
                     style={[
                       styles.progressFill,
-                      { width: `${cat.percent * 100}%` as any, backgroundColor: cat.barColor },
+                      { width: `${cat.percent * 100}%` as any, backgroundColor: CATEGORY_VISUALS[cat.id].barColor },
                     ]}
                   />
                 </View>
@@ -255,11 +193,11 @@ const ExpenseStats = ({ navigation }: Props) => {
         {/* ── Top transactions ── */}
         <Text style={styles.sectionLabel}>{t.expense.recentTop}</Text>
         <View style={styles.card}>
-          {TOP_TX.map((tx, i) => (
+          {topTx.map((tx, i) => (
             <View key={tx.id}>
               <View style={styles.txRow}>
-                <View style={[styles.txIcon, { backgroundColor: tx.iconBg }]}>
-                  <Icon type="ionicon" name={tx.icon} size={18} color={tx.iconColor} />
+                <View style={[styles.txIcon, { backgroundColor: CATEGORY_VISUALS[tx.categoryId].iconBg }]}>
+                  <Icon type="ionicon" name={tx.icon} size={18} color={CATEGORY_VISUALS[tx.categoryId].iconColor} />
                 </View>
                 <View style={styles.txInfo}>
                   <Text style={styles.txName}>{tx.name}</Text>
@@ -267,7 +205,7 @@ const ExpenseStats = ({ navigation }: Props) => {
                 </View>
                 <Text style={styles.txAmount}>{money(tx.amount)}</Text>
               </View>
-              {i < TOP_TX.length - 1 && <View style={styles.txDivider} />}
+              {i < topTx.length - 1 && <View style={styles.txDivider} />}
             </View>
           ))}
         </View>
@@ -391,6 +329,6 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   txInfo: { flex: 1 },
   txName: { fontFamily: FONT.medium, fontSize: TYPE.body, color: c.text },
   txCat: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.muted, marginTop: 2 },
-  txAmount: { fontFamily: FONT.semibold, fontSize: TYPE.body, color: COLOR_DANGER },
+  txAmount: { fontFamily: FONT.semibold, fontSize: TYPE.body, color: c.danger },
   txDivider: { height: StyleSheet.hairlineWidth, backgroundColor: c.divider, marginLeft: 52 },
 });

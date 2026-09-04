@@ -36,8 +36,8 @@ const makeStyles = (c: ThemeColors) =>
     chip: {
       borderRadius: 100,
       backgroundColor: c.white,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: c.border,
+      borderWidth: 1,
+      borderColor: c.borderStrong,
     },
     chipActive: {
       backgroundColor: c.accent100,

@@ -12,33 +12,26 @@ import { Icon } from '@rneui/themed';
 import SubHeader from '../../components/UI/SubHeader';
 import { AppDialog, AppSnackbar } from '../../components/UI';
 import { useLanguage } from '../../context/LanguageContext';
+import { getBalance } from '../../services/accountService';
+import {
+  CarrierId,
+  listCarriers,
+  getCarrier,
+  listDenoms,
+  popularDenom,
+} from '../../services/topupService';
 import { useThemeColors } from '../../context/ThemeContext';
 import { ThemeColors } from '../../theme/paperTheme';
 import { RADII, TYPE, SPACING, FONT } from '../../theme/tokens';
+import { money, shortMoney } from '../../utils/money';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const WALLET_BALANCE = 1000000000;
+// Cùng một số dư với màn Ngân hàng — trước đây chép tay ở hai nơi
+const WALLET_BALANCE = getBalance();
 
-const money = (n: number) =>
-  new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-    maximumFractionDigits: 0,
-  }).format(n);
 
-const formatDenom = (n: number) =>
-  n >= 1000000 ? `${n / 1000000}tr` : `${n / 1000}k`;
 
-const CARRIERS = [
-  { id: 'viettel', name: 'Viettel', color: '#E89951', short: 'V' },
-  { id: 'vinaphone', name: 'Vinaphone', color: '#0077c8', short: 'VP' },
-  { id: 'mobifone', name: 'Mobifone', color: '#00a651', short: 'MB' },
-  { id: 'gmobile', name: 'Gmobile', color: '#8b0000', short: 'GT' },
-  { id: 'itelecom', name: 'Itelecom', color: '#ff6b00', short: 'IT' },
-];
-
-const DENOMS = [10000, 20000, 50000, 100000, 200000, 500000];
-const POPULAR = 50000;
+const POPULAR = popularDenom();
 
 // Width for 3 columns with gaps
 const DENOM_ITEM_WIDTH = Math.floor((SCREEN_WIDTH - 32 - 16 - 4) / 3);
@@ -51,12 +44,12 @@ const TopUpScreen = ({ navigation }: Props) => {
   const { t } = useLanguage();
   const colors = useThemeColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const [selectedCarrier, setSelectedCarrier] = useState('viettel');
+  const [selectedCarrier, setSelectedCarrier] = useState<CarrierId>('viettel');
   const [selectedAmount, setSelectedAmount] = useState(50000);
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [successVisible, setSuccessVisible] = useState(false);
 
-  const currentCarrier = CARRIERS.find(c => c.id === selectedCarrier) ?? CARRIERS[0];
+  const currentCarrier = getCarrier(selectedCarrier);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -88,7 +81,7 @@ const TopUpScreen = ({ navigation }: Props) => {
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.carrierList}>
-            {CARRIERS.map(carrier => (
+            {listCarriers().map(carrier => (
               <TouchableOpacity
                 key={carrier.id}
                 style={[
@@ -115,7 +108,7 @@ const TopUpScreen = ({ navigation }: Props) => {
         <View>
           <Text style={styles.sectionTitle}>{t.topup.chooseDenom}</Text>
           <View style={styles.denomGrid}>
-            {DENOMS.map(denom => (
+            {listDenoms().map(denom => (
               <TouchableOpacity
                 key={denom}
                 style={[
@@ -129,7 +122,7 @@ const TopUpScreen = ({ navigation }: Props) => {
                     styles.denomValue,
                     selectedAmount === denom && styles.denomValueActive,
                   ]}>
-                  {formatDenom(denom)}
+                  {shortMoney(denom, { trim: true })}
                 </Text>
                 {denom === POPULAR ? (
                   <Text style={styles.popularLabel}>{t.topup.popular}</Text>
@@ -308,7 +301,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   // Bottom
   bottom: { padding: SPACING.screenX, paddingBottom: 24, backgroundColor: c.bg },
   ctaBtn: {
-    backgroundColor: c.heroDark,
+    backgroundColor: c.btnSolid,
     borderRadius: RADII.item,
     height: 52,
     flexDirection: 'row',

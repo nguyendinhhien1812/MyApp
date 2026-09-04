@@ -34,10 +34,23 @@ export default Repack.defineRspackConfig({
   },
   plugins: [
     new Repack.RepackPlugin(),
-    new Repack.plugins.ModuleFederationPlugin({
+    // V2 (Module Federation 2). KHÔNG dùng V1: ở V1, module tham chiếu remote
+    // chạy ngay trong __webpack_require__.I lúc khởi động, tức là TRƯỚC khi
+    // ScriptManager kịp khởi tạo — nó đọc scriptManager undefined rồi ném lỗi
+    // "Cannot read property 'addResolver' of undefined".
+    new Repack.plugins.ModuleFederationPluginV2({
       name: 'host',
+      // Tắt sinh type qua mạng của MF2: 'dev' bật plugin gợi ý type chạy bằng
+      // WebSocket, mà React Native không có API đó — nó ném
+      // "Cannot read property 'prototype' of undefined" ngay lúc khởi động.
+      dts: false,
+      dev: false,
       remotes: {
-        miniApp: 'miniApp@http://localhost:9000/miniApp.container.bundle',
+        // Tên remote PHẢI trùng id mini-app trong registry — resolver ở
+        // miniAppService tra bằng scriptId, mà scriptId chính là tên này.
+        // URL dưới đây chỉ là mặc định lúc build; lúc chạy ScriptManager
+        // thay bằng URL registry trả về.
+        loyalty: 'loyalty@http://localhost:9000/loyalty.container.bundle',
       },
       shared: {
         react: {

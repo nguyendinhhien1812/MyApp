@@ -1,0 +1,39 @@
+name = "myapp-ai-proxy"
+main = "src/index.js"
+compatibility_date = "2024-11-01"
+
+# SDK Anthropic import vài module Node (credentials). Cờ này cần
+# compatibility_date >= 2024-09-23 — ngày ở trên đã thoả.
+compatibility_flags = ["nodejs_compat"]
+
+# Smart Placement: chạy Worker gần backend thay vì gần người dùng.
+#
+# Lý do: Gemini chặn theo vị trí NƠI PHÁT REQUEST. Worker chạy ở datacenter
+# Cloudflare nào thì Google thấy vị trí đó — và datacenter đổi theo từng request,
+# nên có lần rơi vào nước không được hỗ trợ và trả
+# "User location is not supported for the API use." (400 FAILED_PRECONDITION).
+[placement]
+mode = "smart"
+
+# KV dùng để đếm rate limit và lưu registry mini-app.
+# Id không phải bí mật — không có token tài khoản thì cầm id cũng vô dụng.
+# Tạo lại (tài khoản khác) bằng: npx wrangler kv namespace create RATE_LIMIT
+[[kv_namespaces]]
+binding = "RATE_LIMIT"
+id = "84ca050e939748e29877b9c9bef789da"
+
+# ANTHROPIC_API_KEY KHÔNG khai ở đây — nạp bằng:
+#   npx wrangler secret put ANTHROPIC_API_KEY
+
+# Bundle mini-app, phục vụ qua route /bundles/* của chính Worker này.
+#
+# run_worker_first = true: mọi request đi vào code Worker trước, asset chỉ với tới
+# được qua binding ASSETS. Nhờ vậy giữ nguyên header, ETag và các chốt chặn đã
+# viết ở handleBundle, thay vì để tầng asset trả file thô.
+#
+# ĐÁNH ĐỔI: thư mục assets/ là MỘT PHẦN của bản deploy. Deploy khi thư mục thiếu
+# file = xoá sạch mọi phiên bản mini-app đang chạy. Vì thế assets/ được commit.
+[assets]
+directory = "./assets"
+binding = "ASSETS"
+run_worker_first = true

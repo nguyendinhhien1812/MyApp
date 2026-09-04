@@ -16,10 +16,26 @@ import { useThemeColors } from '../../context/ThemeContext';
 import { ThemeColors } from '../../theme/paperTheme';
 import { RADII, TYPE, SPACING, FONT } from '../../theme/tokens';
 
+/** Kiểu của bảng style, để component tách ra ngoài vẫn nhận đúng kiểu. */
+type Styles = ReturnType<typeof makeStyles>;
+
 interface ToggleProps {
   value: boolean;
   onToggle: () => void;
+  styles: Styles;
 }
+
+// Đặt NGOÀI component cha: định nghĩa bên trong thì mỗi lần cha vẽ lại sẽ tạo
+// một hàm mới, React coi là loại component khác và huỷ cả cây con — mất state,
+// animation giật lại từ đầu.
+const Toggle = ({ value, onToggle, styles }: ToggleProps) => (
+  <TouchableOpacity
+    style={[styles.toggle, value ? styles.toggleOn : styles.toggleOff]}
+    onPress={onToggle}
+    activeOpacity={0.8}>
+    <View style={[styles.toggleThumb, value ? styles.thumbOn : styles.thumbOff]} />
+  </TouchableOpacity>
+);
 
 interface Props {
   navigation: any;
@@ -38,14 +54,6 @@ const CardManagementScreen = ({ navigation }: Props) => {
   const [cancelDialog, setCancelDialog] = useState(false);
   const [toast, setToast] = useState('');
 
-  const Toggle = ({ value, onToggle }: ToggleProps) => (
-    <TouchableOpacity
-      style={[styles.toggle, value ? styles.toggleOn : styles.toggleOff]}
-      onPress={onToggle}
-      activeOpacity={0.8}>
-      <View style={[styles.toggleThumb, value ? styles.thumbOn : styles.thumbOff]} />
-    </TouchableOpacity>
-  );
 
   const toggleData: { label: string; sub: string; value: boolean; onToggle: () => void }[] = [
     { label: t.card.onlinePayment, sub: t.card.onlinePaymentSub, value: onlinePayment, onToggle: () => setOnlinePayment(v => !v) },
@@ -77,11 +85,11 @@ const CardManagementScreen = ({ navigation }: Props) => {
           </Text>
           <View style={styles.cardBottom}>
             <View>
-              <Text style={styles.cardFieldLabel}>CHỦ THẺ</Text>
+              <Text style={styles.cardFieldLabel}>{t.card.cardHolder}</Text>
               <Text style={styles.cardFieldValue}>N. DINH HIEN</Text>
             </View>
             <View>
-              <Text style={styles.cardFieldLabel}>HẾT HẠN</Text>
+              <Text style={styles.cardFieldLabel}>{t.card.cardExpiry}</Text>
               <Text style={styles.cardFieldValue}>12/28</Text>
             </View>
             <Text style={styles.visaText}>VISA</Text>
@@ -146,7 +154,7 @@ const CardManagementScreen = ({ navigation }: Props) => {
                 <Text style={styles.toggleLabel}>{r.label}</Text>
                 <Text style={styles.toggleSub}>{r.sub}</Text>
               </View>
-              <Toggle value={r.value} onToggle={r.onToggle} />
+              <Toggle styles={styles} value={r.value} onToggle={r.onToggle} />
             </View>
           ))}
         </View>

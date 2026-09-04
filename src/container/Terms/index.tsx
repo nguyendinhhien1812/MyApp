@@ -5,7 +5,6 @@ import {
   Text,
   StyleSheet,
   SafeAreaView,
-  TouchableOpacity,
   ScrollView,
 } from 'react-native';
 import SubHeader from '../../components/UI/SubHeader';

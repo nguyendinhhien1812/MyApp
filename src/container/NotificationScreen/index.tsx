@@ -10,91 +10,48 @@ import {
 import { Icon } from '@rneui/themed';
 import { useNavigation } from '@react-navigation/native';
 import { useLanguage } from '../../context/LanguageContext';
+import { Translations } from '../../i18n/translations';
+import {
+  NotifKey,
+  NotifTime,
+  Notification,
+  listNotifications,
+} from '../../services/notificationService';
 import { useThemeColors } from '../../context/ThemeContext';
 import { ThemeColors } from '../../theme/paperTheme';
-import { RADII, TYPE, SPACING, FONT } from '../../theme/tokens';
+import { RADII, TYPE, SPACING, FONT, TAB_BAR_SPACE } from '../../theme/tokens';
 
-type NotifItem = {
-  id: number;
-  titleKey: string;
-  contentKey: string;
-  isRead: boolean;
-  icon: string;
-  iconBg: string;
-  iconColor: string;
-  time: string;
+// Icon và màu là phần trình bày, tra theo khoá thông báo.
+const NOTIF_VISUALS: Record<NotifKey, { icon: string; iconBg: string; iconColor: string }> = {
+  transferOut:  { icon: 'arrow-up-circle-outline',   iconBg: '#e8f8f0', iconColor: '#1a7a40' },
+  receiveMoney: { icon: 'arrow-down-circle-outline', iconBg: '#e8f8f0', iconColor: '#1a7a40' },
+  security:     { icon: 'shield-checkmark-outline',  iconBg: '#fff4e8', iconColor: '#b36a1a' },
+  salary:       { icon: 'briefcase-outline',         iconBg: '#e8f8f0', iconColor: '#1a7a40' },
+  spotify:      { icon: 'musical-notes-outline',     iconBg: '#f5f0ff', iconColor: '#6c3fc4' },
+  promo:        { icon: 'gift-outline',              iconBg: '#fdf3e7', iconColor: '#b36a1a' },
 };
 
-const NOTIFICATIONS: NotifItem[] = [
-  {
-    id: 1,
-    titleKey: 'Chuyển tiền thành công',
-    contentKey: 'Bạn đã chuyển 500.000đ đến John Smith lúc 14:25.',
-    isRead: false,
-    icon: 'arrow-up-circle-outline',
-    iconBg: '#e8f8f0',
-    iconColor: '#1a7a40',
-    time: '5 phút trước',
-  },
-  {
-    id: 2,
-    titleKey: 'Nhận tiền từ Kevin',
-    contentKey: 'Kevin Brown đã chuyển 200.000đ vào tài khoản của bạn.',
-    isRead: false,
-    icon: 'arrow-down-circle-outline',
-    iconBg: '#e8f8f0',
-    iconColor: '#1a7a40',
-    time: '32 phút trước',
-  },
-  {
-    id: 3,
-    titleKey: 'Cập nhật bảo mật',
-    contentKey: 'Tài khoản của bạn vừa đăng nhập từ thiết bị mới.',
-    isRead: false,
-    icon: 'shield-checkmark-outline',
-    iconBg: '#fff4e8',
-    iconColor: '#b36a1a',
-    time: '2 giờ trước',
-  },
-  {
-    id: 4,
-    titleKey: 'Lương tháng 11',
-    contentKey: 'Nhận 12.000.000đ từ Công ty ABC vào lúc 09:00.',
-    isRead: true,
-    icon: 'briefcase-outline',
-    iconBg: '#e8f8f0',
-    iconColor: '#1a7a40',
-    time: 'Hôm qua',
-  },
-  {
-    id: 5,
-    titleKey: 'Thanh toán Spotify',
-    contentKey: 'Đã thanh toán 59.000đ cho Spotify Premium.',
-    isRead: true,
-    icon: 'musical-notes-outline',
-    iconBg: '#f5f0ff',
-    iconColor: '#6c3fc4',
-    time: 'Hôm qua',
-  },
-  {
-    id: 6,
-    titleKey: 'Khuyến mãi đặc biệt',
-    contentKey: 'Chuyển tiền miễn phí toàn bộ trong tuần này. Áp dụng ngay!',
-    isRead: true,
-    icon: 'gift-outline',
-    iconBg: '#fdf3e7',
-    iconColor: '#b36a1a',
-    time: '2 ngày trước',
-  },
-];
+const formatTime = (time: NotifTime, t: Translations) => {
+  switch (time.unit) {
+    case 'yesterday':
+      return t.common.yesterday;
+    case 'minutes':
+      return `${time.value} ${t.common.minutesAgo}`;
+    case 'hours':
+      return `${time.value} ${t.common.hoursAgo}`;
+    case 'days':
+      return `${time.value} ${t.common.daysAgo}`;
+  }
+};
 
 const NotificationScreen = () => {
   const { t } = useLanguage();
   const colors = useThemeColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const navigation = useNavigation();
   const [activeFilter, setActiveFilter] = useState(0); // 0=all, 1=read, 2=unread
-  const [notifications, setNotifications] = useState(NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<Notification[]>(listNotifications());
 
   const filters = [
     t.notification.filterAll,
@@ -103,8 +60,8 @@ const NotificationScreen = () => {
   ];
 
   const filtered = notifications.filter(item => {
-    if (activeFilter === 1) return item.isRead;
-    if (activeFilter === 2) return !item.isRead;
+    if (activeFilter === 1) {return item.isRead;}
+    if (activeFilter === 2) {return !item.isRead;}
     return true;
   });
 
@@ -160,7 +117,7 @@ const NotificationScreen = () => {
         keyExtractor={item => String(item.id)}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        ItemSeparatorComponent={Separator}
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <View style={styles.emptyIconWrap}>
@@ -170,37 +127,46 @@ const NotificationScreen = () => {
             <Text style={styles.emptyDesc}>{t.notification.emptyDesc}</Text>
           </View>
         }
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            activeOpacity={0.75}
-            onPress={() => markRead(item.id)}
-            style={[styles.notifRow, !item.isRead && styles.notifRowUnread]}>
-            {/* Icon */}
-            <View style={[styles.notifIcon, { backgroundColor: item.iconBg }]}>
-              <Icon type="ionicon" name={item.icon} size={20} color={item.iconColor} />
-            </View>
-
-            {/* Content */}
-            <View style={styles.notifContent}>
-              <View style={styles.notifTitleRow}>
-                <Text style={[styles.notifTitle, !item.isRead && styles.notifTitleUnread]}>
-                  {item.titleKey}
-                </Text>
-                {!item.isRead && <View style={styles.unreadDot} />}
+        renderItem={({ item }) => {
+          const text = t.notification.items[item.key];
+          return (
+            <TouchableOpacity
+              activeOpacity={0.75}
+              onPress={() => markRead(item.id)}
+              style={[styles.notifRow, !item.isRead && styles.notifRowUnread]}>
+              {/* Icon */}
+              <View style={[styles.notifIcon, { backgroundColor: NOTIF_VISUALS[item.key].iconBg }]}>
+                <Icon type="ionicon" name={NOTIF_VISUALS[item.key].icon} size={20} color={NOTIF_VISUALS[item.key].iconColor} />
               </View>
-              <Text style={styles.notifBody} numberOfLines={2}>
-                {item.contentKey}
-              </Text>
-              <Text style={styles.notifTime}>{item.time}</Text>
-            </View>
-          </TouchableOpacity>
-        )}
+
+              {/* Content */}
+              <View style={styles.notifContent}>
+                <View style={styles.notifTitleRow}>
+                  <Text style={[styles.notifTitle, !item.isRead && styles.notifTitleUnread]}>
+                    {text.title}
+                  </Text>
+                  {!item.isRead && <View style={styles.unreadDot} />}
+                </View>
+                <Text style={styles.notifBody} numberOfLines={2}>
+                  {text.body}
+                </Text>
+                <Text style={styles.notifTime}>{formatTime(item.time, t)}</Text>
+              </View>
+            </TouchableOpacity>
+          );
+        }}
       />
     </SafeAreaView>
   );
 };
 
 export default NotificationScreen;
+
+// Ở module scope chứ không lồng trong màn: khoảng cách này không phụ thuộc
+// theme, nên không cần đóng trên bất cứ thứ gì của component cha.
+const Separator = () => <View style={separatorStyle.gap} />;
+
+const separatorStyle = StyleSheet.create({ gap: { height: 8 } });
 
 const makeStyles = (c: ThemeColors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: c.bg },
@@ -235,8 +201,8 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: RADII.pill,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: c.border,
+    borderWidth: 1,
+    borderColor: c.borderStrong,
     backgroundColor: c.white,
   },
   filterChipActive: {
@@ -246,7 +212,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   filterText: { fontFamily: FONT.regular, fontSize: TYPE.body, color: c.subtext },
   filterTextActive: { fontFamily: FONT.medium, color: c.accent700 },
 
-  listContent: { paddingHorizontal: SPACING.screenX, paddingBottom: 120 },
+  listContent: { paddingHorizontal: SPACING.screenX, paddingBottom: TAB_BAR_SPACE },
 
   notifRow: {
     flexDirection: 'row',
@@ -287,7 +253,6 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     flexShrink: 0,
   },
 
-  separator: { height: 8 },
 
   emptyState: { alignItems: 'center', paddingTop: 60, gap: 10 },
   emptyIconWrap: {

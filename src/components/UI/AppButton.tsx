@@ -41,7 +41,9 @@ const AppButton = ({
     danger: c.danger,
     outline: undefined,
     ghost: undefined,
-    dark: c.heroDark,
+    // KHÔNG dùng heroDark: nút tối #1a1815 đứng trên nền tối #121212 chỉ hơn
+    // nhau ΔL* 2.9 nên mất hẳn khối. Nền tối thì CTA chuyển sang đồng đặc.
+    dark: c.btnSolid,
   };
   const textColor: Record<Variant, string> = {
     primary: '#fff', // text trên nền cam

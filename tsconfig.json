@@ -1,3 +1,9 @@
 {
-  "extends": "@react-native/typescript-config"
+  "extends": "@react-native/typescript-config",
+  "compilerOptions": {
+    // Base của React Native đặt "es2015", mà es2015 không cho import() động.
+    // Mini-app nạp lúc chạy bằng import('loyalty/App') nên phải nới lên esnext.
+    // Chỉ ảnh hưởng lúc typecheck — bundle vẫn do Re.Pack/babel sinh ra.
+    "module": "esnext"
+  }
 }

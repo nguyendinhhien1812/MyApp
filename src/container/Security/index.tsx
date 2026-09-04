@@ -2,10 +2,8 @@
 import React, { useMemo, useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   SafeAreaView,
-  TouchableOpacity,
   ScrollView,
   KeyboardAvoidingView,
   Platform,

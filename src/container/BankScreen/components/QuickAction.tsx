@@ -3,7 +3,6 @@ import { StyleSheet, Text, TouchableOpacity } from 'react-native';
 import Icon from '../../../components/Icon';
 import { ICON_TYPE } from '../../../components/Icon/style';
 import { useThemeColors } from '../../../context/ThemeContext';
-import { ThemeColors } from '../../../theme/paperTheme';
 import { RADII, TYPE, FONT } from '../../../theme/tokens';
 
 interface QuickActionProps {
@@ -15,7 +14,7 @@ interface QuickActionProps {
 // Ô hành động trên khối số dư nền tối: nền trắng mờ, icon + nhãn màu đồng sáng.
 const QuickAction = ({ icon, label, onPress }: QuickActionProps) => {
   const c = useThemeColors();
-  const styles = useMemo(() => makeStyles(c), [c]);
+  const styles = useMemo(() => makeStyles(), []);
 
   return (
     <TouchableOpacity style={styles.item} onPress={onPress} activeOpacity={0.7}>
@@ -27,7 +26,9 @@ const QuickAction = ({ icon, label, onPress }: QuickActionProps) => {
 
 export default QuickAction;
 
-const makeStyles = (c: ThemeColors) =>
+// Không nhận ThemeColors: khối này luôn nằm trên nền tối (heroDark), nên dùng
+// trắng trong suốt để hợp với mọi theme — đây là chủ ý, không phải bỏ sót.
+const makeStyles = () =>
   StyleSheet.create({
     item: {
       flex: 1,

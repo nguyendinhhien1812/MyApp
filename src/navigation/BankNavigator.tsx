@@ -8,7 +8,24 @@ import CardManagementScreen from '../container/CardManagement';
 import AllContactsScreen from '../container/AllContacts';
 import InvestmentScreen from '../container/Investment';
 
-const Stack = createStackNavigator();
+/**
+ * Danh sách route và tham số của luồng Ngân hàng.
+ *
+ * Không khai kiểu này thì `createStackNavigator()` suy ra tên route là `never`,
+ * và mọi `<Stack.Screen name=...>` đều báo lỗi kiểu. Khai ra còn giúp bỏ được
+ * các `@ts-ignore` ở chỗ gọi `navigation.navigate`.
+ */
+export type BankStackParamList = {
+  BankScreen: undefined;
+  TransferMoney: { balance: number; contact?: { name: string; avatar?: string } } | undefined;
+  QRPay: undefined;
+  TopUp: undefined;
+  CardManagement: undefined;
+  AllContacts: undefined;
+  Investment: undefined;
+};
+
+const Stack = createStackNavigator<BankStackParamList>();
 
 const BankNavigator = () => {
   return (

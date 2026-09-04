@@ -15,6 +15,10 @@ const TabNavigator = () => {
   return (
     <Tabs.Navigator
       screenOptions={{ headerShown: false }}
+      // KHÔNG rút gọn thành tabBar={PillTabBar}: React Navigation gọi prop này
+      // như một hàm thường chứ không render qua React, nên hook bên trong
+      // PillTabBar (useThemeColors) sẽ ném "Invalid hook call".
+      // eslint-disable-next-line react/no-unstable-nested-components
       tabBar={props => <PillTabBar {...props} />}
       initialRouteName="Home"
     >

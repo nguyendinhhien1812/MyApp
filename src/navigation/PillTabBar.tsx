@@ -1,30 +1,38 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Icon from '../components/Icon';
-import { ICON_TYPE } from '../components/Icon/style';
-import { FONT, TYPE } from '../theme/tokens';
+import { Icon } from '@rneui/themed';
+import { useThemeColors } from '../context/ThemeContext';
+import { ThemeColors } from '../theme/paperTheme';
+import { FONT } from '../theme/tokens';
 
-// Thanh điều hướng đáy dạng "pill nổi" theo design "Classical":
-// nền tối #1a1815, tab đang chọn = pill trắng + icon/nhãn đen, tab khác chỉ icon mờ.
-const DARK = '#1a1815';
-const OFF_WHITE = '#fdfcfb';
-const INACTIVE = 'rgba(253,252,251,0.55)';
+// Thanh điều hướng đáy: mỗi mục là icon trên, nhãn dưới; mục đang chọn có ô bo tròn.
+// Màu lấy qua useThemeColors vì thứ tự phân tầng đảo giữa 2 chế độ — nền sáng thì
+// thanh phải trắng hơn nền, nền tối thì phải sáng hơn card mới nổi lên được.
+const BAR_HEIGHT = 72;
+const ICON_SIZE = 24;
 
+// Badge là khối tự đủ (nền đỏ + chữ trắng) nên màu cố định, KHÔNG lấy c.danger:
+// ở chế độ tối c.danger là đỏ sáng #f87171, chữ trắng lên đó chỉ còn 2.77:1.
+const BADGE_RED = '#d63d42';
+
+// Ionicons có sẵn cặp đặc/viền: mục đang chọn dùng bản đặc cho nặng nét hơn
 const TAB_ICON: Record<string, string> = {
   Home: 'home',
-  Notification: 'bell',
+  Notification: 'notifications',
   Setting: 'settings',
-  Profile: 'user',
+  Profile: 'person',
 };
 
 const PillTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
+  const c = useThemeColors();
+  const styles = useMemo(() => makeStyles(c), [c]);
   const insets = useSafeAreaInsets();
 
   return (
     <View
-      style={[styles.wrap, { paddingBottom: (insets.bottom || 12) }]}
+      style={[styles.wrap, { paddingBottom: insets.bottom || 12 }]}
       pointerEvents="box-none">
       <View style={styles.bar}>
         {state.routes.map((route, index) => {
@@ -33,6 +41,7 @@ const PillTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
           const label =
             typeof options.tabBarLabel === 'string' ? options.tabBarLabel : route.name;
           const badge = options.tabBarBadge;
+          const base = TAB_ICON[route.name] ?? 'ellipse';
 
           const onPress = () => {
             const event = navigation.emit({
@@ -50,15 +59,16 @@ const PillTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
               key={route.key}
               accessibilityRole="button"
               accessibilityState={focused ? { selected: true } : {}}
+              accessibilityLabel={label}
               onPress={onPress}
-              activeOpacity={0.85}
+              activeOpacity={0.75}
               style={[styles.item, focused && styles.itemActive]}>
               <View>
                 <Icon
-                  type={ICON_TYPE.Iconoir}
-                  name={TAB_ICON[route.name] ?? 'circle'}
-                  size={22}
-                  color={focused ? DARK : INACTIVE}
+                  type="ionicon"
+                  name={focused ? base : `${base}-outline`}
+                  size={ICON_SIZE}
+                  color={focused ? c.accent700 : c.subtext}
                 />
                 {badge != null ? (
                   <View style={styles.badge}>
@@ -66,7 +76,11 @@ const PillTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
                   </View>
                 ) : null}
               </View>
-              {focused ? <Text style={styles.label}>{label}</Text> : null}
+              <Text
+                numberOfLines={1}
+                style={[styles.label, focused && styles.labelActive]}>
+                {label}
+              </Text>
             </TouchableOpacity>
           );
         })}
@@ -77,61 +91,66 @@ const PillTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
 
 export default PillTabBar;
 
-const styles = StyleSheet.create({
-  wrap: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    alignItems: 'center',
-  },
-  bar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: DARK,
-    borderRadius: 100,
-    padding: 6,
-    gap: 4,
-    // Viền đồng mờ để thanh vẫn tách khỏi nền ở chế độ Tối
-    borderWidth: 1,
-    borderColor: 'rgba(216,183,131,0.28)',
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 8,
-  },
-  item: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 100,
-    gap: 6,
-  },
-  itemActive: {
-    backgroundColor: OFF_WHITE,
-  },
-  label: {
-    fontFamily: FONT.medium,
-    fontSize: TYPE.body,
-    color: DARK,
-  },
-  badge: {
-    position: 'absolute',
-    top: -5,
-    right: -8,
-    minWidth: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: '#e5484d',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
-  },
-  badgeText: {
-    fontFamily: FONT.semibold,
-    fontSize: 10,
-    color: '#fff',
-  },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    wrap: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 0,
+      alignItems: 'center',
+    },
+    bar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      height: BAR_HEIGHT,
+      marginHorizontal: 16,
+      paddingHorizontal: 8,
+      backgroundColor: c.tabBar,
+      borderRadius: BAR_HEIGHT / 2,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: c.tabBarBorder,
+      // Bóng chỉ có tác dụng ở nền sáng; nền tối đã dùng chênh lệch màu để tách tầng
+      shadowColor: '#000',
+      shadowOpacity: 0.12,
+      shadowRadius: 14,
+      shadowOffset: { width: 0, height: 5 },
+      elevation: 8,
+    },
+    item: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 3,
+      paddingVertical: 8,
+      borderRadius: 22,
+    },
+    itemActive: {
+      backgroundColor: c.tabBarActiveBg,
+    },
+    label: {
+      fontFamily: FONT.medium,
+      fontSize: 11,
+      color: c.subtext,
+    },
+    labelActive: {
+      color: c.accent700,
+    },
+    badge: {
+      position: 'absolute',
+      top: -4,
+      right: -9,
+      minWidth: 16,
+      height: 16,
+      borderRadius: 8,
+      backgroundColor: BADGE_RED,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 4,
+    },
+    badgeText: {
+      fontFamily: FONT.semibold,
+      fontSize: 10,
+      color: '#fff',
+    },
+  });

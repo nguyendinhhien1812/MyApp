@@ -56,7 +56,7 @@ const PRJ_VIP: SkillProject = {
 };
 const PRJ_MYAPP: SkillProject = {
   name: 'MyApp (demo)',
-  tech: 'React Native · Re.Pack · Gemini AI',
+  tech: 'React Native · Re.Pack · Claude AI',
   icon: 'phone-portrait-outline',
   iconBg: '#e8f8f0',
   iconColor: '#1a7a40',

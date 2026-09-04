@@ -18,6 +18,8 @@ import { useLanguage } from '../../../context/LanguageContext';
 import { useThemeColors } from '../../../context/ThemeContext';
 import { ThemeColors } from '../../../theme/paperTheme';
 import { RADII, TYPE, SPACING, FONT } from '../../../theme/tokens';
+import { CategoryId, getCatName } from '../categories';
+import { moneyAbs } from '../../../utils/money';
 
 // ─── Brand colors ─────────────────────────────────────────────────────────────
 const COLOR_DANGER   = '#c0392b';
@@ -27,8 +29,7 @@ const COLOR_SUCCESS  = '#1a7a40';
 type TxItem = {
   id: number;
   name: string;
-  category: string;
-  categoryId: string;
+  categoryId: CategoryId;
   icon: string;
   iconBg: string;
   iconColor: string;
@@ -38,25 +39,6 @@ type TxItem = {
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-const money = (n: number) =>
-  new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-    maximumFractionDigits: 0,
-  }).format(Math.abs(n));
-
-// i18n-safe: maps categoryId → translated name
-const getCatName = (id: string, t: any): string => {
-  const map: Record<string, string> = {
-    food:      t.expense.catFood,
-    shopping:  t.expense.catShopping,
-    fun:       t.expense.catFun,
-    transport: t.expense.catTransport,
-    utility:   t.expense.catUtility,
-    other:     t.expense.catOther,
-  };
-  return map[id] ?? id;
-};
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 interface Props { navigation: any; route: any; }
@@ -70,25 +52,6 @@ const ExpenseDetail = ({ navigation, route }: Props) => {
   const [toast, setToast] = useState('');
 
   // ─── Sub-component: Detail row (dùng styles theo theme) ───────────────────
-  const DetailRow = ({
-    label,
-    value,
-    isLast = false,
-    valueColor,
-  }: {
-    label: string;
-    value: string;
-    isLast?: boolean;
-    valueColor?: string;
-  }) => (
-    <>
-      <View style={styles.detailRow}>
-        <Text style={styles.detailLabel}>{label}</Text>
-        <Text style={[styles.detailValue, valueColor ? { color: valueColor } : {}]}>{value}</Text>
-      </View>
-      {!isLast && <View style={styles.rowDivider} />}
-    </>
-  );
 
   if (!item) {
     return (
@@ -122,7 +85,7 @@ const ExpenseDetail = ({ navigation, route }: Props) => {
             <Icon type="ionicon" name={item.icon} size={32} color={item.iconColor} />
           </View>
           <Text style={styles.heroName}>{item.name}</Text>
-          <Text style={styles.heroAmount}>{money(item.amount)}</Text>
+          <Text style={styles.heroAmount}>{moneyAbs(item.amount)}</Text>
           {/* Status badge */}
           <View style={styles.statusBadge}>
             <View style={styles.statusDot} />
@@ -132,24 +95,24 @@ const ExpenseDetail = ({ navigation, route }: Props) => {
 
         {/* ── Info card ── */}
         <View style={styles.card}>
-          <DetailRow
+          <DetailRow styles={styles}
             label={t.expense.categoryLabel}
             value={getCatName(item.categoryId, t)}
           />
-          <DetailRow
+          <DetailRow styles={styles}
             label={t.expense.payment}
             value="Visa *4242"
           />
-          <DetailRow
+          <DetailRow styles={styles}
             label={t.expense.amountLabel}
-            value={money(item.amount)}
+            value={moneyAbs(item.amount)}
             valueColor={COLOR_DANGER}
           />
-          <DetailRow
+          <DetailRow styles={styles}
             label={t.expense.dateLabel}
             value={item.date}
           />
-          <DetailRow
+          <DetailRow styles={styles}
             label={t.expense.timeLabel}
             value={item.time}
             isLast
@@ -218,6 +181,33 @@ const ExpenseDetail = ({ navigation, route }: Props) => {
 export default ExpenseDetail;
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
+/** Kiểu bảng style, để component tách ra ngoài vẫn đúng kiểu. */
+type Styles = ReturnType<typeof makeStyles>;
+
+// Đặt NGOÀI component cha: định nghĩa bên trong thì mỗi lần cha vẽ lại sẽ
+// tạo một hàm mới, React coi là loại component khác và huỷ cả cây con.
+const DetailRow = ({
+  label,
+  value,
+  isLast = false,
+  valueColor,
+  styles,
+}: {
+  label: string;
+  value: string;
+  isLast?: boolean;
+  valueColor?: string;
+  styles: Styles;
+}) => (
+  <>
+    <View style={styles.detailRow}>
+      <Text style={styles.detailLabel}>{label}</Text>
+      <Text style={[styles.detailValue, valueColor ? { color: valueColor } : {}]}>{value}</Text>
+    </View>
+    {!isLast && <View style={styles.rowDivider} />}
+  </>
+);
+
 const makeStyles = (c: ThemeColors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: c.bg },
 
@@ -323,7 +313,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   sslRow: { flexDirection: 'row', alignItems: 'center', gap: 4, justifyContent: 'center' },
   sslText: { fontFamily: FONT.regular, fontSize: TYPE.caption, color: c.muted },
   primaryBtn: {
-    backgroundColor: c.heroDark,
+    backgroundColor: c.btnSolid,
     borderRadius: RADII.item,
     height: 50,
     flexDirection: 'row',
