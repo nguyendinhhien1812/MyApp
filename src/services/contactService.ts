@@ -26,12 +26,12 @@ const CONTACTS: Contact[] = [
   { id: 7, name: 'Sarah Kim',    bank: 'Sacombank',   avatar: 'https://i.pravatar.cc/80?img=47', lastAmount: 450_000,   lastSeen: { value: 1, unit: 'months' } },
 ];
 
-export const listContacts = (): Contact[] => CONTACTS;
+export const listContacts = (): Contact[] => [...CONTACTS];
 
 /** Tìm theo tên hoặc tên ngân hàng; chuỗi rỗng trả về tất cả. */
 export const searchContacts = (query: string): Contact[] => {
   const q = query.trim().toLowerCase();
-  if (!q) { return CONTACTS; }
+  if (!q) { return [...CONTACTS]; }
   return CONTACTS.filter(
     c => c.name.toLowerCase().includes(q) || c.bank.toLowerCase().includes(q),
   );

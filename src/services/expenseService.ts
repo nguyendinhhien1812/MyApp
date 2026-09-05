@@ -70,7 +70,7 @@ const CHART: Record<Period, { labels: string[]; values: number[] }> = {
 };
 
 /** Toàn bộ danh mục, kể cả danh mục chưa phát sinh chi tiêu. */
-export const listCategories = (): Category[] => CATEGORIES;
+export const listCategories = (): Category[] => [...CATEGORIES];
 
 /** Chỉ danh mục đã phát sinh, sắp giảm dần — dùng cho biểu đồ Thống kê. */
 export const spendingByCategory = (): Category[] =>

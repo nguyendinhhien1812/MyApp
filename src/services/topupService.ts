@@ -23,11 +23,11 @@ const CARRIERS: Carrier[] = [
 const DENOMS = [10_000, 20_000, 50_000, 100_000, 200_000, 500_000];
 const POPULAR_DENOM = 50_000;
 
-export const listCarriers = (): Carrier[] => CARRIERS;
+export const listCarriers = (): Carrier[] => [...CARRIERS];
 
 export const getCarrier = (id: CarrierId): Carrier =>
   CARRIERS.find(c => c.id === id) ?? CARRIERS[0];
 
-export const listDenoms = (): number[] => DENOMS;
+export const listDenoms = (): number[] => [...DENOMS];
 
 export const popularDenom = (): number => POPULAR_DENOM;

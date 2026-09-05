@@ -36,10 +36,13 @@ const QUICK_SEND: QuickContact[] = [
   { id: 5, name: 'Evelyn', avatar: 'https://randomuser.me/api/portraits/women/12.jpg' },
 ];
 
+// Các hàm list* trả về BẢN SAO, không phải mảng gốc. Trả thẳng mảng nội bộ thì
+// một màn gọi .sort() hay .pop() trên kết quả sẽ xáo vĩnh viễn dữ liệu chung —
+// lỗi rất khó lần vì nó xuất hiện ở màn KHÁC với màn gây ra.
 export const getBalance = (): number => BALANCE;
 
 export const listTransactions = (filter?: { type?: 'income' | 'expense' }): Transaction[] =>
-  filter?.type ? TRANSACTIONS.filter(tx => tx.type === filter.type) : TRANSACTIONS;
+  filter?.type ? TRANSACTIONS.filter(tx => tx.type === filter.type) : [...TRANSACTIONS];
 
 /** Gộp theo mốc ngày, giữ nguyên thứ tự xuất hiện. */
 export const groupTransactionsByDate = (
@@ -52,4 +55,4 @@ export const groupTransactionsByDate = (
     return acc;
   }, []);
 
-export const listQuickSend = (): QuickContact[] => QUICK_SEND;
+export const listQuickSend = (): QuickContact[] => [...QUICK_SEND];
