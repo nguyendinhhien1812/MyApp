@@ -1,0 +1,14 @@
+# Worker của Cloudflare: runtime khác hẳn React Native (có Response,
+# ReadableStream, TextEncoder...). Cấu hình eslint của RN không áp được ở đây;
+# server/ có cổng riêng là `node --check` trong CI.
+server/
+
+# Mini-app build và deploy độc lập, dùng cấu hình rspack riêng
+miniapps/
+
+# Script vận hành chạy bằng Node thuần
+tools/
+
+# Kết quả build
+ios/
+android/
