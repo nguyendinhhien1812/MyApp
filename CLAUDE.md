@@ -91,8 +91,53 @@ npm start          # Re.Pack dev server trên 8088
 npm run ios
 ```
 
-## Lỗi TypeScript có sẵn (không phải do bạn gây ra)
+## Thêm dependency có phần native → PHẢI chạy lại `pod install`
 
-`src/components/Picker/index.tsx` (import module không tồn tại) và
-`src/navigation/BankNavigator.tsx:18` (typing StackScreenProps) — đã lỗi từ trước, bỏ qua khi
-đọc output `tsc`.
+Dự án dùng **pnpm**, mà pnpm đặt gói trong `node_modules/.pnpm/<tên>@<phiên bản>_<băm>/`.
+Phần băm đó tính theo **toàn bộ cây phụ thuộc**, nên thêm một gói không liên quan cũng làm
+đường dẫn của gói khác đổi.
+
+Hậu quả: Pods vẫn trỏ đường dẫn cũ và build iOS chết với
+
+```
+Build input files cannot be found: .../@callstack+repack@..._<băm cũ>/ios/CodeSigningUtils.swift
+```
+
+Đã xảy ra thật: thêm `@module-federation/enhanced` làm đổi đường dẫn của `@callstack/repack`.
+
+```bash
+cd ios && LANG=en_US.UTF-8 pod install
+```
+
+`LANG` là bắt buộc — CocoaPods chết câm với `Encoding::CompatibilityError` khi shell dùng
+ASCII.
+
+**Lỗi này ẩn rất lâu**: nạp lại JS vẫn chạy bình thường trên bản `.app` đã build từ trước,
+nên chỉ lộ ra ở lần build native tiếp theo — có thể là nhiều ngày sau.
+
+## Cổng chất lượng
+
+```bash
+pnpm run tools:check   # khai báo tool ở app và Worker có khớp không
+pnpm exec tsc --noEmit
+pnpm run lint
+pnpm test
+```
+
+Cả bốn phải **sạch**. Không còn lỗi "có sẵn" nào để bỏ qua — `src/components/Picker` (code
+chết từ dự án khác) đã xoá, `BankNavigator` đã khai `BankStackParamList`.
+
+CI (`.github/workflows/ci.yml`) chạy đúng bốn lệnh này cộng `node --check` và
+`wrangler deploy --dry-run` cho `server/`.
+
+`eslint` **không** áp cho `server/`, `miniapps/`, `tools/` (xem `.eslintignore`) — chúng chạy
+runtime khác, có cổng riêng.
+
+### Khi viết test
+
+Test nằm ở `src/**/__tests__/*.test.ts`. `jest.setup.js` làm `fetch` **nổ** theo mặc định —
+test cần mạng thì tự giả lập bằng `jest.spyOn`. Test chạm mạng thật là test hay hỏng vặt vì
+lý do ngoài code.
+
+Ưu tiên kiểm **bất biến** hơn giá trị cụ thể: `expect(getBalance()).toBe(12500000)` sẽ đỏ khi
+đổi dữ liệu demo, còn "hai nhóm lọc cộng lại bằng tổng" thì luôn đúng.
