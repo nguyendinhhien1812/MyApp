@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+
+# Push liên tiếp trên cùng nhánh: huỷ lần chạy cũ, chỉ giữ lần mới nhất
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  app:
+    name: App (typecheck · lint · test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Đọc phiên bản pnpm từ trường "packageManager" trong package.json,
+      # để CI và máy lập trình viên không lệch nhau
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Khai báo tool tồn tại hai nơi (app và Worker). Lệch nhau thì model được
+      # mời gọi một hàm mà đầu kia không biết chạy — kiểm trước khi làm gì khác.
+      - name: Khai báo tool có khớp giữa app và Worker không
+        run: pnpm run tools:check
+
+      - name: TypeScript
+        run: pnpm exec tsc --noEmit
+
+      - name: ESLint
+        run: pnpm run lint
+
+      # KHÔNG viết `pnpm test -- --ci`: pnpm hiểu --ci là mẫu tìm file test
+      # chứ không phải cờ của jest, và suite sẽ đỏ với "0 matches".
+      - name: Test
+        run: pnpm test --ci
+
+  worker:
+    name: Worker (cú pháp · build thử)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - run: npm ci
+
+      # eslint của app không áp cho Worker (runtime khác), nên đây là cổng
+      # cú pháp duy nhất của server/
+      - name: Cú pháp
+        run: |
+          for f in src/*.js src/providers/*.js; do
+            node --check "$f" || exit 1
+          done
+          echo "OK $(ls src/*.js src/providers/*.js | wc -l) file"
+
+      # Build thử bằng chính wrangler: bắt được lỗi cấu hình và import hỏng
+      # mà `node --check` không thấy. Không cần tài khoản Cloudflare.
+      - name: Build thử (không deploy)
+        run: npx wrangler deploy --dry-run --outdir /tmp/build
+        env:
+          WRANGLER_SEND_METRICS: 'false'

@@ -1,3 +1,5 @@
+[![CI](https://github.com/nguyendinhhien1812/MyApp/actions/workflows/ci.yml/badge.svg)](https://github.com/nguyendinhhien1812/MyApp/actions/workflows/ci.yml)
+
 This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
 
 # Getting Started
