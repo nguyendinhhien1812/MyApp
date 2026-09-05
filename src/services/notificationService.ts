@@ -23,7 +23,7 @@ const NOTIFICATIONS: Notification[] = [
   { id: 6, key: 'promo',        isRead: true,  time: { value: 2, unit: 'days' } },
 ];
 
-export const listNotifications = (): Notification[] => NOTIFICATIONS;
+export const listNotifications = (): Notification[] => [...NOTIFICATIONS];
 
 export const unreadCount = (items: Notification[] = NOTIFICATIONS): number =>
   items.filter(n => !n.isRead).length;

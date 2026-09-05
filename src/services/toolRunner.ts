@@ -34,6 +34,21 @@ export const runTool = async (
   name: string,
   args: Record<string, unknown> = {},
 ): Promise<ToolResult> => {
+  try {
+    return await dispatch(name, args);
+  } catch (err) {
+    // KHÔNG ném ra ngoài. Hợp đồng của runTool là luôn trả về một kết quả để
+    // model còn diễn giải — tool gọi mạng (getRates) hỏng thì cả lượt chat
+    // hỏng theo, mà lỗi lại rơi ở chỗ rất xa nguyên nhân.
+    logger.error('chatbot', `tool ${name} thất bại`, err);
+    return { data: { ok: false, reason: 'không lấy được dữ liệu' } };
+  }
+};
+
+const dispatch = async (
+  name: string,
+  args: Record<string, unknown> = {},
+): Promise<ToolResult> => {
   switch (name) {
     case 'getBalance':
       return { data: { balance: account.getBalance(), currency: 'VND' } };

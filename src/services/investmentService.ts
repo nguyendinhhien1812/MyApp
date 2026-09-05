@@ -77,7 +77,7 @@ const PORTFOLIO_SERIES = [18, 22, 28, 32, 30, 38, 42, 46, 44, 50, 52, 56];
 
 export const listStocks = (tab: MarketTab): Stock[] => STOCKS[tab];
 
-export const getPortfolioSeries = (): number[] => PORTFOLIO_SERIES;
+export const getPortfolioSeries = (): number[] => [...PORTFOLIO_SERIES];
 
 const fmtTime = () =>
   new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
