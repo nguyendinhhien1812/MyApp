@@ -1,0 +1,7 @@
+<resources>
+    <!-- Android không tự đổi màu ảnh theo theme, phải chỉ đúng file bản tối -->
+    <style name="SplashTheme" parent="AppTheme">
+        <item name="android:windowSplashScreenBackground">@color/splash_bg</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_mark_dark</item>
+    </style>
+</resources>

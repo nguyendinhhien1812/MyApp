@@ -1,5 +1,7 @@
 package com.myapp
 
+import android.os.Build
+import android.os.Bundle
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
@@ -12,6 +14,20 @@ class MainActivity : ReactActivity() {
    * rendering of the component.
    */
   override fun getMainComponentName(): String = "MyApp"
+
+  /**
+   * Android 11 trở xuống: splash chính là windowBackground của SplashTheme, nên
+   * phải tự đổi sang AppTheme — không thì ảnh splash dính lại làm nền cả app.
+   *
+   * Android 12+ (S) không cần: SplashTheme ở values-v31 kế thừa thẳng AppTheme,
+   * phần splash do hệ thống vẽ riêng rồi tự bỏ.
+   */
+  override fun onCreate(savedInstanceState: Bundle?) {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+      setTheme(R.style.AppTheme)
+    }
+    super.onCreate(savedInstanceState)
+  }
 
   /**
    * Returns the instance of the [ReactActivityDelegate]. We use [DefaultReactActivityDelegate]

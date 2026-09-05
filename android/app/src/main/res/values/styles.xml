@@ -1,9 +1,19 @@
 <resources>
 
-    <!-- Base application theme. -->
+    <!-- Theme chính của app, dùng sau khi splash biến mất. -->
     <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
-        <!-- Customize your theme here. -->
         <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
+    </style>
+
+    <!--
+      Theme khởi động cho Android 11 trở xuống: splash chính là windowBackground.
+      MainActivity gọi setTheme(R.style.AppTheme) trong onCreate để đổi lại.
+      Android 12+ dùng bản trong values-v31 thay cho bản này.
+    -->
+    <style name="SplashTheme" parent="AppTheme">
+        <item name="android:windowBackground">@drawable/splash_screen</item>
+        <item name="android:statusBarColor">@color/splash_bg</item>
+        <item name="android:navigationBarColor">@color/splash_bg</item>
     </style>
 
 </resources>

@@ -1,0 +1,17 @@
+<resources>
+    <!--
+      Android 12 trở lên KHÔNG dùng windowBackground cho splash nữa — hệ thống tự
+      vẽ và chỉ nghe hai thuộc tính dưới. Thiếu chúng thì nó lấy icon app đặt trên
+      nền mặc định, nên trông như chưa làm gì.
+
+      Kế thừa thẳng AppTheme nên KHÔNG cần đổi theme sau khi splash xong: theme
+      này chính là AppTheme cộng thêm phần splash.
+
+      Dùng thuộc tính nền tảng (tiền tố android:) chứ không dùng Theme.SplashScreen
+      của androidx — tránh thêm một phụ thuộc chỉ để đặt hai giá trị.
+    -->
+    <style name="SplashTheme" parent="AppTheme">
+        <item name="android:windowSplashScreenBackground">@color/splash_bg</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_mark</item>
+    </style>
+</resources>
