@@ -7,6 +7,16 @@ apply plugin: "com.facebook.react"
  * By default you don't need to apply any configuration, just uncomment the lines you need.
  */
 react {
+    // pnpm: @react-native/codegen là phụ thuộc GIÁN TIẾP nên không nằm ở
+    // node_modules/@react-native/codegen (đường dẫn mặc định plugin tìm).
+    // Suy ra từ chính react-native — getCanonicalFile() đi qua symlink của pnpm
+    // để về .pnpm/react-native@<ver>/node_modules, nơi codegen nằm cạnh nó.
+    // Cách này tự bám đúng phiên bản, khỏi đoán (store đang có cả 0.74.87 và 0.75.3).
+    // ReactPlugin.kt:57 truyền giá trị này xuống mọi thư viện, nên khai một lần là đủ.
+    codegenDir = file(new File(
+        file("../../node_modules/react-native").getCanonicalFile().getParentFile(),
+        "@react-native/codegen").getCanonicalPath())
+
     /* Folders */
     //   The root of your project, i.e. where "package.json" lives. Default is '../..'
     // root = file("../../")
@@ -49,9 +59,6 @@ react {
     //
     //   The list of flags to pass to the Hermes compiler. By default is "-O", "-output-source-map"
     // hermesFlags = ["-O", "-output-source-map"]
-
-    /* Autolinking */
-    autolinkLibrariesWithApp()
 }
 
 /**
@@ -117,5 +124,9 @@ dependencies {
         implementation jscFlavor
     }
 }
+
+// RN 0.74 liên kết thư viện native qua file này. RN 0.75 thay bằng
+// react { autolinkLibrariesWithApp() } — đừng lẫn hai cách.
+apply from: file("../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesAppBuildGradle(project)
 
 apply from: file("../../node_modules/react-native-vector-icons/fonts.gradle")

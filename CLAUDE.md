@@ -115,6 +115,40 @@ ASCII.
 **Lỗi này ẩn rất lâu**: nạp lại JS vẫn chạy bình thường trên bản `.app` đã build từ trước,
 nên chỉ lộ ra ở lần build native tiếp theo — có thể là nhiều ngày sau.
 
+## Build Android — bốn cái bẫy đã gỡ
+
+Thư mục `android/` ban đầu là **template RN 0.75 nằm trên bản cài RN 0.74.5**, cộng thêm
+pnpm không dựng cây phẳng. Bốn lỗi nối đuôi nhau, mỗi lỗi che lỗi sau:
+
+1. **Gradle quá mới** — wrapper để `8.14.1`, RN 0.74.5 cần `8.6`. Triệu chứng:
+   `Unresolved reference: serviceOf` khi biên dịch `react-native-gradle-plugin`.
+2. **`settings.gradle` gọi API của 0.75** — `extensions.configure(com.facebook.react.ReactSettingsExtension)`.
+   Ở 0.74, `com.facebook.react.settings` là **plugin rỗng**, không đăng ký extension nào.
+   Triệu chứng lạc đề hoàn toàn: `Could not get unknown property 'com'`.
+3. **`app/build.gradle` gọi API của 0.75** — `react { autolinkLibrariesWithApp() }`.
+   RN 0.74 liên kết native bằng `applyNativeModulesAppBuildGradle(project)`. **Đừng lẫn hai cách.**
+4. **`@react-native/codegen` không tìm thấy, rồi tìm thấy nhưng vỡ** — nó là phụ thuộc
+   gián tiếp nên không có ở `node_modules/@react-native/codegen`; và bản thân nó **dùng
+   `yargs` mà quên khai báo**, nên với pnpm nó vớ phải `yargs@16.2.2` — bản chưa có `parseSync`.
+
+Hai chỗ vá cho pnpm, đều **suy ra đường dẫn thay vì viết cứng** để không vỡ khi cài lại:
+
+- `settings.gradle` dò `@react-native/gradle-plugin` (phẳng trước, rồi quét `.pnpm`).
+- `app/build.gradle` đặt `codegenDir` bằng cách đi từ chính `react-native`:
+  `getCanonicalFile()` xuyên qua symlink của pnpm về `.pnpm/react-native@<ver>/node_modules`,
+  nơi codegen nằm cạnh nó — nên **luôn khớp phiên bản** (store đang có cả 0.74.87 lẫn 0.75.3).
+
+Phần `yargs` thiếu khai báo vá bằng `pnpm.packageExtensions` trong `package.json`. Không
+dùng `overrides` toàn cục vì `yargs@15` có người thật sự cần (`cli-platform-android@10.x`,
+`logkitty`).
+
+Build cần `ANDROID_HOME` (chưa có `android/local.properties`):
+
+```bash
+export ANDROID_HOME=$HOME/Library/Android/sdk
+cd android && ./gradlew :app:assembleDebug
+```
+
 ## Cổng chất lượng
 
 ```bash

@@ -9,6 +9,8 @@ overrides:
   react-native-gesture-handler: 2.16.2
   '@react-native-async-storage/async-storage': 1.24.0
 
+packageExtensionsChecksum: sha256-L1id8OKJOd8mEZlhLShQwQdjhwz/pd9Zk2Kusov0IuY=
+
 importers:
 
   .:
@@ -7889,6 +7891,7 @@ snapshots:
       jscodeshift: 0.14.0(@babel/preset-env@7.29.7(@babel/core@7.29.7))
       mkdirp: 0.5.6
       nullthrows: 1.1.1
+      yargs: 17.7.3
     transitivePeerDependencies:
       - supports-color
 

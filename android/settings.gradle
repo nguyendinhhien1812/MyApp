@@ -1,6 +1,28 @@
-pluginManagement { includeBuild("../node_modules/@react-native/gradle-plugin") }
-plugins { id("com.facebook.react.settings") }
-extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand() }
+// Bám theo template của React Native 0.74.5.
+//
+// File cũ chép từ template RN 0.75: nó gọi
+//   extensions.configure(com.facebook.react.ReactSettingsExtension) { ... }
+// mà ở 0.74, com.facebook.react.settings chỉ là PLUGIN RỖNG không đăng ký
+// extension nào (xem ReactSettingsPlugin.kt trong gradle-plugin). Lỗi hiện ra là
+// "Could not get unknown property 'com'" — rất khó đoán ra nguyên nhân.
+//
+// Đường dẫn gradle-plugin tự dò thay vì viết cứng: dự án dùng pnpm, mà
+// gradle-plugin là phụ thuộc GIÁN TIẾP nên không có symlink phẳng.
+def reactGradlePlugin = {
+    def modules = new File(settingsDir, "../node_modules").getCanonicalFile()
+    def flat = new File(modules, "@react-native/gradle-plugin")
+    if (flat.exists()) { return flat }
+    def hit = new File(modules, ".pnpm").listFiles()?.find {
+        it.name.startsWith("@react-native+gradle-plugin@")
+    }
+    if (hit == null) {
+        throw new GradleException(
+            "Không tìm thấy @react-native/gradle-plugin trong ${modules}. Đã pnpm install chưa?")
+    }
+    return new File(hit, "node_modules/@react-native/gradle-plugin").getCanonicalFile()
+}()
+
 rootProject.name = 'MyApp'
+apply from: file("../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesSettingsGradle(settings)
 include ':app'
-includeBuild('../node_modules/@react-native/gradle-plugin')
+includeBuild(reactGradlePlugin)

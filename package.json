@@ -66,5 +66,14 @@
   "engines": {
     "node": ">=18"
   },
-  "packageManager": "pnpm@10.12.4"
+  "packageManager": "pnpm@10.12.4",
+  "pnpm": {
+    "packageExtensions": {
+      "@react-native/codegen": {
+        "dependencies": {
+          "yargs": "^17.6.2"
+        }
+      }
+    }
+  }
 }
