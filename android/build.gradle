@@ -4,8 +4,16 @@ buildscript {
         minSdkVersion = 24
         compileSdkVersion = 35
         targetSdkVersion = 35
-        ndkVersion = "27.1.12297006"
-        kotlinVersion = "2.1.20"
+        // RN 0.74.5 ghim NDK 26.1. NDK 27 mang Clang mới hơn, sinh thêm
+        // -Wdeprecated-this-capture và -Wvla-cxx-extension; mã C++ của reanimated
+        // biên dịch với -Werror nên warning thành 12 lỗi cứng.
+        ndkVersion = "26.1.10909125"
+        // Phải khớp bản Kotlin mà RN 0.74.5 dùng để biên dịch
+        // (@react-native/gradle-plugin ghim kotlin = 1.9.22 trong libs.versions.toml).
+        // Năm thư viện (repack, gesture-handler, safe-area-context, screens, webview)
+        // đọc biến này để kéo kotlin-stdlib. Để 2.1.20 như template RN 0.75 thì
+        // stdlib 2.1 gặp compiler 1.9 -> 107 lỗi "incompatible version of Kotlin".
+        kotlinVersion = "1.9.22"
     }
     repositories {
         google()

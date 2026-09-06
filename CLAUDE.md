@@ -115,39 +115,78 @@ ASCII.
 **Lỗi này ẩn rất lâu**: nạp lại JS vẫn chạy bình thường trên bản `.app` đã build từ trước,
 nên chỉ lộ ra ở lần build native tiếp theo — có thể là nhiều ngày sau.
 
-## Build Android — bốn cái bẫy đã gỡ
+## Build Android — mười hai cái bẫy đã gỡ
 
-Thư mục `android/` ban đầu là **template RN 0.75 nằm trên bản cài RN 0.74.5**, cộng thêm
-pnpm không dựng cây phẳng. Bốn lỗi nối đuôi nhau, mỗi lỗi che lỗi sau:
+Thư mục `android/` **chưa từng build được** trước ngày 2026-09-06: nó là **template RN 0.75+
+nằm trên bản cài RN 0.74.5**, cộng thêm pnpm không dựng cây phẳng. Mười hai lỗi nối đuôi nhau,
+mỗi lỗi che lỗi sau — sửa xong một cái mới thấy cái kế tiếp.
 
-1. **Gradle quá mới** — wrapper để `8.14.1`, RN 0.74.5 cần `8.6`. Triệu chứng:
-   `Unresolved reference: serviceOf` khi biên dịch `react-native-gradle-plugin`.
-2. **`settings.gradle` gọi API của 0.75** — `extensions.configure(com.facebook.react.ReactSettingsExtension)`.
-   Ở 0.74, `com.facebook.react.settings` là **plugin rỗng**, không đăng ký extension nào.
-   Triệu chứng lạc đề hoàn toàn: `Could not get unknown property 'com'`.
-3. **`app/build.gradle` gọi API của 0.75** — `react { autolinkLibrariesWithApp() }`.
-   RN 0.74 liên kết native bằng `applyNativeModulesAppBuildGradle(project)`. **Đừng lẫn hai cách.**
-4. **`@react-native/codegen` không tìm thấy, rồi tìm thấy nhưng vỡ** — nó là phụ thuộc
-   gián tiếp nên không có ở `node_modules/@react-native/codegen`; và bản thân nó **dùng
-   `yargs` mà quên khai báo**, nên với pnpm nó vớ phải `yargs@16.2.2` — bản chưa có `parseSync`.
+**Nguyên tắc chung: mọi thứ phải bám RN 0.74.5, đừng tin giá trị sẵn có trong `android/`.**
 
-Hai chỗ vá cho pnpm, đều **suy ra đường dẫn thay vì viết cứng** để không vỡ khi cài lại:
+### Sai template
 
-- `settings.gradle` dò `@react-native/gradle-plugin` (phẳng trước, rồi quét `.pnpm`).
+| Chỗ | Giá trị sai (RN 0.75+) | Đúng cho 0.74.5 | Triệu chứng |
+|---|---|---|---|
+| `gradle-wrapper.properties` | `gradle-8.14.1-bin` | `gradle-8.6-all` | `Unresolved reference: serviceOf` |
+| `settings.gradle` | `ReactSettingsExtension` | `applyNativeModulesSettingsGradle` | `Could not get unknown property 'com'` |
+| `app/build.gradle` | `react { autolinkLibrariesWithApp() }` | `applyNativeModulesAppBuildGradle` | `Could not find method autolinkLibrariesWithApp()` |
+| `build.gradle` | `kotlinVersion = 2.1.20` | `1.9.22` | 107 lỗi `incompatible version of Kotlin` |
+| `build.gradle` | `ndkVersion = 27.1.x` | `26.1.10909125` | 12 lỗi C++ do `-Werror` |
+| `MainApplication.kt` | `loadReactNative(this)` | `SoLoader.init` + `load()` | `Unresolved reference: ReactNativeApplicationEntryPoint` |
+
+`kotlinVersion` quan trọng vì **năm thư viện** (repack, gesture-handler, safe-area-context,
+screens, webview) đọc `rootProject.ext.kotlinVersion` để kéo `kotlin-stdlib`. Compiler thật
+thì do `@react-native/gradle-plugin` ghim (`libs.versions.toml`: `kotlin = 1.9.22`).
+
+NDK 27 mang Clang mới hơn, sinh `-Wdeprecated-this-capture` và `-Wvla-cxx-extension`; mã C++
+của reanimated biên dịch với `-Werror` nên warning hoá lỗi cứng.
+
+### Kiến trúc mới phải TẮT
+
+`newArchEnabled=false` trong `android/gradle.properties`. iOS không đặt `RCT_NEW_ARCH_ENABLED`
+nên chạy kiến trúc cũ; để Android bật là hai nền tảng lệch nhau, và mã Fabric của
+`react-native-screens` / `react-native-svg` không khớp API RN 0.74 → hàng loạt lỗi
+`only virtual member functions can be marked 'override'` cùng `OnLoad.cpp` gọi
+`rncli_cxxModuleProvider` không tồn tại.
+
+### Cổng dev server (bẫy im lặng nhất)
+
+`reactNativeDevServerPort=8088` trong `android/gradle.properties`. iOS ghim 8088 qua
+`RCT_METRO_PORT` trong Podfile, **Android có đường riêng** — thiếu nó thì app cứ gọi 8081,
+`adb reverse` trỏ 8088 vô ích, và màn đỏ chỉ nói "404" chứ không nói sai cổng.
+
+### Hai thư viện phải GHIM CỨNG, không dùng caret
+
+| Gói | Bản | Vì sao không lên cao hơn |
+|---|---|---|
+| `react-native-reanimated` | `3.9.0` | 3.7.x/3.8.x còn override `replaceExistingNonRootView` — RN 0.74 đã bỏ khỏi `UIManagerModule`. 3.9.0 là bản đầu tiên bỏ. |
+| `react-native-svg` | `15.12.1` | 15.13.0 chuyển sang `processTransform` 6 tham số và `MatrixDecompositionContext` công khai — chỉ có ở RN mới. 15.12.1 là bản cuối còn hợp, vẫn thoả peer `^15.12.0` của iconoir. |
+
+Caret sẽ trôi ngược lên bản đòi RN mới hơn. Dự án khoá RN 0.74.5 nên hai gói này ghim exact.
+
+### pnpm: hai đường dẫn phải SUY RA, không viết cứng
+
+- `settings.gradle` dò `@react-native/gradle-plugin` (thử phẳng trước, rồi quét `.pnpm`).
 - `app/build.gradle` đặt `codegenDir` bằng cách đi từ chính `react-native`:
-  `getCanonicalFile()` xuyên qua symlink của pnpm về `.pnpm/react-native@<ver>/node_modules`,
-  nơi codegen nằm cạnh nó — nên **luôn khớp phiên bản** (store đang có cả 0.74.87 lẫn 0.75.3).
+  `getCanonicalFile()` xuyên symlink của pnpm về `.pnpm/react-native@<ver>/node_modules`,
+  nơi codegen nằm cạnh nó — nên **luôn khớp phiên bản** (store có cả 0.74.87 lẫn 0.75.3).
 
-Phần `yargs` thiếu khai báo vá bằng `pnpm.packageExtensions` trong `package.json`. Không
-dùng `overrides` toàn cục vì `yargs@15` có người thật sự cần (`cli-platform-android@10.x`,
-`logkitty`).
+Ngoài ra `@react-native/codegen` **dùng `yargs` mà quên khai báo**; npm/yarn cho nó ăn ké cây
+phẳng, pnpm thì không nên nó vớ phải `yargs@16.2.2` (chưa có `parseSync`). Vá bằng
+`pnpm.packageExtensions` trong `package.json` — **không** dùng `overrides` toàn cục vì
+`yargs@15` có người thật sự cần (`cli-platform-android@10.x`, `logkitty`).
 
-Build cần `ANDROID_HOME` (chưa có `android/local.properties`):
+### Chạy
+
+Cần `ANDROID_HOME` (dự án không commit `android/local.properties`):
 
 ```bash
 export ANDROID_HOME=$HOME/Library/Android/sdk
 cd android && ./gradlew :app:assembleDebug
 ```
+
+Trên máy ảo Android 15+ sẽ có hộp thoại "This app isn't 16 KB compatible" — chỉ là cảnh báo,
+app vẫn chạy ở chế độ tương thích. Các `.so` dựng sẵn của RN 0.74 chưa canh 16 KB.
 
 ## Cổng chất lượng
 
