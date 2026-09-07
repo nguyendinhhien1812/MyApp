@@ -76,3 +76,84 @@ jobs:
         run: npx wrangler deploy --dry-run --outdir /tmp/build
         env:
           WRANGLER_SEND_METRICS: 'false'
+
+  # Hai job dưới đây tồn tại vì `tsc`/`lint`/`test` KHÔNG hề chạm mã native.
+  # Thư mục android/ từng là template RN 0.75 nằm trên bản cài RN 0.74.5 và
+  # hỏng suốt nhiều tháng mà không cổng nào phát hiện — xem chương
+  # "Build Android" trong CLAUDE.md. Chỉ có build thật mới bắt được lớp lỗi đó.
+  android:
+    name: Android (assembleDebug)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # Gradle đọc node_modules để dò gradle-plugin và codegen (pnpm không
+      # dựng cây phẳng), nên phải cài trước khi build.
+      - run: pnpm install --frozen-lockfile
+
+      # Runner mang sẵn NDK khác. Dự án ghim 26.1 vì NDK 27 sinh warning mà
+      # C++ của reanimated biên dịch với -Werror -> lỗi cứng.
+      - name: Cài NDK 26.1
+        run: |
+          NDK=$(grep -oE 'ndkVersion = "[^"]+"' android/build.gradle | cut -d'"' -f2)
+          echo "cần NDK $NDK"
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;$NDK"
+
+      # -P cắt phần ĐẮT NHẤT: reanimated/screens/gesture-handler đều đọc
+      # reactNativeArchitectures để giới hạn buildCMake. APK vẫn mang đủ bốn
+      # ABI (các .so dựng sẵn nằm trong AAR, và ở kiến trúc CŨ thì
+      # NdkConfiguratorUtils.kt:23 thoát sớm nên abiFilters không hề được đặt) —
+      # nhưng ở đây ta cần bắt lỗi biên dịch, không cần APK gọn.
+      - name: assembleDebug
+        working-directory: android
+        run: ./gradlew :app:assembleDebug -PreactNativeArchitectures=arm64-v8a --no-daemon
+
+      - name: APK có thật không
+        run: |
+          APK=android/app/build/outputs/apk/debug/app-debug.apk
+          test -f "$APK" || { echo "không thấy $APK"; exit 1; }
+          echo "OK $(du -h "$APK" | cut -f1)"
+
+  ios:
+    name: iOS (xcodebuild)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # LANG là bắt buộc: CocoaPods chết câm với Encoding::CompatibilityError
+      # khi shell dùng ASCII. Xem CLAUDE.md, chương pod install.
+      - name: pod install
+        working-directory: ios
+        run: pod install
+        env:
+          LANG: en_US.UTF-8
+
+      # generic/platform để khỏi phụ thuộc UDID của simulator cụ thể trên runner.
+      - name: xcodebuild
+        run: |
+          xcodebuild -workspace ios/MyApp.xcworkspace -scheme MyApp \
+            -configuration Debug -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build-ci build
