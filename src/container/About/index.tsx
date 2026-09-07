@@ -94,9 +94,9 @@ const AboutScreen = ({ navigation }: Props) => {
                   <Icon type="ionicon" name="phone-portrait-outline" size={10} color={colors.accent700} />
                   <Text style={styles.devTagText}>React Native</Text>
                 </View>
-                <View style={[styles.devTag, { backgroundColor: '#e8f0f8' }]}>
-                  <Icon type="ionicon" name="code-slash-outline" size={10} color="#1a4a7a" />
-                  <Text style={[styles.devTagText, { color: '#1a4a7a' }]}>TypeScript</Text>
+                <View style={[styles.devTag, styles.devTagTs]}>
+                  <Icon type="ionicon" name="code-slash-outline" size={10} color={TS_BLUE} />
+                  <Text style={[styles.devTagText, styles.devTagTsText]}>TypeScript</Text>
                 </View>
               </View>
             </View>
@@ -237,6 +237,8 @@ const FeatureRow = ({ text, styles }: { text: string; styles: Styles }) => (
   </View>
 );
 
+const TS_BLUE = '#1a4a7a';
+
 const makeStyles = (c: ThemeColors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: c.bg },
 
@@ -331,6 +333,10 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     paddingVertical: 3,
   },
   devTagText: { fontFamily: FONT.medium, fontSize: 10, color: c.accent700 },
+  // Xanh của TypeScript: pastel cố định gắn với thương hiệu ngôn ngữ, giữ
+  // nguyên ở cả hai chế độ. Thẻ có nền đục riêng nên không chìm ở nền tối.
+  devTagTs: { backgroundColor: '#e8f0f8' },
+  devTagTsText: { color: TS_BLUE },
 
   // Contact buttons
   contactRow: {

@@ -216,7 +216,7 @@ const ExpenseScreen = ({ navigation }: Props) => {
           ))}
         </View>
 
-        <View style={{ height: 32 }} />
+        <View style={styles.spacer32} />
       </ScrollView>
 
       {/* ── Add Expense Modal ── */}
@@ -309,6 +309,8 @@ const SectionTitle = ({ title, styles }: { title: string; styles: Styles }) => (
 );
 
 const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  spacer32: { height: 32 },
+
   safe: { flex: 1, backgroundColor: c.bg },
 
   // Scroll

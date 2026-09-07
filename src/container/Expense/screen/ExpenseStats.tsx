@@ -167,7 +167,7 @@ const ExpenseStats = ({ navigation }: Props) => {
         <Text style={styles.sectionLabel}>{t.expense.topCategories}</Text>
         <View style={styles.card}>
           {catStats.map((cat, i) => (
-            <View key={cat.id} style={[styles.catRow, i < catStats.length - 1 && { marginBottom: 16 }]}>
+            <View key={cat.id} style={[styles.catRow, i < catStats.length - 1 && styles.catRowGap]}>
               <View style={[styles.catIconWrap, { backgroundColor: CATEGORY_VISUALS[cat.id].iconBg }]}>
                 <Icon type="ionicon" name={CATEGORY_VISUALS[cat.id].icon} size={17} color={CATEGORY_VISUALS[cat.id].iconColor} />
               </View>
@@ -210,7 +210,7 @@ const ExpenseStats = ({ navigation }: Props) => {
           ))}
         </View>
 
-        <View style={{ height: 32 }} />
+        <View style={styles.spacer32} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -220,6 +220,9 @@ export default ExpenseStats;
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  catRowGap: { marginBottom: 16 },
+  spacer32: { height: 32 },
+
   safe: { flex: 1, backgroundColor: c.bg },
 
   scroll: { paddingBottom: 16 },

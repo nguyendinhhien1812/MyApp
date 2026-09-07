@@ -157,10 +157,7 @@ const BankScreen = ({ navigation }: BankScreenProps) => {
               return (
                 <View key={tx.id} style={styles.txRow}>
                   <View
-                    style={[
-                      styles.txSign,
-                      { backgroundColor: pos ? 'rgba(26,122,64,0.12)' : 'rgba(192,57,43,0.12)' },
-                    ]}
+                    style={[styles.txSign, pos ? styles.txSignPos : styles.txSignNeg]}
                   >
                     <Text style={[styles.txSignText, { color }]}>{pos ? '+' : '–'}</Text>
                   </View>
@@ -185,6 +182,10 @@ export default BankScreen;
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
+  // Xanh lãi / đỏ lỗ: màu semantic cố định, không đổi theo chế độ
+  txSignPos: { backgroundColor: 'rgba(26,122,64,0.12)' },
+  txSignNeg: { backgroundColor: 'rgba(192,57,43,0.12)' },
+
     safeArea: { flex: 1, backgroundColor: c.bg },
     listContent: { paddingBottom: 100 },
 

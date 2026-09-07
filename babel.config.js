@@ -9,8 +9,8 @@ module.exports = {
 					'@src': './src',
 					'@container': './src/container',
 				},
-				extensions: ['.tsx', '.ts', '.js', '.json']
-			}
-		]
+				extensions: ['.tsx', '.ts', '.js', '.json'],
+			},
+		],
 	],
 };

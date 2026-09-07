@@ -12,3 +12,8 @@ tools/
 # Kết quả build
 ios/
 android/
+
+# Khai báo type do Module Federation sinh ra. Không sửa tay — và sở dĩ chúng
+# nằm im trong repo là vì cấu hình đang đặt dts:false (xem CLAUDE.md), nên
+# không có gì tái sinh chúng nữa.
+@mf-types/

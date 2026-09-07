@@ -130,7 +130,7 @@ const ProfileScreen = () => {
       </TouchableOpacity>
 
       {/* ── Đăng xuất ── */}
-      <View style={[styles.card, { marginTop: 12 }]}>
+      <View style={[styles.card, styles.cardGap]}>
         <ProfileRow styles={styles} colors={colors}
           icon="exit-outline"
           label={t.profile.logout}
@@ -195,7 +195,7 @@ const ProfileRow = ({
   <>
     <TouchableOpacity style={styles.profileRow} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.rowLeft}>
-        <View style={[styles.rowIconWrap, { backgroundColor: danger ? 'rgba(192,57,43,0.12)' : colors.accent100 }]}>
+        <View style={[styles.rowIconWrap, danger ? styles.rowIconWrapDanger : styles.rowIconWrapNormal]}>
           <Icon
             type="ionicon"
             name={icon}
@@ -217,6 +217,11 @@ const ProfileRow = ({
 );
 
 const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  cardGap: { marginTop: 12 },
+  // Đỏ semantic cho hành động nguy hiểm (đăng xuất, xoá) — cố định hai chế độ
+  rowIconWrapDanger: { backgroundColor: 'rgba(192,57,43,0.12)' },
+  rowIconWrapNormal: { backgroundColor: c.accent100 },
+
   safe: { flex: 1, backgroundColor: c.bg },
 
   header: { paddingHorizontal: SPACING.screenX, paddingTop: SPACING.s4, paddingBottom: SPACING.s2 },

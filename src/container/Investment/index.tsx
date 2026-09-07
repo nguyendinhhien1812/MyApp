@@ -93,6 +93,16 @@ const tickerVisual = (t: string) => TICKER_VISUALS[t] ?? { bg: '#e8f0f8', fg: '#
 // (defined before sub-components so they can reference it)
 
 const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  // Xanh lãi / đỏ lỗ: màu semantic cố định, giữ nguyên ở cả hai chế độ
+  changeBadgeUp: { backgroundColor: '#e8f8f0' },
+  changeBadgeDown: { backgroundColor: '#ffeaea' },
+  changeTextUp: { color: '#1a7a40' },
+  changeTextDown: { color: '#c0392b' },
+
+  skeletonInfoGap: { gap: 5 },
+  skeletonPriceGap: { gap: 4 },
+  spacer16: { height: 16 },
+
   safe: { flex: 1, backgroundColor: c.bg },
 
   scroll: { paddingBottom: 8 },
@@ -549,12 +559,12 @@ const SkeletonStockRow = ({
     <Animated.View
       style={[styles.stockIcon, { backgroundColor: colors.border, opacity: shimmer }]}
     />
-    <View style={[styles.stockInfo, { gap: 5 }]}>
+    <View style={[styles.stockInfo, styles.skeletonInfoGap]}>
       <SkeletonBox w={36} h={12} shimmer={shimmer} bg={colors.border} />
       <SkeletonBox w={70} h={10} shimmer={shimmer} bg={colors.border} />
     </View>
     <SkeletonBox w={52} h={28} shimmer={shimmer} bg={colors.border} />
-    <View style={[styles.stockPriceCol, { gap: 4 }]}>
+    <View style={[styles.stockPriceCol, styles.skeletonPriceGap]}>
       <SkeletonBox w={72} h={12} shimmer={shimmer} bg={colors.border} />
       <SkeletonBox w={52} h={20} r={6} shimmer={shimmer} bg={colors.border} />
     </View>
@@ -881,15 +891,12 @@ const InvestmentScreen = ({ navigation }: Props) => {
                   <View
                     style={[
                       styles.changeBadge,
-                      {
-                        backgroundColor:
-                          stock.trend === 'up' ? '#e8f8f0' : '#ffeaea',
-                      },
+                      stock.trend === 'up' ? styles.changeBadgeUp : styles.changeBadgeDown,
                     ]}>
                     <Text
                       style={[
                         styles.changeText,
-                        { color: stock.trend === 'up' ? '#1a7a40' : '#c0392b' },
+                        stock.trend === 'up' ? styles.changeTextUp : styles.changeTextDown,
                       ]}>
                       {stock.change > 0 ? '+' : ''}
                       {stock.change.toFixed(2)}%
@@ -901,7 +908,7 @@ const InvestmentScreen = ({ navigation }: Props) => {
           )}
         </View>
 
-        <View style={{ height: 16 }} />
+        <View style={styles.spacer16} />
       </ScrollView>
 
       {/* ── Bottom CTA ── */}
@@ -962,15 +969,12 @@ const InvestmentScreen = ({ navigation }: Props) => {
                   <View
                     style={[
                       styles.changeBadge,
-                      {
-                        backgroundColor:
-                          selectedStock.trend === 'up' ? '#e8f8f0' : '#ffeaea',
-                      },
+                      selectedStock.trend === 'up' ? styles.changeBadgeUp : styles.changeBadgeDown,
                     ]}>
                     <Text
                       style={[
                         styles.changeText,
-                        { color: selectedStock.trend === 'up' ? '#1a7a40' : '#c0392b' },
+                        selectedStock.trend === 'up' ? styles.changeTextUp : styles.changeTextDown,
                       ]}>
                       {selectedStock.change > 0 ? '+' : ''}
                       {selectedStock.change.toFixed(2)}%

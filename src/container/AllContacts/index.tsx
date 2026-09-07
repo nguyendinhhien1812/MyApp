@@ -122,7 +122,7 @@ const AllContactsScreen = ({ navigation }: Props) => {
                 </TouchableOpacity>
               </ScrollView>
 
-              <Text style={[styles.sectionTitle, { marginTop: 8 }]}>{t.contacts.all}</Text>
+              <Text style={[styles.sectionTitle, styles.sectionTitleGap]}>{t.contacts.all}</Text>
             </View>
           ) : null
         }
@@ -179,18 +179,19 @@ export default AllContactsScreen;
 // props tuỳ ý vào ItemSeparatorComponent.
 const Separator = () => {
   const c = useThemeColors();
-  return (
-    <View
-      style={{
-        height: StyleSheet.hairlineWidth,
-        backgroundColor: c.divider,
-        marginLeft: 72,
-      }}
-    />
-  );
+  const styles = useMemo(() => makeStyles(c), [c]);
+  return <View style={styles.separator} />;
 };
 
 const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  sectionTitleGap: { marginTop: 8 },
+  // Thụt trái 72 để đường kẻ bắt đầu ngay sau avatar, không cắt ngang nó
+  separator: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: c.divider,
+    marginLeft: 72,
+  },
+
   safe: { flex: 1, backgroundColor: c.bg },
 
   // Search

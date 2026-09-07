@@ -99,7 +99,7 @@ const WebViewScreen = ({ navigation, route }: Props) => {
           <Icon type="ionicon" name="construct-outline" size={44} color={colors.muted} />
           <Text style={styles.errorTitle}>{t.webview.needRebuild}</Text>
           <Text style={styles.errorSub}>
-            <Text style={{ fontWeight: '700', color: colors.text }}>pod install</Text>
+            <Text style={styles.codeName}>pod install</Text>
             {' '}{t.webview.needRebuildDesc}
           </Text>
           <TouchableOpacity
@@ -234,6 +234,8 @@ export default WebViewScreen;
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  codeName: { fontWeight: '700', color: c.text },
+
   safe: { flex: 1, backgroundColor: c.bg },
 
   // Header

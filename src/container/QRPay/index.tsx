@@ -151,7 +151,7 @@ const QRPayScreen = ({ navigation }: Props) => {
                 <Icon type="ionicon" name="scan-outline" size={12} color={colors.accent700} />
                 <Text style={styles.qrPillText}>{t.qrpay.scanToTransfer}</Text>
               </View>
-              <View style={{ height: 16 }} />
+              <View style={styles.spacer16} />
             </View>
 
             {/* Nhập số tiền */}
@@ -252,7 +252,7 @@ const QRPayScreen = ({ navigation }: Props) => {
               <View style={styles.sheetQR}>
                 <QRCodeSmall />
               </View>
-              <View style={{ flex: 1 }}>
+              <View style={styles.fill}>
                 <Text style={styles.sheetName}>{t.qrpay.sheetMyQr}</Text>
                 <Text style={styles.sheetBank}>{USER_NAME} · VCB</Text>
               </View>
@@ -278,6 +278,9 @@ const QRPayScreen = ({ navigation }: Props) => {
 export default QRPayScreen;
 
 const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  spacer16: { height: 16 },
+  fill: { flex: 1 },
+
   safe: { flex: 1, backgroundColor: c.bg },
 
   // Tab segmented control (nền sáng)
