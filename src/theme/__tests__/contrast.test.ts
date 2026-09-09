@@ -35,6 +35,12 @@ const CHU_THUONG: Cap[] = [
   ['text', 'tabBarActiveBg'],
   ['subtext', 'bg'],
   ['subtext', 'white'],
+  // hint là placeholderTextColor (FormTextInput, Chatbot) — chữ gợi ý KHÔNG
+  // được WCAG miễn trừ. muted là chữ phụ ở 73 chỗ (txMeta, txTime, status...).
+  ['hint', 'bg'],
+  ['hint', 'white'],
+  ['muted', 'bg'],
+  ['muted', 'white'],
   ['accent700', 'white'],
   ['accent700', 'bg'],
   ['accent700', 'accent100'],
@@ -52,15 +58,12 @@ const CHU_TO: Cap[] = [
   ['primaryDark', 'primaryLight'],
 ];
 
-// NỢ ĐÃ BIẾT — chưa đạt chuẩn, ghi lại kèm số đo để nó không âm thầm tệ thêm.
-// Đây KHÔNG phải danh sách miễn trừ vĩnh viễn: sửa được thì chuyển lên trên.
-//   hint/muted  : dùng cho chữ mờ và trạng thái vô hiệu.
-//   borderStrong: WCAG 1.4.11 đòi 3:1 cho viền thành phần bấm được.
-const NO_DA_BIET: { cap: Cap; light: number; dark: number }[] = [
-  { cap: ['hint', 'white'], light: 2.94, dark: 3.84 },
-  { cap: ['muted', 'white'], light: 2.23, dark: 3.05 },
-  { cap: ['borderStrong', 'white'], light: 1.92, dark: 2.08 },
-  { cap: ['borderStrong', 'bg'], light: 1.78, dark: 2.36 },
+// Viền của thành phần bấm được: WCAG 1.4.11 đòi 3:1 (không phải 4.5 — đây là
+// ranh giới đồ hoạ, không phải chữ). borderStrong dùng ở 8 chỗ, đều là borderColor
+// của chip/card/tab chưa chọn.
+const VIEN_UI: Cap[] = [
+  ['borderStrong', 'bg'],
+  ['borderStrong', 'white'],
 ];
 
 const PALETTE: [string, ThemeColors][] = [
@@ -77,12 +80,10 @@ describe('tương phản màu', () => {
     it.each(CHU_TO)('%s trên %s đạt AA chữ to (3:1)', (fg, bg) => {
       expect(tyLe(p[fg], p[bg])).toBeGreaterThanOrEqual(3);
     });
-  });
 
-  // Chốt chặn nợ: cho phép giữ nguyên, cấm tụt thêm.
-  it.each(NO_DA_BIET)('nợ $cap không tệ thêm', ({ cap: [fg, bg], light, dark }) => {
-    expect(tyLe(LIGHT[fg], LIGHT[bg])).toBeGreaterThanOrEqual(light - 0.01);
-    expect(tyLe(DARK[fg], DARK[bg])).toBeGreaterThanOrEqual(dark - 0.01);
+    it.each(VIEN_UI)('viền %s trên %s đạt 3:1 (WCAG 1.4.11)', (fg, bg) => {
+      expect(tyLe(p[fg], p[bg])).toBeGreaterThanOrEqual(3);
+    });
   });
 
   it('mọi màu trong palette là hex 6 ký tự (công thức trên giả định vậy)', () => {

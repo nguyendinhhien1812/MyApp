@@ -44,6 +44,10 @@ Scope đang dùng — **dùng lại thay vì tạo mới nếu phù hợp**:
 - **Header màn con**: dùng `<SubHeader>`, không tự dựng header.
 - **Kiểm tra trước khi xong**: đổi sang EN → text đổi hết; bật chế độ Tối → không khối nào
   bị "tàng hình" (nền tối trên nền tối).
+- **Tương phản đã có test gác**: `src/theme/__tests__/contrast.test.ts` đo WCAG cho cả hai
+  palette — chữ thường 4.5:1, chữ to và viền thành phần bấm được 3:1. Thêm màu mới vào
+  `ThemeColors` thì thêm cặp vào đó luôn. Ca khó không phải nền card: ở chế độ Sáng là nền
+  màn `bg` (tối hơn card), ở chế độ Tối lại là nền card `white` (sáng hơn nền màn).
 
 ## Mini-app (Module Federation)
 

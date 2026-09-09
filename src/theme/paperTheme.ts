@@ -77,9 +77,15 @@ export const LIGHT: ThemeColors = {
   bg:      '#F8F6F2',
   white:   '#FFFFFF',
   text:    '#1A1815',
-  subtext: '#736E66', // đậm hơn #888888 cũ: bản cũ chỉ 3.54:1 trên nền trắng
-  hint:    '#9C968C',
-  muted:   '#B3ADA3',
+  // Thang xám bốn bậc, TẤT CẢ đạt AA 4.5:1 trên nền màn #F8F6F2 (nền màn tối
+  // hơn nền card nên là ca khó hơn — cứ đạt ở đây là đạt cả hai).
+  //   text 16.41  ·  subtext 7.08  ·  hint 5.53  ·  muted 4.62
+  // Phải kéo cả subtext xuống chứ không riêng hai bậc dưới: subtext cũ chỉ
+  // 4.69, nếu chỉ nâng hint/muted lên 4.5 thì ba bậc chụm vào nhau, đạt chuẩn
+  // nhưng mất phân cấp thị giác.
+  subtext: '#57534D',
+  hint:    '#67635D', // dùng làm placeholderTextColor — WCAG không miễn cho chữ gợi ý
+  muted:   '#736F69',
   border:  '#E8E3DB',
   divider: '#F0EDE7',
 
@@ -87,7 +93,7 @@ export const LIGHT: ThemeColors = {
   tabBarActiveBg: '#F3E8D5',
   tabBarBorder:   '#E8E3DB',
   btnSolid:       '#1a1815',
-  borderStrong:   '#C4BAA9',
+  borderStrong:   '#938B7E', // 3.12:1 trên nền màn — WCAG 1.4.11 cho viền bấm được
 };
 
 export const DARK: ThemeColors = {
@@ -116,8 +122,10 @@ export const DARK: ThemeColors = {
   white:   '#1F1F1F', // nền card
   text:    '#f2f2f2',
   subtext: '#A6A6A6',
-  hint:    '#7a7a7a',
-  muted:   '#6a6a6a',
+  // Ở nền tối, ca khó là nền CARD #1F1F1F (sáng hơn nền màn) chứ không phải nền màn.
+  //   text 14.72  ·  subtext 6.77  ·  hint 5.50  ·  muted 4.65
+  hint:    '#959595',
+  muted:   '#888888',
   border:  '#2A2A2A',
   divider: '#242424',
 
@@ -126,7 +134,7 @@ export const DARK: ThemeColors = {
   tabBarActiveBg: '#34281A',
   tabBarBorder:   '#2A2A2A',
   btnSolid:       '#8C5F22', // chữ trắng lên đây đạt 5.43:1
-  borderStrong:   '#575047',
+  borderStrong:   '#716B63', // 3.13:1 trên nền card
 };
 
 // Tương thích ngược: code cũ import { BRAND } vẫn chạy (= palette sáng)
