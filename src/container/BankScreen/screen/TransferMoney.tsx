@@ -8,7 +8,7 @@ import {
   Image,
   ScrollView,
 } from 'react-native';
-import { Icon } from '@rneui/themed';
+import Icon from '../../../components/Icon';
 import { StackScreenProps } from '@react-navigation/stack';
 import { AppDialog, AppSnackbar } from '../../../components/UI';
 import SubHeader from '../../../components/UI/SubHeader';

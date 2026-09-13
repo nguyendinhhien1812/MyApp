@@ -10,7 +10,7 @@ import {
   TextInput,
   ScrollView,
 } from 'react-native';
-import { Icon } from '@rneui/themed';
+import Icon from '../../components/Icon';
 import AppIcon from '../../components/Icon';
 import { ICON_TYPE } from '../../components/Icon/style';
 import { AppSnackbar } from '../../components/UI';
@@ -57,7 +57,9 @@ const AllContactsScreen = ({ navigation }: Props) => {
         title={t.contacts.title}
         onBack={() => navigation.goBack()}
         right={
-          <TouchableOpacity onPress={() => setToast(t.common.demoFeature)} hitSlop={8}>
+          <TouchableOpacity onPress={() => setToast(t.common.demoFeature)} hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t.a11y.addContact}>
             <AppIcon type={ICON_TYPE.Iconoir} name="user-plus" size={20} color={colors.accent700} />
           </TouchableOpacity>
         }
@@ -74,7 +76,9 @@ const AllContactsScreen = ({ navigation }: Props) => {
           onChangeText={setSearch}
         />
         {search.length > 0 && (
-          <TouchableOpacity onPress={() => setSearch('')}>
+          <TouchableOpacity onPress={() => setSearch('')}
+            accessibilityRole="button"
+            accessibilityLabel={t.a11y.clearSearch}>
             <Icon type="ionicon" name="close-circle" size={16} color={colors.muted} />
           </TouchableOpacity>
         )}

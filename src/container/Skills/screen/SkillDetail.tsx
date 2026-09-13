@@ -7,7 +7,7 @@ import {
   SafeAreaView,
   ScrollView,
 } from 'react-native';
-import { Icon } from '@rneui/themed';
+import Icon from '../../../components/Icon';
 import { AppButton } from '../../../components/UI';
 import SubHeader from '../../../components/UI/SubHeader';
 import { ThemeColors } from '../../../theme/paperTheme';

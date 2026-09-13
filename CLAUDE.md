@@ -44,6 +44,18 @@ Scope đang dùng — **dùng lại thay vì tạo mới nếu phù hợp**:
 - **Header màn con**: dùng `<SubHeader>`, không tự dựng header.
 - **Kiểm tra trước khi xong**: đổi sang EN → text đổi hết; bật chế độ Tối → không khối nào
   bị "tàng hình" (nền tối trên nền tối).
+- **Icon: LUÔN dùng `src/components/Icon`, KHÔNG nhập `Icon` từ `@rneui/themed`.**
+  Icon của @rneui bọc glyph trong một View tự gắn `accessibilityRole="button"`, không tắt
+  được từ ngoài (thử `accessible={false}`, `importantForAccessibility`, cả `createTheme
+  ({components:{Icon}})` — đều không ăn). Hậu quả: mỗi icon đẻ ra một nút không nhãn, TalkBack
+  đọc ra glyph kiểu `\ueb18`. Đo được: màn Chi phí từng có 9 node rác như vậy.
+  Icon của dự án nhận cả `type="ionicon"` viết thường nên đổi chỗ gọi không cần sửa gì thêm.
+- **Nút chỉ có icon phải có `accessibilityLabel`** (nút có chữ thì RN tự lấy chữ).
+  `src/__tests__/a11y.test.ts` gác việc này. Công tắc thì dùng `accessibilityRole="switch"`
+  kèm `accessibilityState={{ checked }}`.
+- **Lưới an toàn**: `<ErrorBoundary>` bọc navigator trong `src/app.tsx`. Lỗi render ở bất kỳ
+  màn nào cũng ra màn "Ứng dụng gặp sự cố" có nút thử lại, thay vì màn trắng. MiniAppHost
+  vẫn giữ boundary riêng vì nó bắt sớm hơn — mini-app hỏng thì chỉ mất mini-app.
 - **Tương phản đã có test gác**: `src/theme/__tests__/contrast.test.ts` đo WCAG cho cả hai
   palette — chữ thường 4.5:1, chữ to và viền thành phần bấm được 3:1. Thêm màu mới vào
   `ThemeColors` thì thêm cặp vào đó luôn. Ca khó không phải nền card: ở chế độ Sáng là nền

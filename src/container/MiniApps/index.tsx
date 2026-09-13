@@ -13,7 +13,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import { Icon } from '@rneui/themed';
+import Icon from '../../components/Icon';
 import { version as hostVersion } from '../../../package.json';
 import SubHeader from '../../components/UI/SubHeader';
 import { useLanguage } from '../../context/LanguageContext';
@@ -176,7 +176,12 @@ const MiniAppsScreen = ({ navigation }: Props) => {
         title={t.miniApp.title}
         onBack={() => navigation.goBack()}
         right={
-          <TouchableOpacity onPress={refresh} disabled={refreshing} hitSlop={8}>
+          <TouchableOpacity
+            onPress={refresh}
+            disabled={refreshing}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t.a11y.refresh}>
             {refreshing
               ? <ActivityIndicator size="small" color={c.accent700} />
               : <Icon type="ionicon" name="refresh" size={20} color={c.text} />}

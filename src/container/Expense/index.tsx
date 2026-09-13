@@ -11,7 +11,7 @@ import {
   Pressable,
   TextInput,
 } from 'react-native';
-import { Icon } from '@rneui/themed';
+import Icon from '../../components/Icon';
 import AppIcon from '../../components/Icon';
 import { ICON_TYPE } from '../../components/Icon/style';
 import SubHeader from '../../components/UI/SubHeader';
@@ -82,7 +82,9 @@ const ExpenseScreen = ({ navigation }: Props) => {
         title={t.expense.title}
         onBack={() => navigation.goBack()}
         right={
-          <TouchableOpacity onPress={() => navigation.navigate('ExpenseStats' as never)} hitSlop={8}>
+          <TouchableOpacity onPress={() => navigation.navigate('ExpenseStats' as never)} hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t.a11y.viewStats}>
             <AppIcon type={ICON_TYPE.Iconoir} name="graph-up" size={20} color={colors.accent700} />
           </TouchableOpacity>
         }

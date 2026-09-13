@@ -11,7 +11,7 @@ import {
   Modal,
   Pressable,
 } from 'react-native';
-import { Icon } from '@rneui/themed';
+import Icon from '../../components/Icon';
 import Svg, { Polyline } from 'react-native-svg';
 import { AppDialog, AppSnackbar } from '../../components/UI';
 import SubHeader from '../../components/UI/SubHeader';
@@ -674,7 +674,11 @@ const InvestmentScreen = ({ navigation }: Props) => {
         title={t.investment.title}
         onBack={() => navigation.goBack()}
         right={
-          <TouchableOpacity onPress={handleRefresh} hitSlop={8}>
+          <TouchableOpacity
+            onPress={handleRefresh}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t.a11y.refresh}>
             <Icon2 type={ICON_TYPE.Iconoir} name="refresh-double" size={20} color={colors.accent700} />
           </TouchableOpacity>
         }

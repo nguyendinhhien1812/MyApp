@@ -13,7 +13,7 @@ import {
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Icon } from '@rneui/themed';
+import Icon from '../../components/Icon';
 import { FormTextInput, FormCheckbox } from '../../components/Form';
 import { AppButton, AppDialog } from '../../components/UI';
 import { useLanguage } from '../../context/LanguageContext';

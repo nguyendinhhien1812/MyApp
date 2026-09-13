@@ -11,6 +11,7 @@ import { paperLightTheme, paperDarkTheme } from './theme/paperTheme';
 import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider, useAppTheme } from './context/ThemeContext';
 import Splash from './components/Splash';
+import ErrorBoundary from './components/UI/ErrorBoundary';
 
 LogBox.ignoreLogs(['Warning: ...']); // Ignore log notification by message
 LogBox.ignoreAllLogs(); // Ignore all log notifications
@@ -33,7 +34,12 @@ const ThemedApp = () => {
           barStyle={isDark ? 'light-content' : 'dark-content'}
           backgroundColor={isDark ? '#121212' : '#F2F2F7'}
         />
-        <AppNavigator />
+        {/* Bọc TRONG hai Provider để màn báo lỗi còn dùng được theme và i18n,
+            và NGOÀI navigator để bắt được cả lỗi của chính navigator. Splash
+            để ngoài: nó phải hiện được kể cả khi cây bên dưới đã sập. */}
+        <ErrorBoundary scope="navigator">
+          <AppNavigator />
+        </ErrorBoundary>
         <Splash />
       </PaperProvider>
     </RNEThemeProvider>

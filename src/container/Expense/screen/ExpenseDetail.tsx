@@ -9,7 +9,7 @@ import {
   ScrollView,
   TextInput,
 } from 'react-native';
-import { Icon } from '@rneui/themed';
+import Icon from '../../../components/Icon';
 import { AppSnackbar } from '../../../components/UI';
 import SubHeader from '../../../components/UI/SubHeader';
 import AppIcon from '../../../components/Icon';
@@ -68,7 +68,9 @@ const ExpenseDetail = ({ navigation, route }: Props) => {
         title={t.expense.detailTitle}
         onBack={() => navigation.goBack()}
         right={
-          <TouchableOpacity onPress={() => setToast(t.common.demoFeature)} hitSlop={8}>
+          <TouchableOpacity onPress={() => setToast(t.common.demoFeature)} hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t.a11y.share}>
             <AppIcon type={ICON_TYPE.Iconoir} name="share-ios" size={20} color={colors.accent700} />
           </TouchableOpacity>
         }

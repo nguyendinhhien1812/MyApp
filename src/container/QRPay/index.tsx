@@ -8,7 +8,7 @@ import {
   ScrollView,
   Share,
 } from 'react-native';
-import { Icon } from '@rneui/themed';
+import Icon from '../../components/Icon';
 import Svg, { Rect } from 'react-native-svg';
 import AppIcon from '../../components/Icon';
 import { ICON_TYPE } from '../../components/Icon/style';
@@ -106,7 +106,11 @@ const QRPayScreen = ({ navigation }: Props) => {
         title={t.qrpay.title}
         onBack={() => navigation.goBack()}
         right={
-          <TouchableOpacity onPress={() => setToast(t.common.demoFeature)} hitSlop={8}>
+          <TouchableOpacity
+            onPress={() => setToast(t.common.demoFeature)}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t.a11y.moreOptions}>
             <AppIcon type={ICON_TYPE.Iconoir} name="more-horiz" size={20} color={colors.accent700} />
           </TouchableOpacity>
         }
@@ -163,7 +167,10 @@ const QRPayScreen = ({ navigation }: Props) => {
                 </View>
                 <TouchableOpacity
                   style={[styles.toggle, amountEnabled ? styles.toggleOn : styles.toggleOff]}
-                  onPress={() => setAmountEnabled(v => !v)}>
+                  onPress={() => setAmountEnabled(v => !v)}
+                  accessibilityRole="switch"
+                  accessibilityState={{ checked: amountEnabled }}
+                  accessibilityLabel={t.qrpay.requestAmount}>
                   <View style={[styles.toggleThumb, amountEnabled ? styles.thumbOn : styles.thumbOff]} />
                 </TouchableOpacity>
               </View>
@@ -225,7 +232,9 @@ const QRPayScreen = ({ navigation }: Props) => {
             <View style={styles.controlItem}>
               <TouchableOpacity
                 style={[styles.controlBtn, flashOn && styles.controlBtnActive]}
-                onPress={() => setFlashOn(v => !v)}>
+                onPress={() => setFlashOn(v => !v)}
+                accessibilityRole="button"
+                accessibilityLabel={flashOn ? t.a11y.flashOff : t.a11y.flashOn}>
                 <Icon
                   type="ionicon"
                   name={flashOn ? 'flashlight' : 'flashlight-outline'}
@@ -238,7 +247,9 @@ const QRPayScreen = ({ navigation }: Props) => {
             <View style={styles.controlItem}>
               <TouchableOpacity
                 style={styles.controlBtn}
-                onPress={() => setToast(t.common.demoFeature)}>
+                onPress={() => setToast(t.common.demoFeature)}
+                accessibilityRole="button"
+                accessibilityLabel={t.a11y.pickImage}>
                 <Icon type="ionicon" name="images-outline" size={20} color="#fff" />
               </TouchableOpacity>
               <Text style={styles.controlLabel}>{t.qrpay.gallery}</Text>

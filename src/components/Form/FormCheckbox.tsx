@@ -2,7 +2,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Controller, Control, FieldValues, FieldPath } from 'react-hook-form';
-import { Icon } from '@rneui/themed';
+import Icon from '../Icon';
 import { ThemeColors } from '../../theme/paperTheme';
 import { useThemeColors } from '../../context/ThemeContext';
 

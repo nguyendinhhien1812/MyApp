@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
-import { Icon } from '@rneui/themed';
+import Icon from '../../components/Icon';
 import { ProgressBar } from 'react-native-paper';
 import { AppChip } from '../../components/UI';
 import SubHeader from '../../components/UI/SubHeader';

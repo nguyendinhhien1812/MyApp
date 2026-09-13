@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   FlatList,
 } from 'react-native';
-import { Icon } from '@rneui/themed';
+import Icon from '../../components/Icon';
 import { useNavigation } from '@react-navigation/native';
 import { useLanguage } from '../../context/LanguageContext';
 import { Translations } from '../../i18n/translations';
@@ -86,12 +86,18 @@ const NotificationScreen = () => {
           )}
         </View>
         <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.headerIconBtn} onPress={markAllRead}>
+          <TouchableOpacity
+            style={styles.headerIconBtn}
+            onPress={markAllRead}
+            accessibilityRole="button"
+            accessibilityLabel={t.a11y.markAllRead}>
             <Icon type="ionicon" name="checkmark-done-outline" size={20} color={colors.accent700} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.headerIconBtn}
-            onPress={() => navigation.navigate('Setting' as never)}>
+            onPress={() => navigation.navigate('Setting' as never)}
+            accessibilityRole="button"
+            accessibilityLabel={t.a11y.settings}>
             <Icon type="ionicon" name="settings-outline" size={20} color={colors.subtext} />
           </TouchableOpacity>
         </View>

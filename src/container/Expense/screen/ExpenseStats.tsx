@@ -9,7 +9,7 @@ import {
   ScrollView,
   Dimensions,
 } from 'react-native';
-import { Icon } from '@rneui/themed';
+import Icon from '../../../components/Icon';
 import Svg, { Rect, Text as SvgText, G } from 'react-native-svg';
 import { useLanguage } from '../../../context/LanguageContext';
 import { useThemeColors } from '../../../context/ThemeContext';

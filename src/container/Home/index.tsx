@@ -79,6 +79,8 @@ const HomeScreen = () => {
           <TouchableOpacity
             style={styles.bellBtn}
             onPress={() => navigation.navigate('Notification')}
+            accessibilityRole="button"
+            accessibilityLabel={t.a11y.notifications}
           >
             <Icon type={ICON_TYPE.Iconoir} name="bell" size={20} color={colors.accent700} />
           </TouchableOpacity>
