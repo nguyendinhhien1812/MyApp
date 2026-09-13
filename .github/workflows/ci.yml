@@ -70,6 +70,12 @@ jobs:
           done
           echo "OK $(ls src/*.js src/providers/*.js | wc -l) file"
 
+      # `node --check` KHÔNG bắt được lỗi trong trang admin: HTML nằm trong một
+      # template literal, module vẫn hợp lệ trong khi JS phát ra cho trình duyệt
+      # đã hỏng. Đã dính thật một lần với '\n' bị biến thành xuống dòng.
+      - name: Cú pháp script trong trang admin
+        run: node tools/check-admin-script.mjs
+
       # Build thử bằng chính wrangler: bắt được lỗi cấu hình và import hỏng
       # mà `node --check` không thấy. Không cần tài khoản Cloudflare.
       - name: Build thử (không deploy)
