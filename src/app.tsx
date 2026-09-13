@@ -10,6 +10,7 @@ import { COLORS_DARK, COLORS_LIGHT } from './theme/ColorScheme';
 import { paperLightTheme, paperDarkTheme } from './theme/paperTheme';
 import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider, useAppTheme } from './context/ThemeContext';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Splash from './components/Splash';
 import ErrorBoundary from './components/UI/ErrorBoundary';
 
@@ -48,10 +49,16 @@ const ThemedApp = () => {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <LanguageProvider>
-        <ThemedApp />
-      </LanguageProvider>
-    </ThemeProvider>
+    // SafeAreaProvider phải ở NGOÀI CÙNG: thiếu nó thì useSafeAreaInsets() trả
+    // về 0 và SafeAreaView của safe-area-context không chừa chỗ nào.
+    // Bắt buộc với targetSdk 35: từ Android 15 hệ điều hành ép edge-to-edge,
+    // nội dung vẽ tràn xuống dưới thanh trạng thái nếu app không tự chừa.
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <LanguageProvider>
+          <ThemedApp />
+        </LanguageProvider>
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }

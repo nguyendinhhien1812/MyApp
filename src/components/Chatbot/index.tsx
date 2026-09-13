@@ -1,22 +1,7 @@
 // ─── 1. Imports ────────────────────────────────────────────────────────────
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  SafeAreaView,
-  StyleSheet,
-  TouchableOpacity,
-  Modal,
-  TextInput,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Animated,
-  PanResponder,
-  Pressable,
-  Dimensions,
-  Clipboard,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, KeyboardAvoidingView, Platform, ScrollView, Animated, PanResponder, Pressable, Dimensions, Clipboard } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from '../Icon';
 import { ICON_TYPE } from '../Icon/style';
 import { useNavigation } from '@react-navigation/native';

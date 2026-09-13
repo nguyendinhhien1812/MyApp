@@ -44,6 +44,13 @@ Scope đang dùng — **dùng lại thay vì tạo mới nếu phù hợp**:
 - **Header màn con**: dùng `<SubHeader>`, không tự dựng header.
 - **Kiểm tra trước khi xong**: đổi sang EN → text đổi hết; bật chế độ Tối → không khối nào
   bị "tàng hình" (nền tối trên nền tối).
+- **`SafeAreaView` LUÔN lấy từ `react-native-safe-area-context`, KHÔNG từ `react-native`.**
+  Bản của `react-native` chỉ chạy trên iOS; ở Android nó là `<View>` rỗng. Dự án đặt
+  `targetSdkVersion 35`, mà từ Android 15 hệ điều hành **ép edge-to-edge** — nội dung vẽ tràn
+  xuống dưới thanh trạng thái nếu app không tự chừa, và `android:statusBarColor` bị bỏ qua.
+  Triệu chứng: tiêu đề đè lên đồng hồ ở **mọi** màn, nhưng iOS vẫn đẹp nên rất dễ bỏ sót.
+  `SafeAreaProvider` phải bọc ngoài cùng trong `src/app.tsx`, thiếu nó thì
+  `useSafeAreaInsets()` trả về 0. `src/__tests__/safeArea.test.ts` gác cả hai điều này.
 - **Icon: LUÔN dùng `src/components/Icon`, KHÔNG nhập `Icon` từ `@rneui/themed`.**
   Icon của @rneui bọc glyph trong một View tự gắn `accessibilityRole="button"`, không tắt
   được từ ngoài (thử `accessible={false}`, `importantForAccessibility`, cả `createTheme

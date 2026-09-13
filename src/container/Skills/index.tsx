@@ -1,13 +1,7 @@
 // ─── 1. Imports ────────────────────────────────────────────────────────────
 import React, { useMemo, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  SafeAreaView,
-  TouchableOpacity,
-  ScrollView,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from '../../components/Icon';
 import { ProgressBar } from 'react-native-paper';
 import { AppChip } from '../../components/UI';

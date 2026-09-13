@@ -1,12 +1,7 @@
 // ─── 1. Imports ────────────────────────────────────────────────────────────
 import React, { useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  SafeAreaView,
-  ScrollView,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from '../../../components/Icon';
 import { AppButton } from '../../../components/UI';
 import SubHeader from '../../../components/UI/SubHeader';
