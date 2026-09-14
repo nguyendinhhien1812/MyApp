@@ -211,6 +211,45 @@ cd android && ./gradlew :app:assembleDebug
 Trên máy ảo Android 15+ sẽ có hộp thoại "This app isn't 16 KB compatible" — chỉ là cảnh báo,
 app vẫn chạy ở chế độ tương thích. Các `.so` dựng sẵn của RN 0.74 chưa canh 16 KB.
 
+## Build release Android
+
+`assembleRelease` đi qua ba thứ mà debug KHÔNG chạm: R8, Hermes, và nhúng bundle JS.
+Đo được: 144 MB / 18 dex (debug) -> 60 MB / 2 dex (release), bundle 5,4 MB nhúng sẵn ở
+`assets/index.android.bundle` dưới dạng bytecode Hermes.
+
+**Bẫy đã gỡ**: `@babel/plugin-syntax-typescript` bị dùng mà không ai khai báo. npm/yarn cho
+ăn ké cây phẳng, pnpm thì không — cùng họ với bẫy `yargs` của codegen. Triệu chứng đánh lạc
+hướng: gradle báo `hermesc ... exit value 5`, phải lần ngược log mới thấy Re.Pack chết trước
+đó ở `gesture-handler.native.tsx`. Đã khai vào devDependencies.
+
+### Ký bản phát hành
+
+Khoá đọc từ `android/keystore.properties` — file này **KHÔNG vào git**. Không có file thì
+build vẫn chạy, chỉ ký bằng khoá debug và in cảnh báo, nên người mới clone hay CI không bị
+chặn. Tạo khoá (giữ kỹ file `.jks` và mật khẩu — mất là không cập nhật được app đã phát hành):
+
+```bash
+keytool -genkeypair -v -storetype PKCS12 -keystore ~/myapp-release.jks \
+  -alias myapp -keyalg RSA -keysize 2048 -validity 10000
+```
+
+```properties
+# android/keystore.properties
+storeFile=/Users/<ten>/myapp-release.jks
+storePassword=...
+keyAlias=myapp
+keyPassword=...
+```
+
+Kiểm đã ký đúng chưa:
+
+```bash
+$ANDROID_HOME/build-tools/35.0.0/apksigner verify --print-certs \
+  android/app/build/outputs/apk/release/app-release.apk
+```
+
+`CN=Android Debug` nghĩa là CHƯA ký thật — Play Store sẽ từ chối.
+
 ## Cổng chất lượng
 
 ```bash

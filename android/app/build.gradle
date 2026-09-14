@@ -92,6 +92,16 @@ android {
         versionCode 1
         versionName "1.0"
     }
+    // Thông tin ký bản phát hành đọc từ android/keystore.properties — file đó
+    // KHÔNG vào git (xem .gitignore). Không có file thì vẫn build được, chỉ là
+    // ký bằng khoá debug và build in cảnh báo. Nhờ vậy người mới clone repo hay
+    // CI vẫn chạy `assembleRelease` được mà không cần khoá thật.
+    def ksProps = new Properties()
+    def ksFile = rootProject.file('keystore.properties')
+    if (ksFile.exists()) {
+        ksFile.withInputStream { ksProps.load(it) }
+    }
+
     signingConfigs {
         debug {
             storeFile file('debug.keystore')
@@ -99,15 +109,29 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        if (ksFile.exists()) {
+            release {
+                storeFile file(ksProps['storeFile'])
+                storePassword ksProps['storePassword']
+                keyAlias ksProps['keyAlias']
+                keyPassword ksProps['keyPassword']
+            }
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            if (ksFile.exists()) {
+                signingConfig signingConfigs.release
+            } else {
+                // Ký bằng khoá debug: cài thử được nhưng KHÔNG phát hành được.
+                // Play Store từ chối, và khoá debug ai cũng có.
+                logger.warn('CẢNH BÁO: không thấy android/keystore.properties — ' +
+                            'bản release đang ký bằng khoá DEBUG, không phát hành được.')
+                signingConfig signingConfigs.debug
+            }
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }

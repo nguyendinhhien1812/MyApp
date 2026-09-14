@@ -33,6 +33,9 @@ local.properties
 .cxx/
 *.keystore
 !debug.keystore
+# Mật khẩu khoá ký — KHÔNG BAO GIỜ commit
+android/keystore.properties
+*.jks
 .kotlin/
 
 # node.js
