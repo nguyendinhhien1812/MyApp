@@ -3,15 +3,15 @@ import React, { useMemo, useState } from 'react';
 import {
   View,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Icon } from '@rneui/themed';
+import Icon from '../../components/Icon';
 import { FormTextInput } from '../../components/Form';
 import { AppButton, AppSnackbar } from '../../components/UI';
 import SubHeader from '../../components/UI/SubHeader';

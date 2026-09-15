@@ -4,14 +4,14 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   ScrollView,
   Modal,
   Pressable,
   TextInput,
 } from 'react-native';
-import { Icon } from '@rneui/themed';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Icon from '../../components/Icon';
 import AppIcon from '../../components/Icon';
 import { ICON_TYPE } from '../../components/Icon/style';
 import SubHeader from '../../components/UI/SubHeader';
@@ -82,7 +82,9 @@ const ExpenseScreen = ({ navigation }: Props) => {
         title={t.expense.title}
         onBack={() => navigation.goBack()}
         right={
-          <TouchableOpacity onPress={() => navigation.navigate('ExpenseStats' as never)} hitSlop={8}>
+          <TouchableOpacity onPress={() => navigation.navigate('ExpenseStats' as never)} hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t.a11y.viewStats}>
             <AppIcon type={ICON_TYPE.Iconoir} name="graph-up" size={20} color={colors.accent700} />
           </TouchableOpacity>
         }
@@ -216,7 +218,7 @@ const ExpenseScreen = ({ navigation }: Props) => {
           ))}
         </View>
 
-        <View style={{ height: 32 }} />
+        <View style={styles.spacer32} />
       </ScrollView>
 
       {/* ── Add Expense Modal ── */}
@@ -309,6 +311,8 @@ const SectionTitle = ({ title, styles }: { title: string; styles: Styles }) => (
 );
 
 const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  spacer32: { height: 32 },
+
   safe: { flex: 1, backgroundColor: c.bg },
 
   // Scroll

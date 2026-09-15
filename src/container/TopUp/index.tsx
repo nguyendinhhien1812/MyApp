@@ -3,12 +3,12 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   ScrollView,
   Dimensions,
 } from 'react-native';
-import { Icon } from '@rneui/themed';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Icon from '../../components/Icon';
 import SubHeader from '../../components/UI/SubHeader';
 import { AppDialog, AppSnackbar } from '../../components/UI';
 import { useLanguage } from '../../context/LanguageContext';

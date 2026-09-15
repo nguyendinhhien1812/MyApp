@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from '../Icon';
 import { ICON_TYPE } from '../Icon/style';
 import { useThemeColors } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { ThemeColors } from '../../theme/paperTheme';
 import { TYPE, SPACING, FONT } from '../../theme/tokens';
 
@@ -17,10 +18,16 @@ interface SubHeaderProps {
 
 const SubHeader = ({ title, onBack, right }: SubHeaderProps) => {
   const c = useThemeColors();
+  const { t } = useLanguage();
   const styles = useMemo(() => makeStyles(c), [c]);
   return (
     <View style={styles.row}>
-      <TouchableOpacity style={styles.backBtn} onPress={onBack} hitSlop={8}>
+      <TouchableOpacity
+        style={styles.backBtn}
+        onPress={onBack}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel={t.a11y.goBack}>
         <Icon type={ICON_TYPE.Iconoir} name="nav-arrow-left" size={22} color={c.text} />
       </TouchableOpacity>
       <Text style={styles.title}>{title}</Text>

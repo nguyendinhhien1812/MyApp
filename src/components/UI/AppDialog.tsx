@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Portal, Dialog } from 'react-native-paper';
-import { Icon } from '@rneui/themed';
+import Icon from '../Icon';
 import AppButton from './AppButton';
 import { ThemeColors } from '../../theme/paperTheme';
 import { useAppTheme } from '../../context/ThemeContext';

@@ -3,13 +3,13 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   ActivityIndicator,
   BackHandler,
   Linking,
 } from 'react-native';
-import { Icon } from '@rneui/themed';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Icon from '../../components/Icon';
 import { useFocusEffect } from '@react-navigation/native';
 import type { WebViewNavigation } from 'react-native-webview';
 import { AppSnackbar } from '../../components/UI';
@@ -89,7 +89,11 @@ const WebViewScreen = ({ navigation, route }: Props) => {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.goBack()}>
+          <TouchableOpacity
+            style={styles.headerBtn}
+            onPress={() => navigation.goBack()}
+            accessibilityRole="button"
+            accessibilityLabel={t.a11y.close}>
             <Icon type="ionicon" name="close" size={18} color={colors.accent700} />
           </TouchableOpacity>
           <Text style={styles.headerTitle} numberOfLines={1}>{title}</Text>
@@ -99,7 +103,7 @@ const WebViewScreen = ({ navigation, route }: Props) => {
           <Icon type="ionicon" name="construct-outline" size={44} color={colors.muted} />
           <Text style={styles.errorTitle}>{t.webview.needRebuild}</Text>
           <Text style={styles.errorSub}>
-            <Text style={{ fontWeight: '700', color: colors.text }}>pod install</Text>
+            <Text style={styles.codeName}>pod install</Text>
             {' '}{t.webview.needRebuildDesc}
           </Text>
           <TouchableOpacity
@@ -130,7 +134,11 @@ const WebViewScreen = ({ navigation, route }: Props) => {
     <SafeAreaView style={styles.safe}>
       {/* ── Header ── */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.headerBtn} onPress={handleBack}>
+        <TouchableOpacity
+          style={styles.headerBtn}
+          onPress={handleBack}
+          accessibilityRole="button"
+          accessibilityLabel={canGoBack ? t.a11y.goBack : t.a11y.close}>
           <Icon
             type="ionicon"
             name={canGoBack ? 'arrow-back' : 'close'}
@@ -149,7 +157,9 @@ const WebViewScreen = ({ navigation, route }: Props) => {
           onPress={() => {
             setHasError(false);
             webviewRef.current?.reload();
-          }}>
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={t.a11y.refresh}>
           <Icon type="ionicon" name="refresh-outline" size={18} color={colors.accent700} />
         </TouchableOpacity>
       </View>
@@ -234,6 +244,8 @@ export default WebViewScreen;
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  codeName: { fontWeight: '700', color: c.text },
+
   safe: { flex: 1, backgroundColor: c.bg },
 
   // Header

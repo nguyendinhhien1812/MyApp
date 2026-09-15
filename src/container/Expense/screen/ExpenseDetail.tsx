@@ -4,12 +4,12 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   ScrollView,
   TextInput,
 } from 'react-native';
-import { Icon } from '@rneui/themed';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Icon from '../../../components/Icon';
 import { AppSnackbar } from '../../../components/UI';
 import SubHeader from '../../../components/UI/SubHeader';
 import AppIcon from '../../../components/Icon';
@@ -68,7 +68,9 @@ const ExpenseDetail = ({ navigation, route }: Props) => {
         title={t.expense.detailTitle}
         onBack={() => navigation.goBack()}
         right={
-          <TouchableOpacity onPress={() => setToast(t.common.demoFeature)} hitSlop={8}>
+          <TouchableOpacity onPress={() => setToast(t.common.demoFeature)} hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t.a11y.share}>
             <AppIcon type={ICON_TYPE.Iconoir} name="share-ios" size={20} color={colors.accent700} />
           </TouchableOpacity>
         }
@@ -121,7 +123,7 @@ const ExpenseDetail = ({ navigation, route }: Props) => {
 
         {/* ── Note section ── */}
         <Text style={styles.sectionLabel}>{t.expense.noteLabel}</Text>
-        <View style={[styles.card, { padding: 14 }]}>
+        <View style={[styles.card, styles.cardTight]}>
           <TextInput
             style={styles.noteInput}
             value={note}
@@ -142,14 +144,14 @@ const ExpenseDetail = ({ navigation, route }: Props) => {
           <View style={styles.receiptIcon}>
             <Icon type="ionicon" name="cloud-upload-outline" size={24} color={colors.accent700} />
           </View>
-          <View style={{ flex: 1 }}>
+          <View style={styles.fill}>
             <Text style={styles.receiptTitle}>{t.expense.uploadReceipt}</Text>
             <Text style={styles.receiptSub}>{t.expense.receiptHint}</Text>
           </View>
           <Icon type="ionicon" name="chevron-forward" size={16} color={colors.muted} />
         </TouchableOpacity>
 
-        <View style={{ height: 16 }} />
+        <View style={styles.spacer16} />
       </ScrollView>
 
       {/* ── Bottom bar ── */}
@@ -209,6 +211,10 @@ const DetailRow = ({
 );
 
 const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  cardTight: { padding: 14 },
+  fill: { flex: 1 },
+  spacer16: { height: 16 },
+
   safe: { flex: 1, backgroundColor: c.bg },
 
   scroll: { paddingBottom: 16 },

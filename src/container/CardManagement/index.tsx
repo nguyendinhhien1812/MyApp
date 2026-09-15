@@ -3,10 +3,10 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import AppIcon from '../../components/Icon';
 import { ICON_TYPE } from '../../components/Icon/style';
 import SubHeader from '../../components/UI/SubHeader';
@@ -23,16 +23,21 @@ interface ToggleProps {
   value: boolean;
   onToggle: () => void;
   styles: Styles;
+  /** Nhãn cho trình đọc màn hình — công tắc không có chữ nào bên trong. */
+  label: string;
 }
 
 // Đặt NGOÀI component cha: định nghĩa bên trong thì mỗi lần cha vẽ lại sẽ tạo
 // một hàm mới, React coi là loại component khác và huỷ cả cây con — mất state,
 // animation giật lại từ đầu.
-const Toggle = ({ value, onToggle, styles }: ToggleProps) => (
+const Toggle = ({ value, onToggle, styles, label }: ToggleProps) => (
   <TouchableOpacity
     style={[styles.toggle, value ? styles.toggleOn : styles.toggleOff]}
     onPress={onToggle}
-    activeOpacity={0.8}>
+    activeOpacity={0.8}
+    accessibilityRole="switch"
+    accessibilityState={{ checked: value }}
+    accessibilityLabel={label}>
     <View style={[styles.toggleThumb, value ? styles.thumbOn : styles.thumbOff]} />
   </TouchableOpacity>
 );
@@ -67,7 +72,9 @@ const CardManagementScreen = ({ navigation }: Props) => {
         title={t.card.title}
         onBack={() => navigation.goBack()}
         right={
-          <TouchableOpacity onPress={() => setToast(t.common.demoFeature)} hitSlop={8}>
+          <TouchableOpacity onPress={() => setToast(t.common.demoFeature)} hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t.a11y.addCard}>
             <AppIcon type={ICON_TYPE.Iconoir} name="plus" size={22} color={c.accent700} />
           </TouchableOpacity>
         }
@@ -154,7 +161,7 @@ const CardManagementScreen = ({ navigation }: Props) => {
                 <Text style={styles.toggleLabel}>{r.label}</Text>
                 <Text style={styles.toggleSub}>{r.sub}</Text>
               </View>
-              <Toggle styles={styles} value={r.value} onToggle={r.onToggle} />
+              <Toggle styles={styles} value={r.value} onToggle={r.onToggle} label={r.label} />
             </View>
           ))}
         </View>

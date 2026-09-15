@@ -4,11 +4,11 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
-import { Icon } from '@rneui/themed';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Icon from '../../components/Icon';
 import { ProgressBar } from 'react-native-paper';
 import { AppChip } from '../../components/UI';
 import SubHeader from '../../components/UI/SubHeader';
@@ -16,7 +16,13 @@ import { ThemeColors } from '../../theme/paperTheme';
 import { RADII, TYPE, SPACING, FONT } from '../../theme/tokens';
 import { useThemeColors } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { SKILLS, LEVEL_BADGE, TOTAL_YEARS, TOTAL_PROJECTS, SkillItem } from './data';
+import {
+  SKILLS,
+  LEVEL_BADGE,
+  TOTAL_YEARS,
+  TOTAL_PROJECTS,
+  SkillItem,
+} from './data';
 
 // ─── 2. Types ──────────────────────────────────────────────────────────────
 interface Props {

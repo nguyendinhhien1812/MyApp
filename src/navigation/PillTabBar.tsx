@@ -2,7 +2,8 @@ import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Icon } from '@rneui/themed';
+import Icon from '../components/Icon';
+import { ICON_TYPE } from '../components/Icon/style';
 import { useThemeColors } from '../context/ThemeContext';
 import { ThemeColors } from '../theme/paperTheme';
 import { FONT } from '../theme/tokens';
@@ -63,9 +64,13 @@ const PillTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
               onPress={onPress}
               activeOpacity={0.75}
               style={[styles.item, focused && styles.itemActive]}>
+              {/* Dùng Icon của DỰ ÁN chứ không phải của @rneui: @rneui bọc icon
+                  trong một View tự gắn accessibilityRole="button", ẩn từ ngoài
+                  không với tới, nên TalkBack đọc ra glyph "\ueb18". Icon của dự
+                  án vẽ thẳng và đã tự ẩn khỏi cây trợ năng. */}
               <View>
                 <Icon
-                  type="ionicon"
+                  type={ICON_TYPE.Ionicons}
                   name={focused ? base : `${base}-outline`}
                   size={ICON_SIZE}
                   color={focused ? c.accent700 : c.subtext}

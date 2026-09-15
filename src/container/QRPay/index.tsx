@@ -3,12 +3,12 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   ScrollView,
   Share,
 } from 'react-native';
-import { Icon } from '@rneui/themed';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Icon from '../../components/Icon';
 import Svg, { Rect } from 'react-native-svg';
 import AppIcon from '../../components/Icon';
 import { ICON_TYPE } from '../../components/Icon/style';
@@ -106,7 +106,11 @@ const QRPayScreen = ({ navigation }: Props) => {
         title={t.qrpay.title}
         onBack={() => navigation.goBack()}
         right={
-          <TouchableOpacity onPress={() => setToast(t.common.demoFeature)} hitSlop={8}>
+          <TouchableOpacity
+            onPress={() => setToast(t.common.demoFeature)}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t.a11y.moreOptions}>
             <AppIcon type={ICON_TYPE.Iconoir} name="more-horiz" size={20} color={colors.accent700} />
           </TouchableOpacity>
         }
@@ -151,7 +155,7 @@ const QRPayScreen = ({ navigation }: Props) => {
                 <Icon type="ionicon" name="scan-outline" size={12} color={colors.accent700} />
                 <Text style={styles.qrPillText}>{t.qrpay.scanToTransfer}</Text>
               </View>
-              <View style={{ height: 16 }} />
+              <View style={styles.spacer16} />
             </View>
 
             {/* Nhập số tiền */}
@@ -163,7 +167,10 @@ const QRPayScreen = ({ navigation }: Props) => {
                 </View>
                 <TouchableOpacity
                   style={[styles.toggle, amountEnabled ? styles.toggleOn : styles.toggleOff]}
-                  onPress={() => setAmountEnabled(v => !v)}>
+                  onPress={() => setAmountEnabled(v => !v)}
+                  accessibilityRole="switch"
+                  accessibilityState={{ checked: amountEnabled }}
+                  accessibilityLabel={t.qrpay.requestAmount}>
                   <View style={[styles.toggleThumb, amountEnabled ? styles.thumbOn : styles.thumbOff]} />
                 </TouchableOpacity>
               </View>
@@ -225,7 +232,9 @@ const QRPayScreen = ({ navigation }: Props) => {
             <View style={styles.controlItem}>
               <TouchableOpacity
                 style={[styles.controlBtn, flashOn && styles.controlBtnActive]}
-                onPress={() => setFlashOn(v => !v)}>
+                onPress={() => setFlashOn(v => !v)}
+                accessibilityRole="button"
+                accessibilityLabel={flashOn ? t.a11y.flashOff : t.a11y.flashOn}>
                 <Icon
                   type="ionicon"
                   name={flashOn ? 'flashlight' : 'flashlight-outline'}
@@ -238,7 +247,9 @@ const QRPayScreen = ({ navigation }: Props) => {
             <View style={styles.controlItem}>
               <TouchableOpacity
                 style={styles.controlBtn}
-                onPress={() => setToast(t.common.demoFeature)}>
+                onPress={() => setToast(t.common.demoFeature)}
+                accessibilityRole="button"
+                accessibilityLabel={t.a11y.pickImage}>
                 <Icon type="ionicon" name="images-outline" size={20} color="#fff" />
               </TouchableOpacity>
               <Text style={styles.controlLabel}>{t.qrpay.gallery}</Text>
@@ -252,7 +263,7 @@ const QRPayScreen = ({ navigation }: Props) => {
               <View style={styles.sheetQR}>
                 <QRCodeSmall />
               </View>
-              <View style={{ flex: 1 }}>
+              <View style={styles.fill}>
                 <Text style={styles.sheetName}>{t.qrpay.sheetMyQr}</Text>
                 <Text style={styles.sheetBank}>{USER_NAME} · VCB</Text>
               </View>
@@ -278,6 +289,9 @@ const QRPayScreen = ({ navigation }: Props) => {
 export default QRPayScreen;
 
 const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  spacer16: { height: 16 },
+  fill: { flex: 1 },
+
   safe: { flex: 1, backgroundColor: c.bg },
 
   // Tab segmented control (nền sáng)

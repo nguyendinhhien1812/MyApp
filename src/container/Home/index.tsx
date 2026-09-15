@@ -1,12 +1,12 @@
 import React, { useMemo } from 'react';
 import {
   View,
-  SafeAreaView,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
   Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '@rneui/themed';
 import { useNavigation } from '@react-navigation/native';
 import Icon from '../../components/Icon';
@@ -79,6 +79,8 @@ const HomeScreen = () => {
           <TouchableOpacity
             style={styles.bellBtn}
             onPress={() => navigation.navigate('Notification')}
+            accessibilityRole="button"
+            accessibilityLabel={t.a11y.notifications}
           >
             <Icon type={ICON_TYPE.Iconoir} name="bell" size={20} color={colors.accent700} />
           </TouchableOpacity>

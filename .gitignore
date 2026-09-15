@@ -33,6 +33,9 @@ local.properties
 .cxx/
 *.keystore
 !debug.keystore
+# Mật khẩu khoá ký — KHÔNG BAO GIỜ commit
+android/keystore.properties
+*.jks
 .kotlin/
 
 # node.js
@@ -81,3 +84,8 @@ miniapps/*/build/
 
 # state cục bộ của wrangler
 .wrangler/
+
+# Gốc repo dùng pnpm (xem "packageManager" trong package.json). Lockfile của npm
+# ở đây là rác — ai lỡ chạy `npm install` sẽ dựng một cây phụ thuộc khác hẳn.
+# server/ thì ngược lại: nó dùng npm và CÓ package-lock.json riêng.
+/package-lock.json

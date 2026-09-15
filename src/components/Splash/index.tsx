@@ -1,5 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Appearance, Dimensions, Easing, StyleSheet } from 'react-native';
+import {
+  Animated,
+  Appearance,
+  Dimensions,
+  Easing,
+  StyleSheet,
+} from 'react-native';
 import { FONT } from '../../theme/tokens';
 
 // Bảng màu phải khớp 1-1 với các colorset trong Images.xcassets mà

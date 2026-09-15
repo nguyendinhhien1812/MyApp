@@ -3,14 +3,14 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   FlatList,
   Image,
   TextInput,
   ScrollView,
 } from 'react-native';
-import { Icon } from '@rneui/themed';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Icon from '../../components/Icon';
 import AppIcon from '../../components/Icon';
 import { ICON_TYPE } from '../../components/Icon/style';
 import { AppSnackbar } from '../../components/UI';
@@ -57,7 +57,9 @@ const AllContactsScreen = ({ navigation }: Props) => {
         title={t.contacts.title}
         onBack={() => navigation.goBack()}
         right={
-          <TouchableOpacity onPress={() => setToast(t.common.demoFeature)} hitSlop={8}>
+          <TouchableOpacity onPress={() => setToast(t.common.demoFeature)} hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t.a11y.addContact}>
             <AppIcon type={ICON_TYPE.Iconoir} name="user-plus" size={20} color={colors.accent700} />
           </TouchableOpacity>
         }
@@ -74,7 +76,9 @@ const AllContactsScreen = ({ navigation }: Props) => {
           onChangeText={setSearch}
         />
         {search.length > 0 && (
-          <TouchableOpacity onPress={() => setSearch('')}>
+          <TouchableOpacity onPress={() => setSearch('')}
+            accessibilityRole="button"
+            accessibilityLabel={t.a11y.clearSearch}>
             <Icon type="ionicon" name="close-circle" size={16} color={colors.muted} />
           </TouchableOpacity>
         )}
@@ -122,7 +126,7 @@ const AllContactsScreen = ({ navigation }: Props) => {
                 </TouchableOpacity>
               </ScrollView>
 
-              <Text style={[styles.sectionTitle, { marginTop: 8 }]}>{t.contacts.all}</Text>
+              <Text style={[styles.sectionTitle, styles.sectionTitleGap]}>{t.contacts.all}</Text>
             </View>
           ) : null
         }
@@ -179,18 +183,19 @@ export default AllContactsScreen;
 // props tuỳ ý vào ItemSeparatorComponent.
 const Separator = () => {
   const c = useThemeColors();
-  return (
-    <View
-      style={{
-        height: StyleSheet.hairlineWidth,
-        backgroundColor: c.divider,
-        marginLeft: 72,
-      }}
-    />
-  );
+  const styles = useMemo(() => makeStyles(c), [c]);
+  return <View style={styles.separator} />;
 };
 
 const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  sectionTitleGap: { marginTop: 8 },
+  // Thụt trái 72 để đường kẻ bắt đầu ngay sau avatar, không cắt ngang nó
+  separator: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: c.divider,
+    marginLeft: 72,
+  },
+
   safe: { flex: 1, backgroundColor: c.bg },
 
   // Search

@@ -44,6 +44,29 @@ Scope đang dùng — **dùng lại thay vì tạo mới nếu phù hợp**:
 - **Header màn con**: dùng `<SubHeader>`, không tự dựng header.
 - **Kiểm tra trước khi xong**: đổi sang EN → text đổi hết; bật chế độ Tối → không khối nào
   bị "tàng hình" (nền tối trên nền tối).
+- **`SafeAreaView` LUÔN lấy từ `react-native-safe-area-context`, KHÔNG từ `react-native`.**
+  Bản của `react-native` chỉ chạy trên iOS; ở Android nó là `<View>` rỗng. Dự án đặt
+  `targetSdkVersion 35`, mà từ Android 15 hệ điều hành **ép edge-to-edge** — nội dung vẽ tràn
+  xuống dưới thanh trạng thái nếu app không tự chừa, và `android:statusBarColor` bị bỏ qua.
+  Triệu chứng: tiêu đề đè lên đồng hồ ở **mọi** màn, nhưng iOS vẫn đẹp nên rất dễ bỏ sót.
+  `SafeAreaProvider` phải bọc ngoài cùng trong `src/app.tsx`, thiếu nó thì
+  `useSafeAreaInsets()` trả về 0. `src/__tests__/safeArea.test.ts` gác cả hai điều này.
+- **Icon: LUÔN dùng `src/components/Icon`, KHÔNG nhập `Icon` từ `@rneui/themed`.**
+  Icon của @rneui bọc glyph trong một View tự gắn `accessibilityRole="button"`, không tắt
+  được từ ngoài (thử `accessible={false}`, `importantForAccessibility`, cả `createTheme
+  ({components:{Icon}})` — đều không ăn). Hậu quả: mỗi icon đẻ ra một nút không nhãn, TalkBack
+  đọc ra glyph kiểu `\ueb18`. Đo được: màn Chi phí từng có 9 node rác như vậy.
+  Icon của dự án nhận cả `type="ionicon"` viết thường nên đổi chỗ gọi không cần sửa gì thêm.
+- **Nút chỉ có icon phải có `accessibilityLabel`** (nút có chữ thì RN tự lấy chữ).
+  `src/__tests__/a11y.test.ts` gác việc này. Công tắc thì dùng `accessibilityRole="switch"`
+  kèm `accessibilityState={{ checked }}`.
+- **Lưới an toàn**: `<ErrorBoundary>` bọc navigator trong `src/app.tsx`. Lỗi render ở bất kỳ
+  màn nào cũng ra màn "Ứng dụng gặp sự cố" có nút thử lại, thay vì màn trắng. MiniAppHost
+  vẫn giữ boundary riêng vì nó bắt sớm hơn — mini-app hỏng thì chỉ mất mini-app.
+- **Tương phản đã có test gác**: `src/theme/__tests__/contrast.test.ts` đo WCAG cho cả hai
+  palette — chữ thường 4.5:1, chữ to và viền thành phần bấm được 3:1. Thêm màu mới vào
+  `ThemeColors` thì thêm cặp vào đó luôn. Ca khó không phải nền card: ở chế độ Sáng là nền
+  màn `bg` (tối hơn card), ở chế độ Tối lại là nền card `white` (sáng hơn nền màn).
 
 ## Mini-app (Module Federation)
 
@@ -91,8 +114,165 @@ npm start          # Re.Pack dev server trên 8088
 npm run ios
 ```
 
-## Lỗi TypeScript có sẵn (không phải do bạn gây ra)
+## Thêm dependency có phần native → PHẢI chạy lại `pod install`
 
-`src/components/Picker/index.tsx` (import module không tồn tại) và
-`src/navigation/BankNavigator.tsx:18` (typing StackScreenProps) — đã lỗi từ trước, bỏ qua khi
-đọc output `tsc`.
+Dự án dùng **pnpm**, mà pnpm đặt gói trong `node_modules/.pnpm/<tên>@<phiên bản>_<băm>/`.
+Phần băm đó tính theo **toàn bộ cây phụ thuộc**, nên thêm một gói không liên quan cũng làm
+đường dẫn của gói khác đổi.
+
+Hậu quả: Pods vẫn trỏ đường dẫn cũ và build iOS chết với
+
+```
+Build input files cannot be found: .../@callstack+repack@..._<băm cũ>/ios/CodeSigningUtils.swift
+```
+
+Đã xảy ra thật: thêm `@module-federation/enhanced` làm đổi đường dẫn của `@callstack/repack`.
+
+```bash
+cd ios && LANG=en_US.UTF-8 pod install
+```
+
+`LANG` là bắt buộc — CocoaPods chết câm với `Encoding::CompatibilityError` khi shell dùng
+ASCII.
+
+**Lỗi này ẩn rất lâu**: nạp lại JS vẫn chạy bình thường trên bản `.app` đã build từ trước,
+nên chỉ lộ ra ở lần build native tiếp theo — có thể là nhiều ngày sau.
+
+## Build Android — mười hai cái bẫy đã gỡ
+
+Thư mục `android/` **chưa từng build được** trước ngày 2026-09-06: nó là **template RN 0.75+
+nằm trên bản cài RN 0.74.5**, cộng thêm pnpm không dựng cây phẳng. Mười hai lỗi nối đuôi nhau,
+mỗi lỗi che lỗi sau — sửa xong một cái mới thấy cái kế tiếp.
+
+**Nguyên tắc chung: mọi thứ phải bám RN 0.74.5, đừng tin giá trị sẵn có trong `android/`.**
+
+### Sai template
+
+| Chỗ | Giá trị sai (RN 0.75+) | Đúng cho 0.74.5 | Triệu chứng |
+|---|---|---|---|
+| `gradle-wrapper.properties` | `gradle-8.14.1-bin` | `gradle-8.6-all` | `Unresolved reference: serviceOf` |
+| `settings.gradle` | `ReactSettingsExtension` | `applyNativeModulesSettingsGradle` | `Could not get unknown property 'com'` |
+| `app/build.gradle` | `react { autolinkLibrariesWithApp() }` | `applyNativeModulesAppBuildGradle` | `Could not find method autolinkLibrariesWithApp()` |
+| `build.gradle` | `kotlinVersion = 2.1.20` | `1.9.22` | 107 lỗi `incompatible version of Kotlin` |
+| `build.gradle` | `ndkVersion = 27.1.x` | `26.1.10909125` | 12 lỗi C++ do `-Werror` |
+| `MainApplication.kt` | `loadReactNative(this)` | `SoLoader.init` + `load()` | `Unresolved reference: ReactNativeApplicationEntryPoint` |
+
+`kotlinVersion` quan trọng vì **năm thư viện** (repack, gesture-handler, safe-area-context,
+screens, webview) đọc `rootProject.ext.kotlinVersion` để kéo `kotlin-stdlib`. Compiler thật
+thì do `@react-native/gradle-plugin` ghim (`libs.versions.toml`: `kotlin = 1.9.22`).
+
+NDK 27 mang Clang mới hơn, sinh `-Wdeprecated-this-capture` và `-Wvla-cxx-extension`; mã C++
+của reanimated biên dịch với `-Werror` nên warning hoá lỗi cứng.
+
+### Kiến trúc mới phải TẮT
+
+`newArchEnabled=false` trong `android/gradle.properties`. iOS không đặt `RCT_NEW_ARCH_ENABLED`
+nên chạy kiến trúc cũ; để Android bật là hai nền tảng lệch nhau, và mã Fabric của
+`react-native-screens` / `react-native-svg` không khớp API RN 0.74 → hàng loạt lỗi
+`only virtual member functions can be marked 'override'` cùng `OnLoad.cpp` gọi
+`rncli_cxxModuleProvider` không tồn tại.
+
+### Cổng dev server (bẫy im lặng nhất)
+
+`reactNativeDevServerPort=8088` trong `android/gradle.properties`. iOS ghim 8088 qua
+`RCT_METRO_PORT` trong Podfile, **Android có đường riêng** — thiếu nó thì app cứ gọi 8081,
+`adb reverse` trỏ 8088 vô ích, và màn đỏ chỉ nói "404" chứ không nói sai cổng.
+
+### Hai thư viện phải GHIM CỨNG, không dùng caret
+
+| Gói | Bản | Vì sao không lên cao hơn |
+|---|---|---|
+| `react-native-reanimated` | `3.9.0` | 3.7.x/3.8.x còn override `replaceExistingNonRootView` — RN 0.74 đã bỏ khỏi `UIManagerModule`. 3.9.0 là bản đầu tiên bỏ. |
+| `react-native-svg` | `15.12.1` | 15.13.0 chuyển sang `processTransform` 6 tham số và `MatrixDecompositionContext` công khai — chỉ có ở RN mới. 15.12.1 là bản cuối còn hợp, vẫn thoả peer `^15.12.0` của iconoir. |
+
+Caret sẽ trôi ngược lên bản đòi RN mới hơn. Dự án khoá RN 0.74.5 nên hai gói này ghim exact.
+
+### pnpm: hai đường dẫn phải SUY RA, không viết cứng
+
+- `settings.gradle` dò `@react-native/gradle-plugin` (thử phẳng trước, rồi quét `.pnpm`).
+- `app/build.gradle` đặt `codegenDir` bằng cách đi từ chính `react-native`:
+  `getCanonicalFile()` xuyên symlink của pnpm về `.pnpm/react-native@<ver>/node_modules`,
+  nơi codegen nằm cạnh nó — nên **luôn khớp phiên bản** (store có cả 0.74.87 lẫn 0.75.3).
+
+Ngoài ra `@react-native/codegen` **dùng `yargs` mà quên khai báo**; npm/yarn cho nó ăn ké cây
+phẳng, pnpm thì không nên nó vớ phải `yargs@16.2.2` (chưa có `parseSync`). Vá bằng
+`pnpm.packageExtensions` trong `package.json` — **không** dùng `overrides` toàn cục vì
+`yargs@15` có người thật sự cần (`cli-platform-android@10.x`, `logkitty`).
+
+### Chạy
+
+Cần `ANDROID_HOME` (dự án không commit `android/local.properties`):
+
+```bash
+export ANDROID_HOME=$HOME/Library/Android/sdk
+cd android && ./gradlew :app:assembleDebug
+```
+
+Trên máy ảo Android 15+ sẽ có hộp thoại "This app isn't 16 KB compatible" — chỉ là cảnh báo,
+app vẫn chạy ở chế độ tương thích. Các `.so` dựng sẵn của RN 0.74 chưa canh 16 KB.
+
+## Build release Android
+
+`assembleRelease` đi qua ba thứ mà debug KHÔNG chạm: R8, Hermes, và nhúng bundle JS.
+Đo được: 144 MB / 18 dex (debug) -> 60 MB / 2 dex (release), bundle 5,4 MB nhúng sẵn ở
+`assets/index.android.bundle` dưới dạng bytecode Hermes.
+
+**Bẫy đã gỡ**: `@babel/plugin-syntax-typescript` bị dùng mà không ai khai báo. npm/yarn cho
+ăn ké cây phẳng, pnpm thì không — cùng họ với bẫy `yargs` của codegen. Triệu chứng đánh lạc
+hướng: gradle báo `hermesc ... exit value 5`, phải lần ngược log mới thấy Re.Pack chết trước
+đó ở `gesture-handler.native.tsx`. Đã khai vào devDependencies.
+
+### Ký bản phát hành
+
+Khoá đọc từ `android/keystore.properties` — file này **KHÔNG vào git**. Không có file thì
+build vẫn chạy, chỉ ký bằng khoá debug và in cảnh báo, nên người mới clone hay CI không bị
+chặn. Tạo khoá (giữ kỹ file `.jks` và mật khẩu — mất là không cập nhật được app đã phát hành):
+
+```bash
+keytool -genkeypair -v -storetype PKCS12 -keystore ~/myapp-release.jks \
+  -alias myapp -keyalg RSA -keysize 2048 -validity 10000
+```
+
+```properties
+# android/keystore.properties
+storeFile=/Users/<ten>/myapp-release.jks
+storePassword=...
+keyAlias=myapp
+keyPassword=...
+```
+
+Kiểm đã ký đúng chưa:
+
+```bash
+$ANDROID_HOME/build-tools/35.0.0/apksigner verify --print-certs \
+  android/app/build/outputs/apk/release/app-release.apk
+```
+
+`CN=Android Debug` nghĩa là CHƯA ký thật — Play Store sẽ từ chối.
+
+## Cổng chất lượng
+
+```bash
+pnpm run tools:check   # khai báo tool ở app và Worker có khớp không
+pnpm exec tsc --noEmit
+pnpm run lint
+pnpm test
+```
+
+Cả bốn phải **sạch**. Không còn lỗi "có sẵn" nào để bỏ qua — `src/components/Picker` (code
+chết từ dự án khác) đã xoá, `BankNavigator` đã khai `BankStackParamList`.
+
+CI (`.github/workflows/ci.yml`) chạy đúng bốn lệnh này cộng `node --check` và
+`wrangler deploy --dry-run` cho `server/`.
+
+`eslint` **không** áp cho `server/`, `miniapps/`, `tools/` (xem `.eslintignore`) — chúng chạy
+runtime khác, có cổng riêng.
+
+### Khi viết test
+
+Test nằm ở `src/**/__tests__/*.test.ts`. `jest.setup.js` làm `fetch` **nổ** theo mặc định —
+test cần mạng thì tự giả lập bằng `jest.spyOn`. Test chạm mạng thật là test hay hỏng vặt vì
+lý do ngoài code.
+
+Ưu tiên kiểm **bất biến** hơn giá trị cụ thể: `expect(getBalance()).toBe(12500000)` sẽ đỏ khi
+đổi dữ liệu demo, còn "hai nhóm lọc cộng lại bằng tổng" thì luôn đúng.

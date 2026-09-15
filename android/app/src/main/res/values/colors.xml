@@ -1,0 +1,4 @@
+<resources>
+    <!-- Trùng SplashBg.colorset của iOS để hai nền tảng mở app giống nhau -->
+    <color name="splash_bg">#F8F6F2</color>
+</resources>

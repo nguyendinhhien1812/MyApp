@@ -100,7 +100,54 @@ const CONTENT_TYPES = {
   json: 'application/json; charset=utf-8',
 };
 
-const handleBundle = async (request, env, url) => {
+const ngayKV = d => d.toISOString().slice(0, 10);
+const khoaThongKe = (appId, ngay) => `dl:${appId}:${ngay}`;
+
+/**
+ * Ghi nhận MỘT lượt tải mini-app.
+ *
+ * Chỉ đếm file container, không đếm chunk con — một lần mở mini-app kéo về cả
+ * chục chunk, đếm hết thì con số vô nghĩa. Cũng không đếm 304 vì đó là cache
+ * phía client, không phải lượt tải mới.
+ *
+ * ƯỚC LƯỢNG chứ không chính xác: KV là đọc-sửa-ghi và nhất quán chậm, hai lượt
+ * tải cùng lúc sẽ ghi đè nhau và mất một. Muốn chính xác phải dùng Analytics
+ * Engine hoặc Durable Object; với lưu lượng của app này thì không đáng.
+ */
+const ghiNhanLuotTai = async (env, key) => {
+  if (!key.endsWith('.container.bundle')) { return; }
+  const appId = key.split('/')[0];
+  if (!appId) { return; }
+  const khoa = khoaThongKe(appId, ngayKV(new Date()));
+  const hienTai = Number(await env.RATE_LIMIT.get(khoa)) || 0;
+  // Tự hết hạn sau 40 ngày -> khỏi phải dọn khoá cũ
+  await env.RATE_LIMIT.put(khoa, String(hienTai + 1), { expirationTtl: 60 * 60 * 24 * 40 });
+};
+
+/** Lượt tải STATS_DAYS ngày gần nhất, theo từng mini-app. */
+const handleStats = async (request, env) => {
+  if (!isAdmin(request, env)) { return json({ error: 'unauthorized' }, 401); }
+  if (request.method !== 'GET') { return json({ error: 'method_not_allowed' }, 405); }
+
+  const ngay = [];
+  for (let i = STATS_DAYS - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setUTCDate(d.getUTCDate() - i);
+    ngay.push(ngayKV(d));
+  }
+
+  const registry = await readRegistry(env);
+  const ids = (registry.miniApps ?? []).map(a => a.id);
+  const counts = {};
+  for (const id of ids) {
+    counts[id] = await Promise.all(
+      ngay.map(async d => Number(await env.RATE_LIMIT.get(khoaThongKe(id, d))) || 0),
+    );
+  }
+  return json({ days: ngay, counts, uocLuong: true });
+};
+
+const handleBundle = async (request, env, url, ctx) => {
   if (request.method !== 'GET' && request.method !== 'HEAD') {
     return json({ error: 'method_not_allowed' }, 405);
   }
@@ -129,6 +176,13 @@ const handleBundle = async (request, env, url) => {
   // Đường dẫn có sẵn số phiên bản nên nội dung không bao giờ đổi -> cache thoải mái
   headers.set('Cache-Control', 'public, max-age=31536000, immutable');
 
+  // Đếm sau khi đã biết chắc lấy được file, và KHÔNG chặn việc trả về
+  if (request.method === 'GET' && res.status === 200) {
+    ctx?.waitUntil(ghiNhanLuotTai(env, key).catch(err =>
+      console.error('không ghi được lượt tải', err),
+    ));
+  }
+
   return new Response(res.status === 304 || request.method === 'HEAD' ? null : res.body, {
     status: res.status,
     headers,
@@ -139,6 +193,10 @@ const REGISTRY_KEY = 'miniapp-registry';
 const REGISTRY_LOG_KEY = 'miniapp-registry-log';
 // Giữ đủ để lần lại vài lần chỉnh gần nhất, không biến KV thành kho lịch sử
 const LOG_MAX = 50;
+// Chỉ mục mới nhất mới giữ ảnh chụp registry — đủ để lùi vài bước mà không phình KV
+const SNAPSHOT_KEEP = 10;
+// Số ngày hiển thị trên biểu đồ lượt tải
+const STATS_DAYS = 14;
 
 const readRegistry = async env => {
   try {
@@ -206,9 +264,7 @@ const handleRegistryAdmin = async (request, env) => {
     // Nhật ký hỏng không được làm hỏng việc lưu registry
     if (changes.length) {
       try {
-        const log = await readLog(env);
-        log.unshift({ at: new Date().toISOString(), changes });
-        await env.RATE_LIMIT.put(REGISTRY_LOG_KEY, JSON.stringify(log.slice(0, LOG_MAX)));
+        await ghiNhatKy(env, changes, previous);
       } catch (err) {
         console.error('không ghi được nhật ký', err);
       }
@@ -217,6 +273,57 @@ const handleRegistryAdmin = async (request, env) => {
     return json({ ok: true, count: body.miniApps.length, changes });
   }
   return json({ error: 'method_not_allowed' }, 405);
+};
+
+/**
+ * Ghi một mục nhật ký kèm ẢNH CHỤP registry trước khi đổi.
+ *
+ * Nhật ký cũ chỉ lưu mô tả bằng chữ nên không khôi phục được — muốn quay lại
+ * phải có nguyên trạng bản cũ. Chỉ giữ ảnh chụp cho SNAPSHOT_KEEP mục mới nhất
+ * để giá trị KV không phình theo thời gian; mục cũ hơn vẫn còn phần mô tả.
+ */
+const ghiNhatKy = async (env, changes, snapshot) => {
+  const log = await readLog(env);
+  log.unshift({ at: new Date().toISOString(), changes, before: snapshot });
+  const cat = log.slice(0, LOG_MAX).map((e, i) =>
+    i < SNAPSHOT_KEEP ? e : { at: e.at, changes: e.changes },
+  );
+  await env.RATE_LIMIT.put(REGISTRY_LOG_KEY, JSON.stringify(cat));
+};
+
+/**
+ * Quay registry về nguyên trạng TRƯỚC một mục nhật ký.
+ *
+ * Bản thân việc khôi phục cũng được ghi nhật ký, nên lỡ tay bấm nhầm vẫn còn
+ * đường lùi tiếp.
+ */
+const handleRestore = async (request, env) => {
+  if (!isAdmin(request, env)) { return json({ error: 'unauthorized' }, 401); }
+  if (request.method !== 'POST') { return json({ error: 'method_not_allowed' }, 405); }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: 'bad_json' }, 400);
+  }
+
+  const log = await readLog(env);
+  const entry = log.find(e => e.at === body?.at);
+  if (!entry) { return json({ error: 'not_found' }, 404); }
+  // Mục quá cũ đã bị cắt ảnh chụp -> nói thẳng thay vì khôi phục nhầm
+  if (!entry.before) { return json({ error: 'no_snapshot' }, 409); }
+
+  const previous = await readRegistry(env);
+  await env.RATE_LIMIT.put(REGISTRY_KEY, JSON.stringify(entry.before));
+
+  try {
+    await ghiNhatKy(env, [`khôi phục về trạng thái trước ${entry.at}`], previous);
+  } catch (err) {
+    console.error('không ghi được nhật ký khôi phục', err);
+  }
+
+  return json({ ok: true, restored: entry.before });
 };
 
 const readLog = async env => {
@@ -233,7 +340,14 @@ const readLog = async env => {
 const handleRegistryLog = async (request, env) => {
   if (!isAdmin(request, env)) { return json({ error: 'unauthorized' }, 401); }
   if (request.method !== 'GET') { return json({ error: 'method_not_allowed' }, 405); }
-  return json({ entries: await readLog(env) });
+  // Cắt ảnh chụp khỏi phản hồi: trình duyệt chỉ cần biết CÓ khôi phục được hay
+  // không, gửi cả registry cũ cho từng mục là phí băng thông vô ích.
+  const entries = (await readLog(env)).map(({ at, changes, before }) => ({
+    at,
+    changes,
+    coAnhChup: Boolean(before),
+  }));
+  return json({ entries });
 };
 
 /**
@@ -256,7 +370,7 @@ const handleSimulate = async (request, env, url) => {
 };
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
     if (url.pathname === '/health') {
@@ -276,7 +390,7 @@ export default {
 
     // ─── Registry mini-app ───────────────────────────────────────────────
     if (url.pathname.startsWith(BUNDLE_PREFIX)) {
-      return handleBundle(request, env, url);
+      return handleBundle(request, env, url, ctx);
     }
     if (url.pathname === '/registry') {
       return handleRegistry(request, env, url);
@@ -286,6 +400,12 @@ export default {
     }
     if (url.pathname === '/registry/admin/log') {
       return handleRegistryLog(request, env);
+    }
+    if (url.pathname === '/registry/admin/restore') {
+      return handleRestore(request, env);
+    }
+    if (url.pathname === '/registry/admin/stats') {
+      return handleStats(request, env);
     }
     if (url.pathname === '/registry/simulate') {
       return handleSimulate(request, env, url);

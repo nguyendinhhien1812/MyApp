@@ -3,14 +3,14 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   Switch,
   Modal,
   Pressable,
   Linking,
 } from 'react-native';
-import { Icon } from '@rneui/themed';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Icon from '../../components/Icon';
 import { useNavigation } from '@react-navigation/native';
 import { AppSnackbar } from '../../components/UI';
 import { useLanguage } from '../../context/LanguageContext';

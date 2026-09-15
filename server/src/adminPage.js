@@ -96,6 +96,23 @@ pre{background:var(--sunk);border:1px solid var(--border);border-radius:8px;
 .log time{color:var(--sub);font-size:11px}
 .log ul{margin:3px 0 0;padding-left:18px}
 .gone{display:none}
+
+/* Biểu đồ cột vẽ tay — CSP của trang chặn mọi script ngoài nên không dùng thư viện */
+.chart { display:flex; align-items:stretch; gap:4px; height:150px; margin-top:12px; }
+.chart .col { flex:1; height:100%; display:flex; flex-direction:column;
+              align-items:center; gap:3px; min-width:0; }
+/* Cột phải nằm trong khung CÓ chiều cao xác định, nếu không height:% trượt về 0 */
+.chart .wrap { flex:1; width:100%; display:flex; align-items:flex-end; }
+.chart .bar { width:100%; background:var(--accent); border-radius:3px 3px 0 0; min-height:3px; }
+.chart .bar.zero { background:var(--border); }
+.chart .d { font-size:9px; color:var(--sub); line-height:1; white-space:nowrap; }
+.chart .n { font-size:10px; color:var(--sub); line-height:1; }
+.app-stat { margin-bottom:18px; }
+.app-stat h3 { margin:0; font-size:13px; }
+.pill { display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; }
+.pill.on { background:var(--ok-bg); color:var(--ok); }
+.pill.off { background:var(--danger-bg); color:var(--danger); }
+.restore { margin-left:8px; }
 </style>
 </head>
 <body>
@@ -147,6 +164,29 @@ pre{background:var(--sunk);border:1px solid var(--border);border-radius:8px;
         <button id="btn-preview" style="align-self:flex-end">Thử</button>
       </div>
       <pre id="pv-out">—</pre>
+    </div>
+
+    <!-- Sức khoẻ proxy AI -->
+    <div class="card">
+      <div class="row spread">
+        <h2>Proxy AI</h2>
+        <button class="sm" id="btn-health">Kiểm tra</button>
+      </div>
+      <div id="health"><p class="hint">Bấm "Kiểm tra" để xem provider nào đang phục vụ.</p></div>
+    </div>
+
+    <!-- Lượt tải -->
+    <div class="card">
+      <div class="row spread">
+        <h2>Lượt tải mini-app</h2>
+        <button class="sm" id="btn-stats">Tải số liệu</button>
+      </div>
+      <p class="hint">
+        Đếm mỗi lần lấy file container thành công, không tính chunk con và không tính
+        bản đã cache (304). Con số là <b>ước lượng</b>: hai lượt tải cùng lúc có thể
+        ghi đè nhau trong KV và mất một.
+      </p>
+      <div id="stats"></div>
     </div>
 
     <!-- Nhật ký -->
@@ -478,6 +518,9 @@ const loadLog = async () => {
       ? entries.map(e => \`
           <div>
             <time>\${esc(new Date(e.at).toLocaleString('vi-VN'))}</time>
+            \${e.coAnhChup
+              ? '<button class="sm restore" data-restore="' + esc(e.at) + '">Khôi phục về trước đây</button>'
+              : '<span class="hint restore">(quá cũ, không còn ảnh chụp)</span>'}
             <ul>\${e.changes.map(c => '<li>' + esc(c) + '</li>').join('')}</ul>
           </div>\`).join('')
       : '<p class="hint">Chưa có thay đổi nào được ghi.</p>';
@@ -486,6 +529,84 @@ const loadLog = async () => {
   }
 };
 $('#btn-log').onclick = loadLog;
+
+// ─── Sức khoẻ proxy AI ────────────────────────────────────────────────────
+const loadHealth = async () => {
+  const box = $('#health');
+  box.innerHTML = '<p class="hint">Đang kiểm tra…</p>';
+  try {
+    const bd = Date.now();
+    const h = await api('/health', 'GET');
+    const ms = Date.now() - bd;
+    // configured chỉ là boolean — Worker không bao giờ trả giá trị key ra ngoài
+    // KHÔNG dùng <table>: bảng của trang bị ép min-width 860px cho danh sách
+    // mini-app, dùng lại ở thẻ nhỏ này sẽ tràn ngang.
+    const hang = Object.entries(h.configured || {}).map(([ten, co]) =>
+      '<div class="row spread" style="padding:4px 0"><span>' + esc(ten) + '</span>' +
+      '<span class="pill ' + (co ? 'on' : 'off') + '">' +
+      (co ? 'đã có key' : 'chưa có key') + '</span></div>').join('');
+    box.innerHTML =
+      '<p>Đang phục vụ: <b>' + esc(h.provider || 'không có — app rơi về chế độ demo') +
+      '</b> · phản hồi ' + ms + 'ms</p>' + hang;
+  } catch (err) {
+    box.innerHTML = '<p class="hint" style="color:var(--danger)">Lỗi: ' + esc(err.message) + '</p>';
+  }
+};
+$('#btn-health').onclick = loadHealth;
+
+// ─── Lượt tải ─────────────────────────────────────────────────────────────
+const veCot = (days, nums) => {
+  const max = Math.max(1, ...nums);
+  return '<div class="chart">' + nums.map((n, i) => {
+    // Chiều cao theo tỉ lệ với ngày cao nhất; ngày 0 lượt vẫn vẽ vạch xám cho thấy có cột
+    const h = n === 0 ? 3 : Math.max(3, Math.round((n / max) * 100));
+    return '<div class="col">' +
+      '<span class="n">' + n + '</span>' +
+      '<div class="wrap"><div class="bar' + (n === 0 ? ' zero' : '') +
+        '" style="height:' + h + '%"></div></div>' +
+      '<span class="d">' + esc(days[i].slice(5)) + '</span>' +
+    '</div>';
+  }).join('') + '</div>';
+};
+
+const loadStats = async () => {
+  const box = $('#stats');
+  box.innerHTML = '<p class="hint">Đang tải…</p>';
+  try {
+    const { days, counts } = await api('/registry/admin/stats', 'GET');
+    const ids = Object.keys(counts);
+    if (!ids.length) { box.innerHTML = '<p class="hint">Chưa có mini-app nào.</p>'; return; }
+    box.innerHTML = ids.map(id => {
+      const tong = counts[id].reduce((a, b) => a + b, 0);
+      return '<div class="app-stat"><h3>' + esc(id) +
+        ' <span class="hint">— ' + tong + ' lượt trong ' + days.length + ' ngày</span></h3>' +
+        veCot(days, counts[id]) + '</div>';
+    }).join('');
+  } catch (err) {
+    box.innerHTML = '<p class="hint" style="color:var(--danger)">Lỗi: ' + esc(err.message) + '</p>';
+  }
+};
+$('#btn-stats').onclick = loadStats;
+
+// ─── Khôi phục ────────────────────────────────────────────────────────────
+const khoiPhuc = async at => {
+  if (!confirm('Đưa registry về nguyên trạng TRƯỚC thay đổi lúc ' +
+      new Date(at).toLocaleString('vi-VN') + '?\\n\\nViệc này cũng được ghi nhật ký nên vẫn lùi tiếp được.')) {
+    return;
+  }
+  try {
+    await api('/registry/admin/restore', 'POST', { at });
+    say('Đã khôi phục', 'ok');
+    await load();           // nạp lại registry đang hiển thị
+    await loadLog();
+  } catch (err) {
+    say('Không khôi phục được: ' + err.message, 'err');
+  }
+};
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-restore]');
+  if (b) { khoiPhuc(b.getAttribute('data-restore')); }
+});
 
 // Quay lại tab cũ thì khỏi nhập token lần nữa
 if (token.get()) {

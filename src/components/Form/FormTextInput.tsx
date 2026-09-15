@@ -9,9 +9,10 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Controller, Control, FieldValues, FieldPath } from 'react-hook-form';
-import { Icon } from '@rneui/themed';
+import Icon from '../Icon';
 import { ThemeColors } from '../../theme/paperTheme';
 import { useThemeColors } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 
 // ─── 3. Types ──────────────────────────────────────────────────────────────
 interface FormTextInputProps<T extends FieldValues>
@@ -35,6 +36,7 @@ const FormTextInput = <T extends FieldValues>({
   const [hidden, setHidden] = useState(secure);
   const [focused, setFocused] = useState(false);
   const c = useThemeColors();
+  const { t } = useLanguage();
   const styles = useMemo(() => makeStyles(c), [c]);
 
   return (
@@ -78,7 +80,9 @@ const FormTextInput = <T extends FieldValues>({
             {secure ? (
               <TouchableOpacity
                 onPress={() => setHidden(h => !h)}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel={hidden ? t.a11y.showPassword : t.a11y.hidePassword}>
                 <Icon
                   type="ionicon"
                   name={hidden ? 'eye-outline' : 'eye-off-outline'}

@@ -3,7 +3,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
-  SafeAreaView,
   StyleSheet,
   TouchableOpacity,
   Modal,
@@ -17,7 +16,9 @@ import {
   Dimensions,
   Clipboard,
 } from 'react-native';
-import { Icon } from '@rneui/themed';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Icon from '../Icon';
+import { ICON_TYPE } from '../Icon/style';
 import { useNavigation } from '@react-navigation/native';
 import { ThemeColors } from '../../theme/paperTheme';
 import { logger } from '../../utils/logger';
@@ -28,7 +29,13 @@ import { AppButton } from '../UI';
 import { useLanguage } from '../../context/LanguageContext';
 import { useThemeColors } from '../../context/ThemeContext';
 import type { Translations } from '../../i18n/translations';
-import { loadHistory, saveHistory, clearHistory, loadApiKey, saveApiKey } from '../../services/chatService';
+import {
+  loadHistory,
+  saveHistory,
+  clearHistory,
+  loadApiKey,
+  saveApiKey,
+} from '../../services/chatService';
 import { runTool, NavIntent } from '../../services/toolRunner';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -417,8 +424,10 @@ const Chatbot = () => {
         <TouchableOpacity
           style={styles.fabButton}
           onPress={() => setIsChatOpen(true)}
-          activeOpacity={0.8}>
-          <Icon name="chatbubbles" type="ionicon" color="#fff" size={26} />
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel={t.a11y.openAssistant}>
+          <Icon name="chatbubbles" type={ICON_TYPE.Ionicons} color="#fff" size={26} />
         </TouchableOpacity>
       </Animated.View>
 
@@ -462,7 +471,11 @@ const Chatbot = () => {
               }}>
               <Icon name="settings-outline" type="ionicon" color="#fff" size={17} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.headerBtn} onPress={() => setIsChatOpen(false)}>
+            <TouchableOpacity
+              style={styles.headerBtn}
+              onPress={() => setIsChatOpen(false)}
+              accessibilityRole="button"
+              accessibilityLabel={t.a11y.closeAssistant}>
               <Icon name="close" type="ionicon" color="#fff" size={18} />
             </TouchableOpacity>
           </View>
@@ -562,7 +575,9 @@ const Chatbot = () => {
               <TouchableOpacity
                 style={[styles.sendButton, (!inputText.trim() || isLoading) && styles.sendDisabled]}
                 onPress={() => send()}
-                disabled={!inputText.trim() || isLoading}>
+                disabled={!inputText.trim() || isLoading}
+                accessibilityRole="button"
+                accessibilityLabel={t.a11y.sendMessage}>
                 <Icon name="send" type="ionicon" color="#fff" size={18} />
               </TouchableOpacity>
             </View>

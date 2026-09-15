@@ -26,7 +26,10 @@ const getIconComponent = (type: string) => {
             return FontAwesome;
         case ICON_TYPE.Foundation:
             return Foundation;
+        // 'ionicon' là bí danh viết thường của @rneui. Giữ lại để 93 chỗ gọi
+        // type="ionicon" không phải sửa khi bỏ Icon của @rneui.
         case ICON_TYPE.Ionicons:
+        case 'ionicon':
             return Ionicons;
         case ICON_TYPE.MaterialIcons:
             return MaterialIcons;
@@ -43,6 +46,18 @@ const getIconComponent = (type: string) => {
     }
 };
 
+// Icon là ĐỒ TRANG TRÍ, không phải nội dung: nhãn thuộc về nút chứa nó.
+//
+// react-native-vector-icons vẽ icon bằng <Text> chứa glyph ở vùng mã riêng, nên
+// nếu để nguyên thì TalkBack đọc ra "\ueb18" — ký tự vô nghĩa. Ẩn hẳn khỏi cây
+// trợ năng: accessibilityElementsHidden cho iOS, importantForAccessibility cho
+// Android. Cứ đặt ở đây một lần, khỏi phải nhớ ở 28 chỗ gọi.
+const AN_KHOI_TRO_NANG = {
+  accessible: false,
+  accessibilityElementsHidden: true,
+  importantForAccessibility: 'no-hide-descendants',
+} as const;
+
 const Icon = ({ type, name, color, size }: IconProps) => {
     if (type === ICON_TYPE.Iconoir) {
         const componentName = getComponentName(name);
@@ -53,6 +68,7 @@ const Icon = ({ type, name, color, size }: IconProps) => {
                 color={color}
                 height={size}
                 width={size}
+                {...AN_KHOI_TRO_NANG}
             />
         );
     }
@@ -64,6 +80,7 @@ const Icon = ({ type, name, color, size }: IconProps) => {
             name={name}
             color={color}
             size={size}
+            {...AN_KHOI_TRO_NANG}
         />
     );
 };
